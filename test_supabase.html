@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head><title>Supabase Debug</title></head>
+<body>
+<h2>Supabase Debug Tool</h2>
+<div id="result" style="font-family:monospace;white-space:pre;background:#f1f5f9;padding:20px;border-radius:8px;margin:20px"></div>
+<script>
+const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
+const HEADERS = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+
+async function runTests() {
+    const out = document.getElementById('result');
+    
+    // Test 1: Ping
+    out.textContent = '⏳ Testing connection...\n';
+    
+    // Test 2: Query tanpa filter
+    try {
+        const r1 = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=id,nama_lengkap,status_verifikasi&limit=5`, { headers: HEADERS });
+        const d1 = await r1.json();
+        out.textContent += `✅ Query mitra_ahli (no filter): HTTP ${r1.status}\n`;
+        out.textContent += `   Rows: ${JSON.stringify(d1).substring(0,200)}\n\n`;
+    } catch(e) {
+        out.textContent += `❌ Query mitra_ahli failed: ${e.message}\n\n`;
+    }
+    
+    // Test 3: Query dengan filter verified
+    try {
+        const r2 = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=id,nama_lengkap,status_verifikasi&status_verifikasi=eq.verified&limit=5`, { headers: HEADERS });
+        const d2 = await r2.json();
+        out.textContent += `✅ Query verified mitra: HTTP ${r2.status}\n`;
+        out.textContent += `   Rows: ${JSON.stringify(d2).substring(0,200)}\n\n`;
+    } catch(e) {
+        out.textContent += `❌ Query verified failed: ${e.message}\n\n`;
+    }
+
+    // Test 4: Cek semua status
+    try {
+        const r3 = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=status_verifikasi`, { headers: HEADERS });
+        const d3 = await r3.json();
+        const statuses = [...new Set((d3||[]).map(x=>x.status_verifikasi))];
+        out.textContent += `ℹ️ Semua status_verifikasi yang ada: ${JSON.stringify(statuses)}\n`;
+        out.textContent += `   Total rows: ${(d3||[]).length}\n`;
+    } catch(e) {
+        out.textContent += `❌ Status check failed: ${e.message}\n`;
+    }
+}
+runTests();
+</script>
+</body>
+</html>

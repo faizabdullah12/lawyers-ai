@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Daftar Akun - Lawyers AI Enterprise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="shared-modal.js" onerror="window.laiAlert=({message=''}={})=>new Promise(r=>{alert(message);r()});window.laiConfirm=({message=''}={})=>new Promise(r=>r(confirm(message)));window.laiPrompt=({message=''}={})=>new Promise(r=>r(prompt(message)));"></script>
+    <script src="shared-otp.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; min-height: 100vh; position: relative; overflow-x: hidden; }
+
+        /* Animated Diagonal Stripes Background */
+        .animated-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); overflow: hidden; z-index: 0; }
+        .stripe { position: absolute; width: 200%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.3) 50%, transparent 100%); animation: moveStripe 8s linear infinite; }
+        .stripe:nth-child(1) { top: 10%; animation-delay: 0s; opacity: 0.4; }
+        .stripe:nth-child(2) { top: 25%; animation-delay: 2s; opacity: 0.6; }
+        .stripe:nth-child(3) { top: 40%; animation-delay: 4s; opacity: 0.3; }
+        .stripe:nth-child(4) { top: 55%; animation-delay: 1s; opacity: 0.5; }
+        .stripe:nth-child(5) { top: 70%; animation-delay: 3s; opacity: 0.4; }
+        .stripe:nth-child(6) { top: 85%; animation-delay: 5s; opacity: 0.6; }
+        @keyframes moveStripe { 0% { transform: translateX(-100%) rotate(-5deg); } 100% { transform: translateX(0%) rotate(-5deg); } }
+
+        /* Glowing Orbs */
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3; animation: floatOrb 20s ease-in-out infinite; }
+        .orb1 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, transparent 70%); top: -200px; left: -200px; }
+        .orb2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%); bottom: -250px; right: -250px; animation-delay: 5s; }
+        .orb3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: 10s; }
+        @keyframes floatOrb { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(50px, -50px) scale(1.1); } 66% { transform: translate(-50px, 50px) scale(0.9); } }
+
+        .grid-pattern { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px); background-size: 50px 50px; animation: gridMove 20s linear infinite; }
+        @keyframes gridMove { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, 50px); } }
+
+        .main-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; z-index: 2; }
+        .form-card { width: 100%; max-width: 500px; background: rgba(255, 255, 255, 0.97); backdrop-filter: blur(20px); border-radius: 32px; padding: 50px 45px; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5); animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden; }
+        .form-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%); animation: shimmer 3s ease-in-out infinite; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo-section { text-align: center; margin-bottom: 40px; animation: fadeIn 1s ease 0.3s both; }
+        .logo { font-size: 42px; font-weight: 800; font-style: italic; color: #0f172a; letter-spacing: -2px; margin-bottom: 8px; }
+        .logo span { color: #3b82f6; }
+        .logo-tagline { color: #64748b; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; }
+
+        .form-header { text-align: center; margin-bottom: 35px; animation: fadeIn 1s ease 0.5s both; }
+        .form-title { font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 8px; }
+        .form-subtitle { color: #64748b; font-size: 14px; font-weight: 500; }
+
+        .form-group { margin-bottom: 22px; animation: fadeIn 1s ease both; }
+        .form-label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 8px; margin-left: 4px; }
+        .input-wrapper { position: relative; }
+        .form-input { width: 100%; padding: 15px 18px; font-size: 15px; font-weight: 500; color: #0f172a; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; outline: none; transition: all 0.3s ease; }
+        .form-input:focus { background: white; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); transform: translateY(-2px); }
+        .input-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 15px; pointer-events: none; }
+        .input-with-icon { padding-left: 50px; }
+        .toggle-password { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; cursor: pointer; padding: 8px; }
+
+        .password-strength { height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+        .password-strength-bar { height: 100%; width: 0; transition: all 0.4s ease; }
+        .strength-weak { width: 50%; background: #f87171; }
+        .strength-strong { width: 100%; background: #34d399; }
+        .strength-text { font-size: 11px; font-weight: 600; margin-top: 6px; }
+
+        .error-message { color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 6px; display: none; }
+        .error-message.show { display: block; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .checkbox-wrapper { display: flex; align-items: flex-start; gap: 12px; margin: 24px 0; }
+        .form-checkbox { width: 18px; height: 18px; margin-top: 2px; accent-color: #3b82f6; }
+        .checkbox-label { font-size: 13px; color: #64748b; line-height: 1.6; }
+        .checkbox-label a { color: #3b82f6; font-weight: 600; text-decoration: none; }
+
+        .submit-button { width: 100%; padding: 16px; font-size: 14px; font-weight: 800; text-transform: uppercase; color: white; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border: none; border-radius: 14px; cursor: pointer; transition: all 0.4s; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); }
+        .submit-button:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(59, 130, 246, 0.5); }
+
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .loading-overlay.active { display: flex; }
+        .spinner { width: 60px; height: 60px; border: 4px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .form-card { padding: 40px 32px; } }
+    </style>
+</head>
+<body>
+    <div class="animated-bg">
+        <div class="stripe"></div><div class="stripe"></div><div class="stripe"></div><div class="stripe"></div>
+        <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+        <div class="grid-pattern"></div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div style="text-align: center;">
+            <div class="spinner"></div>
+            <p style="color: white; font-weight: 600; margin-top: 15px;">Memproses Pendaftaran...</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="form-card">
+            <div class="logo-section">
+                <h1 class="logo">Lawyers<span>AI</span></h1>
+                <p class="logo-tagline">Enterprise Platform</p>
+            </div>
+
+            <div class="form-header">
+                <h2 class="form-title">Buat Akun Baru</h2>
+                <p class="form-subtitle">Gabung sekarang di platform hukum tercanggih</p>
+            </div>
+
+            <form id="regForm" novalidate>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Nama Depan</label>
+                        <input type="text" id="firstName" class="form-input" placeholder="Ahmad" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nama Belakang</label>
+                        <input type="text" id="lastName" class="form-input" placeholder="Santoso" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Aktif</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="email" class="form-input input-with-icon" placeholder="nama@gmail.com" required>
+                    </div>
+                    <div class="error-message" id="emailError">Format email tidak valid</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Kata Sandi</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" class="form-input input-with-icon" placeholder="Min. 6 Karakter (Huruf & Angka)" required>
+                        <span class="toggle-password" id="togglePassword"><i class="far fa-eye" id="eyeIcon"></i></span>
+                    </div>
+                    <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+                    <p class="strength-text" id="strengthText"></p>
+                    <div class="error-message" id="passwordError">Min. 6 karakter dengan kombinasi huruf & angka</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Konfirmasi Kata Sandi</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="confirmPassword" class="form-input input-with-icon" placeholder="Ulangi kata sandi" required>
+                    </div>
+                    <div class="error-message" id="confirmPasswordError">Sandi tidak cocok</div>
+                </div>
+
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="terms" class="form-checkbox" required>
+                    <label for="terms" class="checkbox-label">Saya setuju dengan <a href="#">Syarat & Ketentuan</a></label>
+                </div>
+
+                <button type="submit" class="submit-button" id="btnRegister">Daftar Sekarang</button>
+            </form>
+
+            <div style="text-align: center; margin-top: 25px;">
+                <p style="font-size: 14px; color: #64748b;">Sudah punya akun? <a href="login.html" style="color: #3b82f6; font-weight: 700; text-decoration: none;">Masuk di sini</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- VALIDASI EMAIL ---
+        function isStrictEmail(email) {
+            return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+        }
+
+        // --- VALIDASI SANDI (SIMPLE: HURUF + ANGKA) ---
+        function validatePassword(pass) {
+            return pass.length >= 6 && /[a-zA-Z]/.test(pass) && /\d/.test(pass);
+        }
+
+        // --- PASSWORD STRENGTH BAR ---
+        document.getElementById('password').addEventListener('input', function() {
+            const bar = document.getElementById('strengthBar');
+            const text = document.getElementById('strengthText');
+            if (validatePassword(this.value)) {
+                bar.className = 'password-strength-bar strength-strong';
+                text.textContent = 'Format Benar ✅'; text.style.color = '#10b981';
+            } else {
+                bar.className = 'password-strength-bar strength-weak';
+                text.textContent = 'Gunakan Huruf & Angka (Min. 6)'; text.style.color = '#ef4444';
+            }
+        });
+
+        // --- TOGGLE PASSWORD ---
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const pass = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            pass.type = pass.type === 'password' ? 'text' : 'password';
+            icon.className = pass.type === 'password' ? 'far fa-eye' : 'fas fa-eye-slash';
+        });
+
+        // --- SUBMIT FORM ---
+        document.getElementById('regForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('terms').checked;
+
+            // Reset Errors
+            document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
+
+            if (!firstName || !lastName) { laiAlert({ type: "warning", title: "Nama Wajib Diisi", message: "Nama lengkap tidak boleh kosong." }); return; }
+            if (!isStrictEmail(email)) return document.getElementById('emailError').classList.add('show');
+            if (!validatePassword(password)) return document.getElementById('passwordError').classList.add('show');
+            if (password !== confirm) return document.getElementById('confirmPasswordError').classList.add('show');
+            if (!terms) { laiAlert({ type:'warning', title:'Syarat & Ketentuan', message:'Kamu harus menyetujui syarat & ketentuan terlebih dahulu.' }); return; }
+
+            document.getElementById('loadingOverlay').classList.add('active');
+
+            try {
+                const { data, error } = await window.supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: { data: { full_name: firstName + ' ' + lastName, role: 'client' } }
+                });
+
+                if (error) throw error;
+
+                document.getElementById('loadingOverlay').classList.remove('active');
+
+                // Tampilkan OTP modal verifikasi email
+                showOTPModal({
+                    email,
+                    type: 'signup',
+                    title: 'Verifikasi Email Kamu',
+                    subtitle: `Kode OTP 6 digit telah dikirim ke<br><strong>${email}</strong><br><span style="font-size:11px;color:#64748B;">Cek folder spam jika tidak muncul.</span>`,
+                    onSuccess: async () => {
+                        await laiAlert({ type: 'success', title: 'Akun Berhasil Dibuat! 🎉', message: 'Email kamu sudah terverifikasi. Silakan login sekarang.' });
+                        window.location.href = 'login.html';
+                    }
+                });
+
+            } catch (err) {
+                document.getElementById('loadingOverlay').classList.remove('active');
+                laiAlert({ type: 'danger', title: 'Pendaftaran Gagal', message: err.message });
+            }
+        });
+    </script>
+</body>
+</html>

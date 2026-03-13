@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Konsultasi — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #060A12; --bg-2: #0C1220; --bg-3: #111827; --bg-4: #1A2235;
+            --border: rgba(255,255,255,0.06); --border-2: rgba(255,255,255,0.1);
+            --text-1: #F1F5F9; --text-2: #94A3B8; --text-3: #475569; --text-4: #2D3748;
+            --accent: #3B82F6; --accent-2: #1D4ED8; --gold: #F59E0B; --emerald: #10B981;
+            --scrollbar: rgba(255,255,255,0.05);
+        }
+        body.light {
+            --bg: #F1F5F9; --bg-2: #FFFFFF; --bg-3: #F8FAFC; --bg-4: #EFF6FF;
+            --border: rgba(0,0,0,0.07); --border-2: rgba(0,0,0,0.12);
+            --text-1: #0F172A; --text-2: #334155; --text-3: #64748B; --text-4: #CBD5E1;
+            --scrollbar: rgba(0,0,0,0.07);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text-1); transition: background 0.3s, color 0.3s; }
+
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+        /* ─── LAYOUT ─── */
+        #app { display: flex; height: 100vh; overflow: hidden; }
+        #sidebar { width: 220px; flex-shrink: 0; background: var(--bg-2); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); overflow-y: auto; }
+        #inbox-panel { width: 300px; flex-shrink: 0; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        #chat-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); min-width: 0; }
+
+        @media (max-width: 1024px) {
+            #sidebar { position: fixed; z-index: 200; height: 100vh; transform: translateX(-100%); }
+            #sidebar.open { transform: translateX(0); }
+        }
+        @media (max-width: 768px) {
+            #inbox-panel { width: 100%; position: absolute; z-index: 10; height: 100%; }
+            #inbox-panel.hidden-mobile { display: none; }
+        }
+
+        /* ─── SIDEBAR ─── */
+        .logo { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .logo-text { font-size: 20px; font-weight: 800; font-style: italic; color: var(--text-1); letter-spacing: -0.5px; }
+        .logo-text span { color: var(--accent); }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); animation: pulse-dot 2s infinite; flex-shrink: 0; }
+        @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.8); } }
+
+        .nav-section { flex: 1; padding: 16px 12px; overflow-y: auto; }
+        .nav-label { font-size: 9px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-3); padding: 0 8px; margin: 16px 0 6px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: all 0.15s; text-decoration: none; }
+        .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
+        .nav-item.active { background: rgba(59,130,246,0.12); color: #60A5FA; }
+        body.light .nav-item:hover { background: rgba(0,0,0,0.04); }
+        body.light .nav-item.active { background: rgba(59,130,246,0.1); }
+        .nav-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+        .nav-item.active .nav-icon { background: rgba(59,130,246,0.2); }
+        body.light .nav-icon { background: rgba(0,0,0,0.05); }
+
+        .premium-card { margin: 12px; border-radius: 14px; padding: 14px; cursor: pointer; background: linear-gradient(135deg, #1C1400, #2A1E00); border: 1px solid rgba(245,158,11,0.2); transition: border-color 0.2s; flex-shrink: 0; }
+        .premium-card:hover { border-color: rgba(245,158,11,0.4); }
+        body.light .premium-card { background: linear-gradient(135deg, #FFFBEB, #FEF3C7); border-color: rgba(245,158,11,0.3); }
+
+        .profile-row { display: flex; align-items: center; gap: 10px; margin: 0 12px 16px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.03); cursor: pointer; transition: background 0.15s; text-decoration: none; flex-shrink: 0; }
+        .profile-row:hover { background: rgba(255,255,255,0.06); }
+        body.light .profile-row { background: rgba(0,0,0,0.03); }
+        body.light .profile-row:hover { background: rgba(0,0,0,0.06); }
+
+        /* ─── INBOX ─── */
+        .inbox-header { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg-2); }
+        body.light .inbox-header { background: #FFFFFF; border-color: #E2E8F0; }
+        .search-box { position: relative; margin-top: 12px; }
+        .search-box input { width: 100%; background: var(--bg-3); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px 9px 34px; font-size: 12px; color: var(--text-1); font-family: 'Plus Jakarta Sans', sans-serif; outline: none; transition: border-color 0.2s; }
+        .search-box input:focus { border-color: var(--accent); }
+        .search-box input::placeholder { color: var(--text-3); }
+        .search-box i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 11px; pointer-events: none; }
+        body.light .search-box input { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
+
+        .conv-list { flex: 1; overflow-y: auto; background: var(--bg); }
+        body.light .conv-list { background: #F0F4F8; }
+        .conv-item { display: flex; align-items: center; gap: 12px; padding: 13px 18px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.12s; position: relative; }
+        .conv-item:hover { background: rgba(255,255,255,0.025); }
+        .conv-item.active { background: rgba(59,130,246,0.07); }
+        body.light .conv-item { border-color: #F1F5F9; }
+        body.light .conv-item:hover { background: #F8FAFC; }
+        body.light .conv-item.active { background: #EFF6FF; }
+        .conv-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 0 2px 2px 0; }
+        .conv-avatar { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1.5px solid var(--border); }
+        .unread-count { min-width: 18px; height: 18px; background: var(--accent); color: #fff; border-radius: 9px; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; flex-shrink: 0; }
+
+        /* ─── CHAT HEADER ─── */
+        #chat-header { background: var(--bg-2); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+        body.light #chat-header { background: #FFFFFF; border-color: #E2E8F0; }
+        .adv-avatar-wrap { position: relative; }
+        .adv-avatar-wrap img { width: 40px; height: 40px; border-radius: 11px; object-fit: cover; border: 1.5px solid var(--border-2); }
+        .online-badge { position: absolute; bottom: -2px; right: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--text-3); border: 2px solid var(--bg-2); transition: background 0.3s; }
+        .online-badge.online { background: var(--emerald); }
+        body.light .online-badge { border-color: #FFFFFF; }
+
+        .header-btn { width: 34px; height: 34px; border-radius: 9px; background: var(--bg-3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); font-size: 13px; transition: all 0.15s; }
+        .header-btn:hover { background: var(--bg-4); color: var(--text-1); }
+        body.light .header-btn { background: #F8FAFC; border-color: #E2E8F0; color: #334155; }
+        body.light .header-btn:hover { background: #F1F5F9; color: #0F172A; }
+
+        /* ─── MESSAGES ─── */
+        #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 4px; }
+        body.light #chat-box { background: #F0F4F8; }
+        .date-sep { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+        .date-sep::before, .date-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+        .date-sep span { font-size: 10px; font-weight: 600; color: var(--text-3); letter-spacing: 0.05em; }
+        body.light .date-sep::before, body.light .date-sep::after { background: #E2E8F0; }
+        body.light .date-sep span { color: #94A3B8; }
+
+        .msg-row { display: flex; align-items: flex-end; gap: 8px; }
+        .msg-row.me { justify-content: flex-end; }
+        .msg-row.them { justify-content: flex-start; }
+
+        .msg-avatar { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
+        .msg-avatar-me { width: 26px; height: 26px; border-radius: 8px; background: var(--accent-2); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+
+        .msg-bubble { max-width: 68%; }
+        .msg-bubble .bubble { padding: 10px 14px; font-size: 13.5px; line-height: 1.55; word-break: break-word; }
+        .msg-bubble .bubble p { margin: 0; }
+        .msg-bubble .meta { display: flex; align-items: center; gap: 4px; margin-top: 3px; padding: 0 4px; opacity: 0; transition: opacity 0.2s; }
+        .msg-row:hover .meta { opacity: 1; }
+        .meta span { font-size: 9.5px; color: var(--text-3); font-weight: 500; }
+
+        .bubble-in { background: var(--bg-3); border: 1px solid var(--border); border-radius: 14px 14px 14px 3px; color: var(--text-1); }
+        .bubble-out { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border-radius: 14px 14px 3px 14px; color: #fff; }
+        body.light .bubble-in { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+
+        /* typing indicator */
+        .typing-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 4px; }
+        .typing-bubble { background: var(--bg-3); border: 1px solid var(--border); border-radius: 14px 14px 14px 3px; padding: 10px 14px; display: flex; gap: 4px; align-items: center; }
+        body.light .typing-bubble { background: #FFFFFF; border-color: #E2E8F0; }
+        .t-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-3); animation: tdot 1.4s infinite; }
+        .t-dot:nth-child(2) { animation-delay: 0.15s; } .t-dot:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-4px);opacity:1} }
+
+        /* ─── INPUT AREA ─── */
+        #input-wrap { background: var(--bg-2); border-top: 1px solid var(--border); padding: 14px 18px; flex-shrink: 0; }
+        body.light #input-wrap { background: #FFFFFF; border-color: #E2E8F0; }
+        .input-row { display: flex; align-items: flex-end; gap: 10px; }
+        .attach-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--bg-3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); font-size: 14px; flex-shrink: 0; transition: all 0.15s; }
+        .attach-btn:hover { background: var(--bg-4); color: var(--text-1); }
+        body.light .attach-btn { background: #F8FAFC; border-color: #E2E8F0; color: #64748B; }
+        .input-field-wrap { flex: 1; position: relative; }
+        #msg-input { width: 100%; background: var(--bg-3); border: 1.5px solid var(--border); border-radius: 12px; padding: 10px 46px 10px 14px; font-size: 13px; color: var(--text-1); font-family: 'Plus Jakarta Sans', sans-serif; outline: none; resize: none; min-height: 40px; max-height: 120px; overflow-y: auto; transition: border-color 0.2s; display: block; line-height: 1.5; }
+        #msg-input:focus { border-color: var(--accent); }
+        #msg-input::placeholder { color: var(--text-3); }
+        #msg-input:disabled { opacity: 0.5; cursor: not-allowed; }
+        body.light #msg-input { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
+        body.light #msg-input::placeholder { color: #94A3B8; }
+        body.light #msg-input:focus { border-color: #3B82F6; }
+        .send-btn { position: absolute; right: 6px; bottom: 5px; width: 30px; height: 30px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 11px; border: none; transition: background 0.15s, transform 0.1s; }
+        .send-btn:hover { background: #2563EB; }
+        .send-btn:active { transform: scale(0.9); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #file-preview { display: none; margin-top: 8px; }
+        #file-preview .fp-inner { display: flex; align-items: center; gap: 8px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
+        body.light #file-preview .fp-inner { background: #F8FAFC; border-color: #E2E8F0; }
+
+        /* ─── UPGRADE WALL ─── */
+        #upgrade-wall { margin: 12px 16px; padding: 14px 16px; border-radius: 14px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.18); display: none; flex-shrink: 0; }
+
+        /* ─── EMPTY STATE ─── */
+        #chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0.4; }
+        body.light #chat-empty { color: #64748B; }
+
+        /* ─── CONTACT MODAL ─── */
+        #contact-modal { position: fixed; inset: 0; z-index: 400; display: none; align-items: flex-end; justify-content: center; padding: 16px; }
+        #contact-modal.open { display: flex; }
+        @media (min-width: 640px) { #contact-modal { align-items: center; } }
+        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); }
+        .modal-card { position: relative; z-index: 1; width: 100%; max-width: 380px; border-radius: 24px; overflow: hidden; animation: modalUp 0.38s cubic-bezier(0.34,1.56,0.64,1); background: var(--bg-2); border: 1px solid var(--border-2); }
+        body.light .modal-card { background: #FFFFFF; border-color: #E2E8F0; }
+        @keyframes modalUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .modal-banner { height: 80px; background: linear-gradient(135deg, #1e3a5f, #2563EB); position: relative; }
+        .modal-avatar { position: absolute; bottom: -22px; left: 20px; width: 56px; height: 56px; border-radius: 14px; object-fit: cover; border: 3px solid var(--bg-2); }
+        body.light .modal-avatar { border-color: #FFFFFF; }
+        .modal-close { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 8px; background: rgba(0,0,0,0.3); border: none; color: rgba(255,255,255,0.8); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        .modal-close:hover { background: rgba(0,0,0,0.5); }
+        .modal-body { padding: 30px 20px 20px; }
+        body.light .modal-body { color: #0F172A; }
+        .contact-action-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px; border-radius: 11px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: all 0.15s; text-decoration: none; border: none; }
+
+        /* ─── THEME TOGGLE ─── */
+        .theme-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-3); border: 1px solid var(--border); cursor: pointer; position: relative; transition: background 0.3s; flex-shrink: 0; }
+        body.light .theme-toggle { background: #BFDBFE !important; border-color: #93C5FD !important; }
+        .theme-toggle .knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #64748B; transition: all 0.35s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; justify-content: center; font-size: 9px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        body.light .theme-toggle .knob { transform: translateX(20px) !important; background: #F59E0B !important; }
+
+        /* ─── TOAST ─── */
+        #toast-container { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+        .toast { background: var(--bg-2); border: 1px solid var(--border-2); border-radius: 10px; padding: 9px 14px; font-size: 12px; font-weight: 500; color: var(--text-1); white-space: nowrap; box-shadow: 0 6px 24px rgba(0,0,0,0.4); animation: toastIn 0.28s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; }
+        body.light .toast { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
+        @keyframes toastIn { from{opacity:0;transform:translateY(8px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .toast.hide { animation: toastOut 0.25s ease forwards; }
+        @keyframes toastOut { to{opacity:0;transform:translateY(-6px)} }
+
+        /* ─── RATING STARS ─── */
+        .star-btn { background:none; border:none; cursor:pointer; font-size:32px; color:var(--border-2); transition:color 0.15s, transform 0.15s; padding:0 2px; line-height:1; }
+        .star-btn:hover, .star-btn.active { color:#F59E0B; transform:scale(1.15); }
+        .star-btn.active { color:#F59E0B; }
+        @media(min-width:640px){ #rating-modal { align-items:center; } }
+
+        /* ─── PRO BADGE ─── */
+        .pro-badge { background: linear-gradient(135deg, var(--gold), #D97706); border-radius: 5px; padding: 2px 6px; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; }
+
+        /* ─── OVERLAYS ─── */
+        #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 190; display: none; }
+        #sidebar-overlay.show { display: block; }
+        #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.3s; }
+        body.light #load-overlay { background: #F0F4F8; }
+        .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border-2); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── SIDEBAR LIGHT MODE ─── */
+        body.light #sidebar { background: #FFFFFF; border-color: #E2E8F0; }
+        body.light #sidebar .logo-text { color: #0F172A; }
+        body.light .nav-item { color: #64748B; }
+        body.light .nav-item:hover { background: #F1F5F9 !important; color: #334155 !important; }
+        body.light .nav-item.active { background: rgba(59,130,246,0.1) !important; color: #2563EB !important; }
+        body.light .nav-icon { background: #F1F5F9 !important; }
+        body.light .premium-card { background: linear-gradient(135deg,#FFFBEB,#FEF3C7) !important; border-color: rgba(245,158,11,0.3) !important; }
+        body.light .profile-row { background: #F8FAFC !important; }
+        body.light #inbox-panel { background: #F0F4F8 !important; border-color: #E2E8F0 !important; }
+        body.light #chat-panel { background: #F0F4F8 !important; }
+    </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div id="load-overlay">
+    <div class="spin"></div>
+    <span style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3)">Memuat...</span>
+</div>
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div id="app">
+
+    <!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════ -->
+    <aside id="sidebar">
+        <div class="logo">
+            <div class="logo-text">Lawyers<span>AI</span></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+                <div class="status-dot"></div>
+                <span id="session-tag" style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Protected</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-label">Menu</div>
+            <a href="index.html" class="nav-item"><div class="nav-icon"><i class="fas fa-home"></i></div>Beranda</a>
+            <a href="konsultasi.html" class="nav-item"><div class="nav-icon"><i class="fas fa-robot"></i></div>AI Konsultasi</a>
+            <a href="mitra.html" class="nav-item"><div class="nav-icon"><i class="fas fa-user-tie"></i></div>Temukan Mitra</a>
+            <a href="chat-advokat.html" class="nav-item active"><div class="nav-icon"><i class="fas fa-comments"></i></div>Chat Advokat</a>
+            <a href="arsip-kasus.html" class="nav-item"><div class="nav-icon"><i class="fas fa-folder-open"></i></div>Arsip Kasus</a>
+            <div class="nav-label" style="margin-top:20px">Akun</div>
+            <a href="profile.html" class="nav-item"><div class="nav-icon"><i class="fas fa-user-circle"></i></div>Profil Saya</a>
+        </div>
+
+        <div class="premium-card" onclick="location.href='upgrade.html'">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <i class="fas fa-crown" style="color:var(--gold);font-size:14px"></i>
+                <span id="side-plan-badge" class="pro-badge" style="background:var(--text-3)">FREE</span>
+            </div>
+            <p id="side-plan-title" style="font-size:13px;font-weight:700;color:var(--text-1);margin:0 0 4px;">Upgrade PRO Sultan</p>
+            <p id="side-plan-sub" style="font-size:10px;margin-top:3px;color:rgba(245,158,11,0.6);font-weight:600">Rp 150.000 • Seumur Hidup →</p>
+        </div>
+
+        <a href="profile.html" class="profile-row">
+            <img id="side-avatar" src="" style="width:36px;height:36px;border-radius:10px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;" alt="Avatar">
+            <div style="overflow:hidden;flex:1">
+                <p id="side-name" style="font-size:12px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0">Sultan</p>
+                <p style="font-size:10px;color:var(--text-3);margin:0">Lihat Profil</p>
+            </div>
+            <i class="fas fa-chevron-right" style="font-size:9px;color:var(--text-3)"></i>
+        </a>
+    </aside>
+
+    <!-- ═══════════════════════════════ INBOX PANEL ═══════════════════════════════ -->
+    <div id="inbox-panel">
+        <div class="inbox-header">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                    <h2 style="font-size:17px;font-weight:800;font-style:italic;letter-spacing:-0.3px;margin:0;">Inbox</h2>
+                    <p id="conv-count" style="font-size:10px;color:var(--text-3);margin-top:1px">0 percakapan</p>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <button id="menu-toggle" onclick="openSidebar()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--text-2);cursor:pointer;font-size:13px">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <button class="theme-toggle" onclick="window.toggleTheme?.()" title="Mode Siang/Malam">
+                        <div class="knob">🌙</div>
+                    </button>
+                </div>
+            </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input id="search-input" type="text" placeholder="Cari advokat atau pesan..." oninput="filterConvs(this.value)">
+            </div>
+        </div>
+
+        <div class="conv-list" id="conv-list">
+            <div style="display:flex;align-items:center;justify-content:center;padding:40px;opacity:0.5">
+                <div class="spin"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════ CHAT PANEL ═══════════════════════════════ -->
+    <div id="chat-panel">
+
+        <!-- Empty state -->
+        <div id="chat-empty">
+            <div style="width:52px;height:52px;border-radius:14px;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-3)"><i class="fas fa-comments"></i></div>
+            <p style="font-size:14px;font-weight:700;font-style:italic;margin:0">Pilih percakapan</p>
+            <a href="mitra.html" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;letter-spacing:0.05em">Temukan Advokat →</a>
+        </div>
+
+        <!-- Chat view (hidden until selected) -->
+        <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+
+            <!-- Header -->
+            <div id="chat-header">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <button id="back-btn" onclick="backToInbox()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="adv-avatar-wrap">
+                        <img id="adv-img" src="" onerror="this.src=avatarFallback(advName||'A')" style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border-2)">
+                        <div id="online-dot" class="online-badge"></div>
+                    </div>
+                    <div>
+                        <div style="display:flex;align-items:center;gap:7px">
+                            <span id="adv-name" style="font-size:15px;font-weight:800;font-style:italic;letter-spacing:-0.2px">Memuat...</span>
+                            <span id="premium-marker" style="display:none" class="pro-badge">💎 PRO</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:1px">
+                            <span id="adv-spec" style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em"></span>
+                            <span id="adv-typing" style="display:none;font-size:10px;font-weight:600;color:var(--emerald)">• mengetik...</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <a id="view-profile-btn" href="#" class="header-btn" title="Lihat Profil"><i class="fas fa-id-card"></i></a>
+                    <button class="header-btn" onclick="openRatingModal()" title="Beri Rating" id="rating-btn" style="color:#F59E0B"><i class="fas fa-star"></i></button>
+                    <button class="header-btn" onclick="openContactModal()" title="Info Kontak"><i class="fas fa-address-card"></i></button>
+                    <button class="header-btn" onclick="clearChatConfirm()" title="Hapus Riwayat" style="color:var(--text-3)"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div id="chat-box"></div>
+
+            <!-- Upgrade wall -->
+            <div id="upgrade-wall">
+                <div style="display:flex;align-items:center;gap:14px">
+                    <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <i class="fas fa-lock" style="color:var(--gold)"></i>
+                    </div>
+                    <div style="flex:1">
+                        <p style="font-weight:700;font-size:13px;color:var(--gold);margin:0 0 2px;">Fitur Khusus PRO Sultan</p>
+                        <p style="font-size:11px;color:var(--text-3);margin:0">Upgrade untuk membalas & chat langsung dengan advokat</p>
+                    </div>
+                    <a href="upgrade.html" style="background:var(--gold);color:#fff;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;padding:9px 14px;border-radius:9px;text-decoration:none;flex-shrink:0">Upgrade</a>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <div id="input-wrap">
+                <div class="input-row">
+                    <label class="attach-btn" title="Lampirkan File">
+                        <i class="fas fa-paperclip"></i>
+                        <input type="file" id="file-input" style="display:none" onchange="handleFileAttach(this)">
+                    </label>
+                    <div class="input-field-wrap">
+                        <textarea id="msg-input" rows="1" placeholder="Ketik pesan konsultasi hukum Anda..." oninput="autoResize(this);notifyTyping()" onkeydown="handleKey(event)"></textarea>
+                        <button id="send-btn" class="send-btn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <div id="file-preview">
+                    <div class="fp-inner">
+                        <i class="fas fa-file" style="color:var(--accent);font-size:12px"></i>
+                        <span id="fp-name" style="font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)"></span>
+                        <button onclick="clearAttach()" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:2px 4px;border-radius:4px;font-size:11px"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════ RATING MODAL ═══════════════════════════════ -->
+<div id="rating-modal" style="position:fixed;inset:0;z-index:400;display:none;align-items:flex-end;justify-content:center;padding:16px;">
+    <div class="modal-overlay" onclick="closeRatingModal()"></div>
+    <div style="position:relative;z-index:1;width:100%;max-width:380px;border-radius:24px;overflow:hidden;animation:modalUp 0.38s cubic-bezier(0.34,1.56,0.64,1);background:var(--bg-2);border:1px solid var(--border-2);">
+        <div style="height:6px;background:linear-gradient(90deg,#F59E0B,#FBBF24);"></div>
+        <div style="padding:24px 24px 20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <div>
+                    <h3 style="font-size:17px;font-weight:900;font-style:italic;letter-spacing:-0.3px;margin:0;color:var(--text-1);">Beri Rating</h3>
+                    <p id="rating-adv-name" style="font-size:11px;color:var(--text-3);margin:3px 0 0;font-weight:600;"></p>
+                </div>
+                <button onclick="closeRatingModal()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Stars -->
+            <div style="display:flex;justify-content:center;gap:10px;margin:20px 0 8px;" id="star-row">
+                <button class="star-btn" data-val="1" onclick="setRating(1)"><i class="fas fa-star"></i></button>
+                <button class="star-btn" data-val="2" onclick="setRating(2)"><i class="fas fa-star"></i></button>
+                <button class="star-btn" data-val="3" onclick="setRating(3)"><i class="fas fa-star"></i></button>
+                <button class="star-btn" data-val="4" onclick="setRating(4)"><i class="fas fa-star"></i></button>
+                <button class="star-btn" data-val="5" onclick="setRating(5)"><i class="fas fa-star"></i></button>
+            </div>
+            <p id="rating-label" style="text-align:center;font-size:12px;font-weight:700;color:var(--text-3);margin:0 0 16px;min-height:18px;"></p>
+
+            <!-- Komentar -->
+            <textarea id="rating-comment" placeholder="Tulis ulasan singkat (opsional)..." maxlength="200"
+                style="width:100%;padding:11px 14px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text-1);outline:none;resize:none;min-height:72px;line-height:1.5;box-sizing:border-box;transition:border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+
+            <!-- Already rated info -->
+            <div id="already-rated-info" style="display:none;text-align:center;padding:8px 12px;border-radius:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);margin-bottom:12px;">
+                <p style="font-size:11px;font-weight:600;color:#34D399;margin:0;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Anda sudah memberi rating. Rating baru akan mengganti yang lama.</p>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <button onclick="closeRatingModal()" style="flex:1;padding:11px;border-radius:11px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Batal</button>
+                <button id="submit-rating-btn" onclick="submitRating()" style="flex:2;padding:11px;border-radius:11px;background:#F59E0B;color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;border:none;opacity:0.4;pointer-events:none;transition:opacity 0.2s;">
+                    <i class="fas fa-paper-plane"></i> Kirim Rating
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════ CONTACT MODAL ═══════════════════════════════ -->
+<div id="contact-modal">
+    <div class="modal-overlay" onclick="closeContactModal()"></div>
+    <div class="modal-card">
+        <div class="modal-banner">
+            <img id="m-img" src="" class="modal-avatar" onerror="this.src=avatarFallback('A')">
+            <button class="modal-close" onclick="closeContactModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:4px">
+                <div>
+                    <h3 id="m-name" style="font-size:18px;font-weight:800;font-style:italic;letter-spacing:-0.3px;margin:0;"></h3>
+                    <p id="m-spec" style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px"></p>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.1);padding:5px 10px;border-radius:20px">
+                    <i class="fas fa-star" style="color:var(--gold);font-size:10px"></i>
+                    <span style="font-size:12px;font-weight:700;color:var(--gold)">5.0</span>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap">
+                <span id="m-nia" style="font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(16,185,129,0.1);color:#34D399"></span>
+                <span id="m-exp" style="font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(59,130,246,0.1);color:#60A5FA"></span>
+                <span id="m-kota" style="font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--bg-3);color:var(--text-2);display:none"></span>
+            </div>
+
+            <div id="m-pendidikan-row" style="display:none;padding:10px 12px;border-radius:10px;background:var(--bg-3);margin-bottom:14px;border:1px solid var(--border)">
+                <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);margin-bottom:3px">Pendidikan</p>
+                <p id="m-pendidikan" style="font-size:12px;font-weight:500;color:var(--text-1);margin:0"></p>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+                <a id="m-wa-btn" href="#" target="_blank" rel="noopener" class="contact-action-btn" style="background:#16A34A;color:#fff">
+                    <i class="fab fa-whatsapp" style="font-size:14px"></i>WhatsApp
+                </a>
+                <a id="m-email-btn" href="#" class="contact-action-btn" style="background:var(--bg-3);border:1px solid var(--border);color:var(--text-1)">
+                    <i class="fas fa-envelope" style="font-size:11px"></i>Email
+                </a>
+            </div>
+            <button id="copy-wa-btn" onclick="copyWA()" style="width:100%;margin-top:8px;padding:10px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.15s">
+                <i class="fas fa-copy" style="font-size:11px"></i>
+                <span id="copy-wa-label">Salin Nomor WA</span>
+            </button>
+            <a id="m-profile-link" href="#" style="display:block;width:100%;margin-top:8px;padding:10px;border-radius:9px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);color:#60A5FA;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-align:center;text-decoration:none;transition:background 0.15s">
+                <i class="fas fa-id-card" style="margin-right:6px;"></i>Lihat Profil Lengkap
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════ STATE ═══════════════════════════════
+let currentUser = null;
+let currentProfile = null;
+let receiverId = new URLSearchParams(location.search).get('id');
+let advData = null;
+let advName = '';
+let lawyerTableId = null;
+let activeConvId = null;
+let isPremium = false;
+let allConvs = [];
+let attachedFile = null;
+let rtChannel = null;
+let typingHideTimer = null;
+let typingDebounce = null;
+let autoMsgSent = false;
+
+const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
+const HDRS = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+const ADV_FIELDS = 'id,user_id,nama_lengkap,spesialisasi,foto_profil_url,kabupaten,provinsi,pengalaman,nomor_nia,lulusan,jurusan,bio_singkat,wa_number,email_kontak';
+
+// ═══════════════════════════════ HELPERS ═══════════════════════════════
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function avatarFallback(n) { return `https://ui-avatars.com/api/?name=${encodeURIComponent(n||'A')}&background=1E3A5F&color=60A5FA&bold=true`; }
+function fmtTime(iso) {
+    const d=new Date(iso), now=new Date(), df=now-d;
+    if (df<60000) return 'Baru';
+    if (df<3600000) return Math.floor(df/60000)+'m';
+    if (df<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    if (df<604800000) return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
+    return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+}
+function imgSrc(url, name) {
+    if (!url) return avatarFallback(name);
+    // Tambah cache-bust hanya jika storage Supabase
+    if (url.includes('supabase')) return url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+    return url;
+}
+
+// ═══════════════════════════════ FETCH MITRA ═══════════════════════════════
+async function fetchMitraData(uid) {
+    if (!uid) return null;
+    try {
+        // 1. By user_id
+        let r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&user_id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
+        let d = await r.json();
+        if (Array.isArray(d) && d.length) return d[0];
+        // 2. By id tabel
+        r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
+        d = await r.json();
+        if (Array.isArray(d) && d.length) return d[0];
+    } catch(e) { console.error('[Chat] fetchMitraData error:', e); }
+    return null;
+}
+
+// ═══════════════════════════════ INIT ═══════════════════════════════
+window.onload = async () => {
+    // Apply theme early
+    const theme = localStorage.getItem('lawyers_ai_theme') || 'dark';
+    if (theme === 'light') document.body.classList.add('light');
+
+    const { data:{ session } } = await window.supabase.auth.getSession();
+    if (!session) { location.href = 'login.html'; return; }
+    currentUser = session.user;
+
+    // Redirect advokat terverifikasi ke dashboard mereka
+    const { data: mitraCheck } = await window.supabase
+        .from('mitra_ahli').select('id')
+        .eq('user_id', currentUser.id)
+        .eq('status_verifikasi', 'verified')
+        .maybeSingle();
+    if (mitraCheck) { location.href = 'dashboard-mitra.html'; return; }
+
+    const { data: profile } = await window.supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+    isPremium = !!profile?.is_premium;
+    currentProfile = profile;
+
+    // Sidebar UI
+    if (profile) {
+        const n = profile.full_name || 'Sultan';
+        const av = profile.avatar_url || avatarFallback(n);
+        document.getElementById('side-name').textContent = n;
+        document.getElementById('side-avatar').src = av;
+        document.getElementById('side-avatar').onerror = function() { this.src = avatarFallback(n); };
+    }
+    if (isPremium) {
+        document.getElementById('session-tag').textContent = 'PRO SULTAN';
+        document.getElementById('session-tag').style.color = '#F59E0B';
+        document.getElementById('side-plan-badge').textContent = 'PRO';
+        document.getElementById('side-plan-badge').style.background = 'linear-gradient(135deg,#F59E0B,#D97706)';
+        document.getElementById('side-plan-title').textContent = 'PRO Sultan Aktif 💎';
+        document.getElementById('side-plan-sub').textContent = 'Akses penuh seumur hidup';
+        document.getElementById('premium-marker').style.display = '';
+    }
+
+    // Mobile tweaks
+    if (window.innerWidth <= 1024) document.getElementById('menu-toggle').style.display = 'flex';
+    if (window.innerWidth <= 768) document.getElementById('back-btn').style.display = 'flex';
+
+    await loadInbox();
+    document.getElementById('load-overlay').style.display = 'none';
+
+    // Auto-open if ?id in URL
+    if (receiverId) {
+        showChatView();
+        await loadChatMode();
+        if (window.innerWidth <= 768) hideMobileInbox();
+    }
+};
+
+// ═══════════════════════════════ INBOX ═══════════════════════════════
+async function loadInbox() {
+    const { data: msgs } = await window.supabase
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
+        .order('created_at', { ascending: false });
+
+    if (!msgs?.length) { renderEmptyInbox(); return; }
+
+    // Deduplicate by partner
+    const seen = new Map();
+    for (const m of msgs) {
+        const pid = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
+        if (pid && !seen.has(pid)) seen.set(pid, m);
+    }
+
+    // Unread counts
+    const { data: unread } = await window.supabase.from('messages')
+        .select('sender_id').eq('receiver_id', currentUser.id).eq('is_read', false);
+    const unreadMap = {};
+    (unread || []).forEach(m => { unreadMap[m.sender_id] = (unreadMap[m.sender_id]||0)+1; });
+
+    // Fetch semua partner data (mitra_ahli + profiles)
+    const pids = [...seen.keys()];
+
+    let mitras = [];
+    try {
+        const inList = pids.map(p => encodeURIComponent(p)).join(',');
+        const r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=user_id,id,nama_lengkap,spesialisasi,foto_profil_url&user_id=in.(${inList})`, { headers: HDRS });
+        const d = await r.json();
+        mitras = Array.isArray(d) ? d : [];
+    } catch(e) { mitras = []; }
+
+    const { data: profs } = await window.supabase.from('profiles')
+        .select('id,full_name,avatar_url').in('id', pids);
+
+    // Map by user_id
+    const mMap = {};
+    mitras.forEach(m => { mMap[m.user_id] = m; });
+    const pMap = {};
+    (profs||[]).forEach(p => { pMap[p.id] = p; });
+
+    allConvs = [...seen.entries()].map(([pid, last]) => {
+        const m = mMap[pid];
+        const p = pMap[pid];
+        const name = m?.nama_lengkap || (p?.full_name) || 'Advokat';
+        const spec = m?.spesialisasi || '';
+        const foto = imgSrc(m?.foto_profil_url || p?.avatar_url, name);
+        return {
+            pid,
+            mitraId: m?.id || null,        // id di tabel mitra_ahli
+            name, spec, foto,
+            unread: unreadMap[pid]||0,
+            isMe: last.sender_id===currentUser.id,
+            preview: last.message_text||'',
+            time: fmtTime(last.created_at)
+        };
+    });
+
+    renderConvList(allConvs);
+    document.getElementById('conv-count').textContent = `${allConvs.length} percakapan`;
+}
+
+function renderEmptyInbox() {
+    document.getElementById('conv-list').innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:12px;opacity:0.4;text-align:center">
+            <i class="fas fa-inbox" style="font-size:28px;color:var(--text-3)"></i>
+            <p style="font-size:13px;font-weight:700;font-style:italic;margin:0">Belum ada percakapan</p>
+            <a href="mitra.html" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none">Temukan Advokat →</a>
+        </div>`;
+}
+
+function renderConvList(convs) {
+    if (!convs.length) { renderEmptyInbox(); return; }
+    document.getElementById('conv-list').innerHTML = convs.map(cv => `
+        <div class="conv-item ${cv.pid===receiverId?'active':''}" onclick="openConv('${cv.pid}','${esc(cv.name)}')">
+            <div style="position:relative;flex-shrink:0">
+                <img src="${esc(cv.foto)}" class="conv-avatar"
+                     onerror="this.src='${avatarFallback(cv.name)}'"
+                     alt="${esc(cv.name)}">
+                ${cv.unread ? `<div style="position:absolute;top:-3px;right:-3px;width:9px;height:9px;background:var(--accent);border-radius:50%;border:2px solid var(--bg)"></div>` : ''}
+            </div>
+            <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+                    <span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-1)">${esc(cv.name)}</span>
+                    <span style="font-size:9.5px;color:var(--text-3);flex-shrink:0;font-weight:500">${cv.time}</span>
+                </div>
+                ${cv.spec ? `<p style="font-size:9.5px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.07em;margin:1px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(cv.spec)}</p>` : ''}
+                <p style="font-size:11.5px;color:${cv.unread?'var(--text-2)':'var(--text-3)'};font-weight:${cv.unread?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">
+                    ${cv.isMe?`<span style="color:var(--text-4)">✓ </span>`:''}${esc((cv.preview||'').slice(0,55))}
+                </p>
+            </div>
+            ${cv.unread ? `<div class="unread-count">${cv.unread>99?'99+':cv.unread}</div>` : ''}
+        </div>`).join('');
+}
+
+function filterConvs(q) {
+    const ql = q.toLowerCase();
+    renderConvList(ql ? allConvs.filter(c =>
+        c.name.toLowerCase().includes(ql) ||
+        c.spec.toLowerCase().includes(ql) ||
+        c.preview.toLowerCase().includes(ql)
+    ) : allConvs);
+}
+
+async function openConv(pid, name) {
+    receiverId = pid;
+    advName = name;
+    history.replaceState(null, '', `chat-advokat.html?id=${pid}`);
+    renderConvList(allConvs);
+    showChatView();
+    await loadChatMode();
+    if (window.innerWidth <= 768) hideMobileInbox();
+}
+
+function hideMobileInbox() { document.getElementById('inbox-panel').classList.add('hidden-mobile'); }
+function showMobileInbox() { document.getElementById('inbox-panel').classList.remove('hidden-mobile'); }
+function backToInbox() { showMobileInbox(); }
+
+function showChatView() {
+    document.getElementById('chat-empty').style.display = 'none';
+    document.getElementById('chat-view').style.display = 'flex';
+    if (!isPremium) {
+        document.getElementById('upgrade-wall').style.display = 'block';
+        document.getElementById('input-wrap').style.display = 'none';
+    } else {
+        document.getElementById('upgrade-wall').style.display = 'none';
+        document.getElementById('input-wrap').style.display = 'block';
+    }
+}
+
+// ═══════════════════════════════ LOAD CHAT ═══════════════════════════════
+async function loadChatMode() {
+    if (rtChannel) { window.supabase.removeChannel(rtChannel); rtChannel = null; }
+
+    // Reset state
+    advData = null;
+    autoMsgSent = false;
+
+    // Fetch mitra data
+    const adv = await fetchMitraData(receiverId);
+
+    if (adv) {
+        advData = adv;
+        // Gunakan user_id dari mitra (ini adalah receiverId yang benar untuk kirim pesan)
+        if (adv.user_id && adv.user_id !== receiverId) {
+            // receiverId mungkin adalah id tabel, update ke user_id
+            receiverId = adv.user_id;
+        }
+        advName = adv.nama_lengkap;
+        lawyerTableId = adv.id;
+
+        // Update UI header
+        document.getElementById('adv-name').textContent = advName;
+        document.getElementById('adv-spec').textContent = adv.spesialisasi || '';
+
+        const advImgEl = document.getElementById('adv-img');
+        advImgEl.src = imgSrc(adv.foto_profil_url, advName);
+        advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
+
+        // View profile button
+        const profileBtn = document.getElementById('view-profile-btn');
+        if (profileBtn) profileBtn.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
+
+        console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
+    } else {
+        // Fallback ke profiles (hanya jika bukan diri sendiri)
+        console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
+        if (receiverId && receiverId !== currentUser.id) {
+            const { data: prof } = await window.supabase.from('profiles')
+                .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
+            if (prof) {
+                advName = prof.full_name || 'Advokat';
+                document.getElementById('adv-name').textContent = advName;
+                const advImgEl = document.getElementById('adv-img');
+                advImgEl.src = prof.avatar_url || avatarFallback(advName);
+                advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
+            }
+        } else {
+            document.getElementById('adv-name').textContent = 'Advokat';
+            document.getElementById('adv-img').src = avatarFallback('Advokat');
+        }
+    }
+
+    // Cari atau buat conversation_id
+    const { data: ex } = await window.supabase.from('messages')
+        .select('conversation_id')
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`)
+        .not('conversation_id', 'is', null)
+        .limit(1);
+    activeConvId = ex?.[0]?.conversation_id || crypto.randomUUID();
+
+    await renderMessages();
+    subscribeRT();
+    checkAutoMsg();
+}
+
+// ═══════════════════════════════ RENDER MESSAGES ═══════════════════════════════
+async function renderMessages() {
+    if (!receiverId) return;
+
+    const { data: msgs } = await window.supabase.from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`)
+        .order('created_at', { ascending: true });
+
+    const box = document.getElementById('chat-box');
+    box.innerHTML = '';
+
+    const advAv = advData?.foto_profil_url
+        ? imgSrc(advData.foto_profil_url, advName || 'A')
+        : avatarFallback(advName || 'A');
+    const myProfileName = currentProfile?.full_name || currentUser.email || 'U';
+    const myInit = myProfileName[0].toUpperCase();
+    const myAvatar = currentProfile?.avatar_url || null;
+
+    let lastDate = '';
+
+    (msgs || []).forEach(m => {
+        const isMe = m.sender_id === currentUser.id;
+        if (m.conversation_id) activeConvId = m.conversation_id;
+
+        const dObj = new Date(m.created_at);
+        const dateStr = dObj.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        if (dateStr !== lastDate) {
+            lastDate = dateStr;
+            box.innerHTML += `<div class="date-sep"><span>${dateStr}</span></div>`;
+        }
+
+        const time = dObj.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
+
+        const avatarHtml = isMe
+            ? (myAvatar
+                ? `<img src="${myAvatar}" class="msg-avatar" onerror="this.style.display='none'" style="background:var(--accent-2)">`
+                : `<div class="msg-avatar-me">${myInit}</div>`)
+            : `<img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
+
+        box.innerHTML += `
+            <div class="msg-row ${isMe?'me':'them'}">
+                ${!isMe ? avatarHtml : ''}
+                <div class="msg-bubble">
+                    <div class="bubble ${isMe?'bubble-out':'bubble-in'}"><p>${txt}</p></div>
+                    <div class="meta ${isMe?'justify-end':'justify-start'}">
+                        <span>${time}</span>
+                        ${isMe ? (m.is_read
+                            ? '<i class="fas fa-check-double" style="font-size:9px;color:#60A5FA"></i>'
+                            : '<i class="fas fa-check" style="font-size:9px;color:var(--text-3)"></i>') : ''}
+                    </div>
+                </div>
+                ${isMe ? avatarHtml : ''}
+            </div>`;
+    });
+
+    // Typing placeholder
+    box.innerHTML += `
+        <div id="typing-row" class="typing-row" style="display:none">
+            <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
+            <div class="typing-bubble"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
+        </div>`;
+
+    box.scrollTop = box.scrollHeight;
+
+    // Mark as read
+    await window.supabase.from('messages')
+        .update({ is_read: true })
+        .eq('sender_id', receiverId)
+        .eq('receiver_id', currentUser.id)
+        .eq('is_read', false);
+
+    // Reset unread in conv list
+    const conv = allConvs.find(c => c.pid === receiverId);
+    if (conv) { conv.unread = 0; renderConvList(allConvs); }
+}
+
+// ═══════════════════════════════ SEND ═══════════════════════════════
+async function sendMsg() {
+    if (!isPremium) { toast('🔒 Upgrade PRO untuk membalas pesan', 'warn'); return; }
+    if (!receiverId) { toast('Pilih percakapan terlebih dahulu', 'warn'); return; }
+
+    const inp = document.getElementById('msg-input');
+    const text = inp.value.trim();
+    if (!text && !attachedFile) return;
+
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+    inp.value = '';
+    autoResize(inp);
+
+    try {
+        const msgText = text || `📎 ${attachedFile?.name}`;
+        await window.supabase.from('messages').insert([{
+            sender_id: currentUser.id,
+            receiver_id: receiverId,
+            lawyer_id: lawyerTableId,
+            conversation_id: activeConvId,
+            message_text: msgText,
+            is_read: false
+        }]);
+        clearAttach();
+        // Update conv preview
+        const cv = allConvs.find(c => c.pid === receiverId);
+        if (cv) { cv.preview = msgText; cv.isMe = true; cv.time = 'Baru'; renderConvList(allConvs); }
+    } catch(e) {
+        toast('Gagal kirim: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        inp.focus();
+    }
+}
+
+function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+// ═══════════════════════════════ FILE ═══════════════════════════════
+function handleFileAttach(inp) {
+    const f = inp.files[0]; if (!f) return;
+    if (f.size > 10 * 1024 * 1024) { toast('File maksimal 10MB', 'error'); return; }
+    attachedFile = f;
+    document.getElementById('fp-name').textContent = f.name;
+    document.getElementById('file-preview').style.display = 'block';
+}
+function clearAttach() {
+    attachedFile = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-preview').style.display = 'none';
+}
+
+// ═══════════════════════════════ REALTIME ═══════════════════════════════
+function subscribeRT() {
+    if (!receiverId) return;
+    rtChannel = window.supabase.channel('msgs-' + receiverId + '-' + Date.now())
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => {
+            const m = p.new;
+            const rel = (m.sender_id === currentUser.id && m.receiver_id === receiverId) ||
+                        (m.sender_id === receiverId && m.receiver_id === currentUser.id);
+            if (rel) renderMessages();
+        })
+        .on('broadcast', { event: 'typing' }, p => {
+            if (p.payload?.from === receiverId) showTyping();
+        })
+        .subscribe();
+}
+
+function showTyping() {
+    document.getElementById('adv-typing').style.display = '';
+    const tr = document.getElementById('typing-row');
+    if (tr) { tr.style.display = 'flex'; document.getElementById('chat-box').scrollTop = 999999; }
+    clearTimeout(typingHideTimer);
+    typingHideTimer = setTimeout(() => {
+        const el = document.getElementById('adv-typing');
+        if (el) el.style.display = 'none';
+        const trEl = document.getElementById('typing-row');
+        if (trEl) trEl.style.display = 'none';
+    }, 3200);
+}
+
+function notifyTyping() {
+    if (!receiverId || !rtChannel) return;
+    clearTimeout(typingDebounce);
+    typingDebounce = setTimeout(() => {
+        rtChannel.send({ type: 'broadcast', event: 'typing', payload: { from: currentUser.id } });
+    }, 350);
+}
+
+// ═══════════════════════════════ AUTO MSG ═══════════════════════════════
+async function checkAutoMsg() {
+    if (autoMsgSent) return;
+    const safeName = advData?.nama_lengkap || advName || 'Advokat';
+    const { count } = await window.supabase.from('messages')
+        .select('*', { count: 'exact', head: true })
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`);
+    if (count === 0) {
+        autoMsgSent = true;
+        setTimeout(async () => {
+            await window.supabase.from('messages').insert([{
+                sender_id: receiverId,
+                receiver_id: currentUser.id,
+                lawyer_id: lawyerTableId,
+                conversation_id: activeConvId,
+                message_text: `Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,
+                is_read: false
+            }]);
+        }, 1500);
+    }
+}
+
+// ═══════════════════════════════ CLEAR CHAT ═══════════════════════════════
+async function clearChatConfirm() {
+    if (typeof laiConfirm !== 'function') {
+        if (!confirm(`Hapus semua riwayat chat dengan ${advName}?`)) return;
+    } else {
+        const ok = await laiConfirm({
+            type: 'danger',
+            title: 'Hapus Riwayat Chat',
+            message: `Semua percakapan dengan <strong>${esc(advName)}</strong> akan dihapus permanen.`,
+            confirmText: 'Ya, Hapus Semua',
+            cancelText: 'Batal'
+        });
+        if (!ok) return;
+    }
+    await window.supabase.from('messages').delete()
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`);
+    await renderMessages();
+    toast('Riwayat chat dihapus', 'info');
+}
+
+// ═══════════════════════════════ CONTACT MODAL ═══════════════════════════════
+function openContactModal() {
+    if (!advData && !advName) { toast('Data advokat tidak tersedia', 'warn'); return; }
+
+    const av = advData?.foto_profil_url ? imgSrc(advData.foto_profil_url, advName) : avatarFallback(advName || 'A');
+    document.getElementById('m-img').src = av;
+    document.getElementById('m-img').onerror = function() { this.src = avatarFallback(advName||'A'); };
+    document.getElementById('m-name').textContent = advData?.nama_lengkap || advName || 'Advokat';
+    document.getElementById('m-spec').textContent = advData?.spesialisasi || '';
+    document.getElementById('m-nia').textContent = advData?.nomor_nia ? `✓ NIA ${advData.nomor_nia}` : '✓ NIA Terverifikasi';
+    document.getElementById('m-exp').textContent = advData?.pengalaman ? `${advData.pengalaman} Tahun Pengalaman` : 'Berpengalaman';
+
+    const kotaText = [advData?.kabupaten, advData?.provinsi].filter(Boolean).join(', ');
+    const kotaEl = document.getElementById('m-kota');
+    if (kotaText) { kotaEl.textContent = '📍 ' + kotaText; kotaEl.style.display = ''; }
+    else { kotaEl.style.display = 'none'; }
+
+    const pendEl = document.getElementById('m-pendidikan-row');
+    if (advData?.lulusan || advData?.jurusan) {
+        document.getElementById('m-pendidikan').textContent = [advData.jurusan, advData.lulusan].filter(Boolean).join(' — ');
+        pendEl.style.display = 'block';
+    } else {
+        pendEl.style.display = 'none';
+    }
+
+    // WA button
+    const waBtn = document.getElementById('m-wa-btn');
+    const copyWaBtn = document.getElementById('copy-wa-btn');
+    let waNum = (advData?.wa_number || '').replace(/\D/g, '');
+    if (waNum.startsWith('0')) waNum = '62' + waNum.slice(1);
+    if (waNum) {
+        waBtn.href = `https://wa.me/${waNum}`;
+        waBtn.style.opacity = '1'; waBtn.style.pointerEvents = '';
+        copyWaBtn.style.display = '';
+        document.getElementById('copy-wa-label').textContent = 'Salin: ' + (advData.wa_number);
+    } else {
+        waBtn.href = '#'; waBtn.style.opacity = '0.4'; waBtn.style.pointerEvents = 'none';
+        copyWaBtn.style.display = 'none';
+    }
+
+    // Email button
+    const emailBtn = document.getElementById('m-email-btn');
+    if (advData?.email_kontak) {
+        emailBtn.href = `mailto:${advData.email_kontak}`;
+        emailBtn.style.opacity = '1'; emailBtn.style.pointerEvents = '';
+    } else {
+        emailBtn.href = '#'; emailBtn.style.opacity = '0.4'; emailBtn.style.pointerEvents = 'none';
+    }
+
+    // Profile link
+    const profileLink = document.getElementById('m-profile-link');
+    if (profileLink) profileLink.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
+
+    document.getElementById('contact-modal').classList.add('open');
+}
+
+function closeContactModal() { document.getElementById('contact-modal').classList.remove('open'); }
+
+function copyWA() {
+    const wa = advData?.wa_number;
+    if (!wa) return;
+    navigator.clipboard.writeText(wa).then(() => {
+        const l = document.getElementById('copy-wa-label');
+        l.textContent = '✓ Tersalin!';
+        setTimeout(() => { l.textContent = 'Salin: ' + wa; }, 2000);
+    }).catch(() => toast('Gagal menyalin nomor', 'error'));
+}
+
+// ═══════════════════════════════ SIDEBAR MOBILE ═══════════════════════════════
+function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('show');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// ═══════════════════════════════ TOAST ═══════════════════════════════
+function toast(msg, type = 'info') {
+    const icons = { info: '#60A5FA', error: '#F87171', warn: '#FBBF24', success: '#34D399' };
+    const imap = { info: 'fa-info-circle', error: 'fa-times-circle', warn: 'fa-exclamation-circle', success: 'fa-check-circle' };
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = `<i class="fas ${imap[type]||imap.info}" style="color:${icons[type]||icons.info};margin-right:7px"></i>${esc(msg)}`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.classList.add('hide'); setTimeout(() => el.remove(), 280); }, 3500);
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeContactModal(); closeRatingModal(); } });
+
+// ═══════════════════════════════ RATING SYSTEM ═══════════════════════════════
+let selectedRating = 0;
+const RATING_LABELS = ['', 'Kurang Memuaskan', 'Cukup', 'Baik', 'Sangat Baik', 'Luar Biasa! ⭐'];
+
+function setRating(val) {
+    selectedRating = val;
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.val) <= val);
+    });
+    document.getElementById('rating-label').textContent = RATING_LABELS[val] || '';
+    const submitBtn = document.getElementById('submit-rating-btn');
+    submitBtn.style.opacity = '1';
+    submitBtn.style.pointerEvents = '';
+}
+
+async function openRatingModal() {
+    if (!receiverId) return;
+    selectedRating = 0;
+    document.getElementById('rating-adv-name').textContent = advName || 'Advokat';
+    document.getElementById('rating-label').textContent = '';
+    document.getElementById('rating-comment').value = '';
+    document.getElementById('already-rated-info').style.display = 'none';
+    document.querySelectorAll('.star-btn').forEach(btn => btn.classList.remove('active'));
+    const submitBtn = document.getElementById('submit-rating-btn');
+    submitBtn.style.opacity = '0.4';
+    submitBtn.style.pointerEvents = 'none';
+
+    // Cek apakah sudah pernah rating
+    try {
+        const { data: existing } = await window.supabase
+            .from('ratings')
+            .select('score, comment')
+            .eq('reviewer_id', currentUser.id)
+            .eq('advokat_id', receiverId)
+            .maybeSingle();
+        if (existing) {
+            setRating(existing.score);
+            document.getElementById('rating-comment').value = existing.comment || '';
+            document.getElementById('already-rated-info').style.display = 'block';
+        }
+    } catch(e) { /* tabel mungkin belum ada, skip */ }
+
+    document.getElementById('rating-modal').style.display = 'flex';
+}
+
+function closeRatingModal() {
+    document.getElementById('rating-modal').style.display = 'none';
+}
+
+async function submitRating() {
+    if (!selectedRating || !receiverId) return;
+    const btn = document.getElementById('submit-rating-btn');
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
+    btn.style.pointerEvents = 'none';
+
+    try {
+        const comment = document.getElementById('rating-comment').value.trim();
+        // Upsert — update jika sudah ada, insert jika baru
+        const { error } = await window.supabase.from('ratings').upsert({
+            reviewer_id:  currentUser.id,
+            advokat_id:   receiverId,
+            lawyer_id:    lawyerTableId,
+            score:        selectedRating,
+            comment:      comment || null,
+            updated_at:   new Date().toISOString()
+        }, { onConflict: 'reviewer_id,advokat_id' });
+
+        if (error) throw error;
+
+        closeRatingModal();
+        toast('⭐ Rating berhasil dikirim!', 'success');
+    } catch(e) {
+        // Jika tabel belum ada, tampilkan pesan khusus
+        if (e.message?.includes('does not exist') || e.message?.includes('relation')) {
+            toast('⚠️ Tabel ratings belum dibuat di Supabase', 'warn');
+        } else {
+            toast('Gagal kirim rating: ' + e.message, 'error');
+        }
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Rating';
+        btn.style.pointerEvents = '';
+    }
+}
+</script>
+
+<!-- shared-modal.js for laiConfirm -->
+<script src="shared-modal.js"></script>
+</body>
+</html>

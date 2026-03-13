@@ -1,0 +1,86 @@
+:root {
+    --navy: #0F172A;
+    --accent: #2563EB;
+    --bg: #F8FAFC;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+body { background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+
+/* Sidebar Halodoc Style */
+aside {
+    width: 280px;
+    background: linear-gradient(180deg, var(--navy) 0%, #1E293B 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 24px;
+    flex-shrink: 0;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.05);
+}
+
+/* Judul Lawyers Putih Terang */
+aside h1 {
+    font-size: 28px;
+    font-weight: 800;
+    font-style: italic;
+    color: #FFFFFF !important;
+    margin-bottom: 50px;
+    letter-spacing: -1px;
+}
+aside h1 span { color: var(--accent); }
+
+aside a {
+    color: #94A3B8;
+    text-decoration: none;
+    padding: 16px 20px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+aside a.active, aside a:hover {
+    background: var(--accent);
+    color: white;
+}
+
+/* Kategori Horizontal Scroll */
+.category-container {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    scrollbar-width: none;
+}
+.category-container::-webkit-scrollbar { display: none; }
+
+.case-card-small {
+    flex: 0 0 110px;
+    background: white;
+    border: 1px solid #F1F5F9;
+    border-radius: 24px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.case-card-small:hover { border-color: var(--accent); transform: translateY(-5px); }
+
+/* Mitra Photo Gede */
+.mitra-photo-big {
+    width: 130px;
+    height: 130px;
+    border-radius: 40px;
+    overflow: hidden;
+    border: 5px solid white;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}

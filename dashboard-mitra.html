@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advokat Dashboard — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="shared-modal.js"></script>
+    <link rel="stylesheet" href="shared.css">
+
+    <style>
+        /* ══════════════════════════════════════════════
+           ADVOKAT DASHBOARD — Layout & Page-specific
+        ══════════════════════════════════════════════ */
+
+        html, body { height: 100%; overflow: hidden; }
+        body { display: flex; }
+
+        /* ── Left sidebar (reuse shared.css sidebar styles) ── */
+        /* nothing extra needed — shared.css handles it */
+
+        /* ── Main wrapper ── */
+        #adv-app {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        /* ── Top bar ── */
+        #topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-sidebar);
+            flex-shrink: 0;
+            gap: 16px;
+        }
+        .topbar-tabs {
+            display: flex;
+            gap: 4px;
+        }
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 14px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-3);
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .tab-btn:hover { background: var(--bg-input); color: var(--text-2); }
+        .tab-btn.active { background: rgba(59,130,246,0.12); color: var(--accent); }
+        .tab-badge {
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            background: #EF4444;
+            color: #fff;
+            font-size: 8px;
+            font-weight: 900;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .tab-badge.show { display: flex; }
+
+        /* ── Content panels ── */
+        .panel { display: none; flex: 1; overflow: hidden; }
+        .panel.active { display: flex; }
+
+        /* ═══════════════════════ INBOX PANEL ═══════════════════════ */
+        #panel-inbox {
+            flex-direction: row;
+        }
+
+        /* Conversation list */
+        #conv-sidebar {
+            width: 300px;
+            flex-shrink: 0;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-sidebar);
+            overflow: hidden;
+        }
+        body.light #conv-sidebar { background: #FFFFFF; }
+
+        .conv-header {
+            padding: 16px 18px 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .conv-search {
+            position: relative;
+            margin-top: 10px;
+        }
+        .conv-search input {
+            width: 100%;
+            padding: 8px 12px 8px 32px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-1);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .conv-search input:focus { border-color: var(--accent); }
+        .conv-search input::placeholder { color: var(--text-3); }
+        .conv-search i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-3);
+            font-size: 10px;
+        }
+        .conv-filter {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .conv-filter-btn {
+            flex: 1;
+            padding: 5px 8px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-3);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .conv-filter-btn.active { background: rgba(59,130,246,0.12); color: var(--accent); border-color: rgba(59,130,246,0.25); }
+
+        .conv-list { flex: 1; overflow-y: auto; }
+        .conv-item {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 12px 18px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.12s;
+            position: relative;
+        }
+        .conv-item:hover { background: var(--bg-input); }
+        .conv-item.active { background: rgba(59,130,246,0.07); }
+        .conv-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--accent);
+            border-radius: 0 3px 3px 0;
+        }
+        .conv-avatar {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1.5px solid var(--border);
+        }
+        .conv-unread-dot {
+            position: absolute;
+            top: 13px; right: 18px;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 2px solid var(--bg-sidebar);
+        }
+        body.light .conv-unread-dot { border-color: #fff; }
+        .unread-badge {
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 9px;
+            font-size: 9px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Chat area */
+        #chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-base);
+        }
+
+        /* Chat header */
+        #chat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-sidebar);
+            flex-shrink: 0;
+        }
+        body.light #chat-top { background: #FFFFFF; }
+
+        .chat-adv-avatar {
+            width: 38px; height: 38px;
+            border-radius: 11px;
+            object-fit: cover;
+            border: 1.5px solid var(--border);
+        }
+        .online-ring {
+            position: relative;
+        }
+        .online-ring::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; right: -2px;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #10B981;
+            border: 2px solid var(--bg-sidebar);
+            animation: aiPulse 2.5s infinite;
+        }
+        body.light .online-ring::after { border-color: #fff; }
+
+        /* Chat messages */
+        #chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .date-sep {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 14px 0 10px;
+        }
+        .date-sep::before, .date-sep::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .date-sep span {
+            font-size: 9.5px;
+            font-weight: 600;
+            color: var(--text-3);
+            letter-spacing: 0.06em;
+        }
+
+        .msg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        .msg-row.me { justify-content: flex-end; }
+
+        .msg-av {
+            width: 26px; height: 26px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+        }
+        .msg-av-init {
+            width: 26px; height: 26px;
+            border-radius: 8px;
+            background: var(--accent-dark);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .msg-bubble-wrap { max-width: 68%; }
+        .msg-bubble {
+            padding: 10px 14px;
+            font-size: 13.5px;
+            line-height: 1.55;
+            word-break: break-word;
+            border-radius: 14px;
+        }
+        .msg-bubble p { margin: 0; }
+        .bubble-in {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px 14px 14px 3px;
+            color: var(--text-1);
+        }
+        body.light .bubble-in { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
+        .bubble-out {
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            border-radius: 14px 14px 3px 14px;
+            color: #fff;
+        }
+        .msg-meta {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 3px;
+            padding: 0 4px;
+            font-size: 9.5px;
+            color: var(--text-3);
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .msg-row:hover .msg-meta { opacity: 1; }
+
+        /* Typing indicator */
+        #typing-indicator-row {
+            display: none;
+            align-items: flex-end;
+            gap: 8px;
+            padding: 0 20px 12px;
+        }
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px 14px 14px 3px;
+            padding: 10px 14px;
+        }
+        body.light .typing-dots { background: #FFFFFF; border-color: #E2E8F0; }
+        .t-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--text-3);
+            animation: tdot 1.4s ease-in-out infinite;
+        }
+        .t-dot:nth-child(2) { animation-delay: 0.15s; }
+        .t-dot:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes tdot {
+            0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        /* Input area */
+        #chat-input-wrap {
+            padding: 14px 18px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-sidebar);
+            flex-shrink: 0;
+        }
+        body.light #chat-input-wrap { background: #FFFFFF; }
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        #msg-textarea {
+            flex: 1;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-1);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            outline: none;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+            overflow-y: auto;
+            line-height: 1.5;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #msg-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        #msg-textarea::placeholder { color: var(--text-3); }
+        body.light #msg-textarea { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
+        .send-btn {
+            width: 40px; height: 40px;
+            border-radius: 11px;
+            background: var(--accent-dark);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .send-btn:hover { background: #1D4ED8; transform: scale(1.05); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Empty state */
+        #chat-empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            opacity: 0.35;
+            padding: 40px;
+            text-align: center;
+        }
+
+        /* ═══════════════════════ PROFIL PANEL ═══════════════════════ */
+        #panel-profil {
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .profil-inner {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 32px 24px 60px;
+            width: 100%;
+        }
+
+        .profil-banner {
+            width: 100%;
+            height: 160px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #0B1628, #1E3A6E, #2563EB);
+            position: relative;
+            margin-bottom: 72px;
+            overflow: visible;
+        }
+        .profil-banner::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 70% 50%, rgba(99,102,241,0.3), transparent 60%);
+        }
+        .profil-avatar-wrap {
+            position: absolute;
+            bottom: -46px;
+            left: 28px;
+        }
+        .profil-avatar {
+            width: 90px; height: 90px;
+            border-radius: 22px;
+            object-fit: cover;
+            border: 3px solid var(--bg-base);
+            box-shadow: 0 10px 32px rgba(0,0,0,0.5);
+            display: block;
+        }
+        body.light .profil-avatar { border-color: #EEF2F7; }
+        .profil-avatar-upload {
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 28px; height: 28px;
+            background: var(--accent-dark);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            color: #fff;
+            border: 2px solid var(--bg-base);
+            transition: background 0.2s;
+        }
+        .profil-avatar-upload:hover { background: #1D4ED8; }
+        body.light .profil-avatar-upload { border-color: #EEF2F7; }
+
+        .profil-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .badge-verified {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(16,185,129,0.12);
+            color: #34D399;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .badge-spec {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(59,130,246,0.1);
+            color: #60A5FA;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        .form-grid.full { grid-template-columns: 1fr; }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-3);
+        }
+        .form-select {
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+            outline: none;
+            transition: border-color 0.2s;
+            appearance: none;
+            cursor: pointer;
+        }
+        .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        body.light .form-select { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
+        .form-textarea {
+            width: 100%;
+            padding: 13px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-1);
+            outline: none;
+            resize: vertical;
+            min-height: 90px;
+            line-height: 1.6;
+            transition: border-color 0.2s;
+        }
+        .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        body.light .form-textarea { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
+        .form-textarea::placeholder, .form-select::placeholder { color: var(--text-3); }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 28px 0;
+        }
+        .section-heading {
+            font-size: 13px;
+            font-weight: 800;
+            font-style: italic;
+            color: var(--text-1);
+            margin: 0 0 18px;
+            letter-spacing: -0.2px;
+        }
+        .section-heading span { color: var(--accent); }
+
+        /* Availability toggle */
+        .avail-toggle-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+        .avail-toggle {
+            width: 44px; height: 24px;
+            border-radius: 12px;
+            background: rgba(16,185,129,0.2);
+            border: 1px solid rgba(16,185,129,0.3);
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s;
+            flex-shrink: 0;
+        }
+        .avail-toggle.off {
+            background: var(--bg-input);
+            border-color: var(--border);
+        }
+        .avail-toggle-knob {
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: #10B981;
+            transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), background 0.3s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        .avail-toggle.off .avail-toggle-knob {
+            transform: translateX(20px);
+            background: var(--text-3);
+        }
+
+        /* Save button sticky */
+        .save-bar {
+            position: sticky;
+            bottom: 0;
+            padding: 16px 0;
+            background: var(--bg-base);
+            margin-top: 28px;
+            border-top: 1px solid var(--border);
+        }
+        body.light .save-bar { background: #EEF2F7; }
+
+        /* ─ Loading overlay ─ */
+        #load-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--bg-base);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        .spin {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─ Notif bell animation ─ */
+        @keyframes bellShake {
+            0%,100% { transform: rotate(0); }
+            15% { transform: rotate(12deg); }
+            30% { transform: rotate(-10deg); }
+            45% { transform: rotate(8deg); }
+            60% { transform: rotate(-6deg); }
+            75% { transform: rotate(4deg); }
+        }
+        .bell-shake { animation: bellShake 0.7s cubic-bezier(0.16,1,0.3,1); }
+
+        /* ─ Ping dot for realtime ─ */
+        .rt-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            animation: aiPulse 2.5s infinite;
+            flex-shrink: 0;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            #conv-sidebar { width: 100%; position: absolute; height: 100%; z-index: 10; }
+            #conv-sidebar.mobile-hidden { display: none; }
+            .topbar-tabs .tab-btn span.label { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Load overlay -->
+<div id="load-overlay">
+    <div class="spin"></div>
+    <span style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3)">Memuat Dashboard...</span>
+</div>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside id="sidebar" class="hide-scrollbar">
+    <div class="sidebar-logo">
+        <h1>Lawyers<span>AI</span></h1>
+        <div class="sidebar-online">
+            <span class="sidebar-online-dot"></span>
+            <span class="sidebar-online-label">Advokat Online</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="index.html" class="nav-link">
+            <span class="nav-icon"><i class="fas fa-house"></i></span>Mode Klien
+        </a>
+        <a href="#" class="nav-link active" onclick="return false;">
+            <span class="nav-icon"><i class="fas fa-scale-balanced"></i></span>Advokat Panel
+        </a>
+    </nav>
+
+    <!-- Mitra Profile Card -->
+    <div style="margin: 8px 12px 8px; padding: 14px 14px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="position:relative;flex-shrink:0;">
+                <img id="side-avatar" src="https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA&bold=true"
+                     style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border);" alt="Foto">
+                <span class="rt-dot" style="position:absolute;bottom:-2px;right:-2px;border:2px solid var(--bg-sidebar);"></span>
+            </div>
+            <div style="overflow:hidden;flex:1;">
+                <p id="side-name" style="font-size:12px;font-weight:800;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;">Memuat...</p>
+                <p id="side-spec" style="font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;margin:2px 0 0;">Advokat</p>
+            </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+            <button onclick="handleLogout()" class="btn-ghost" style="flex:1;padding:9px 12px;font-size:10px;justify-content:center;">
+                <i class="fas fa-right-from-bracket"></i> Logout
+            </button>
+            <button onclick="window.toggleTheme?.()" class="theme-toggle" style="flex-shrink:0;align-self:center;">
+                <div class="knob">🌙</div>
+            </button>
+        </div>
+    </div>
+</aside>
+
+<!-- Overlay (mobile) -->
+<div id="overlay" onclick="closeSidebar()"></div>
+<!-- Hamburger (mobile) -->
+<button id="menuBtn" onclick="toggleSidebar()"><i class="fas fa-bars" style="font-size:14px;"></i></button>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="adv-app">
+
+    <!-- Top bar with tabs -->
+    <div id="topbar">
+        <div class="topbar-tabs">
+            <button class="tab-btn active" onclick="switchTab('inbox', this)" id="tab-inbox">
+                <i class="fas fa-inbox"></i>
+                <span class="label">Inbox</span>
+                <span class="tab-badge" id="inbox-badge">0</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('profil', this)" id="tab-profil">
+                <i class="fas fa-id-card"></i>
+                <span class="label">Profil</span>
+            </button>
+        </div>
+        <!-- Realtime status -->
+        <div style="display:flex;align-items:center;gap:7px;">
+            <span class="rt-dot"></span>
+            <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);" id="rt-status">Realtime</span>
+            <div style="width:1px;height:16px;background:var(--border);margin:0 4px;"></div>
+            <button id="notif-bell" style="position:relative;width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-bell"></i>
+                <span id="bell-badge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#EF4444;border-radius:50%;font-size:7px;font-weight:900;color:#fff;align-items:center;justify-content:center;border:2px solid var(--bg-sidebar);">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ══ PANEL: INBOX ══ -->
+    <div class="panel active" id="panel-inbox">
+
+        <!-- Conversation Sidebar -->
+        <div id="conv-sidebar">
+            <div class="conv-header">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <div>
+                        <p style="font-size:15px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Konsultasi</p>
+                        <p id="conv-count" style="font-size:10px;color:var(--text-3);margin-top:2px;font-weight:600;">0 percakapan</p>
+                    </div>
+                    <button onclick="loadConvList()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;" title="Refresh">
+                        <i class="fas fa-rotate-right" id="refresh-icon"></i>
+                    </button>
+                </div>
+                <div class="conv-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Cari klien atau pesan..." oninput="filterConvs(this.value)" id="conv-search-input">
+                </div>
+                <div class="conv-filter">
+                    <button class="conv-filter-btn active" onclick="setFilter('all',this)" id="filter-all">Semua</button>
+                    <button class="conv-filter-btn" onclick="setFilter('unread',this)" id="filter-unread">Belum Dibaca</button>
+                </div>
+            </div>
+
+            <div class="conv-list hide-scrollbar" id="conv-list">
+                <div style="display:flex;align-items:center;justify-content:center;padding:50px 20px;opacity:0.5;">
+                    <div class="spin" style="width:24px;height:24px;border-width:2px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chat-area">
+            <!-- Empty state -->
+            <div id="chat-empty-state">
+                <div style="width:56px;height:56px;border-radius:16px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text-3);">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div>
+                    <p style="font-size:14px;font-weight:800;font-style:italic;color:var(--text-2);margin:0 0 6px;">Pilih Percakapan</p>
+                    <p style="font-size:11px;color:var(--text-3);font-weight:500;margin:0;">Klik nama klien di sebelah kiri untuk memulai membalas konsultasi.</p>
+                </div>
+            </div>
+
+            <!-- Chat view (hidden until conv selected) -->
+            <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+
+                <!-- Chat header -->
+                <div id="chat-top">
+                    <div style="display:flex;align-items:center;gap:11px;">
+                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="online-ring" style="flex-shrink:0;">
+                            <img id="active-client-av" src="" class="chat-adv-avatar" alt="Klien">
+                        </div>
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span id="active-client-name" style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);letter-spacing:-0.2px;">Klien</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
+                                <span style="font-size:10px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:0.08em;">● Online & Aktif</span>
+                                <span id="typing-label" style="display:none;font-size:10px;font-weight:600;color:var(--accent);">• mengetik...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="clearChatConfirm()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;" title="Hapus riwayat" onmouseover="this.style.color='#F87171'" onmouseout="this.style.color='var(--text-3)'">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+
+                <!-- Messages -->
+                <div id="chat-box" class="hide-scrollbar"></div>
+
+                <!-- Typing indicator -->
+                <div id="typing-indicator-row">
+                    <img id="typing-av" src="" class="msg-av" alt="">
+                    <div class="typing-dots">
+                        <div class="t-dot"></div>
+                        <div class="t-dot"></div>
+                        <div class="t-dot"></div>
+                    </div>
+                </div>
+
+                <!-- Input -->
+                <div id="chat-input-wrap">
+                    <div class="input-row">
+                        <textarea id="msg-textarea" rows="1"
+                            placeholder="Ketik balasan hukum Anda..."
+                            oninput="autoResize(this); notifyTyping();"
+                            onkeydown="handleMsgKey(event)"></textarea>
+                        <button id="send-btn" class="send-btn" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ PANEL: PROFIL ══ -->
+    <div class="panel" id="panel-profil">
+        <div class="profil-inner">
+
+            <!-- Banner + Avatar -->
+            <div class="profil-banner fade-up">
+                <div class="profil-avatar-wrap">
+                    <img id="profil-avatar-img"
+                         src="https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA&bold=true"
+                         class="profil-avatar" alt="Foto Profil">
+                    <label class="profil-avatar-upload" title="Ganti foto">
+                        <i class="fas fa-camera"></i>
+                        <input type="file" id="avatar-file-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Name + badges -->
+            <div class="fade-up fade-up-1" style="margin-bottom:24px;">
+                <h2 id="profil-nama-display" style="font-size:22px;font-weight:900;font-style:italic;color:var(--text-1);margin:0 0 10px;letter-spacing:-0.4px;">Memuat...</h2>
+                <div class="profil-badge-row">
+                    <span class="badge-verified"><i class="fas fa-circle-check"></i> Terverifikasi</span>
+                    <span class="badge-spec" id="profil-spec-badge">Hukum Umum</span>
+                </div>
+            </div>
+
+            <!-- ── Section: Identitas ── -->
+            <div class="fade-up fade-up-2">
+                <p class="section-heading">Data <span>Identitas</span></p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Nama Lengkap</label>
+                        <input type="text" class="field" id="f-nama" placeholder="Nama lengkap sesuai KTP">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nomor NIA</label>
+                        <input type="text" class="field" id="f-nia" placeholder="Nomor Induk Advokat">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Spesialisasi</label>
+                        <select class="form-select" id="f-spesialisasi">
+                            <option value="">Pilih Spesialisasi</option>
+                            <option value="Pidana">Pidana</option>
+                            <option value="Hukum Pidana">Hukum Pidana</option>
+                            <option value="Perdata">Perdata</option>
+                            <option value="Hukum Perdata">Hukum Perdata</option>
+                            <option value="Bisnis">Bisnis</option>
+                            <option value="Hukum Bisnis">Hukum Bisnis</option>
+                            <option value="Keluarga">Keluarga</option>
+                            <option value="Hukum Keluarga">Hukum Keluarga</option>
+                            <option value="Properti">Properti</option>
+                            <option value="Hukum Properti">Hukum Properti</option>
+                            <option value="Ketenagakerjaan">Ketenagakerjaan</option>
+                            <option value="Pajak">Hukum Pajak</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pengalaman (Tahun)</label>
+                        <input type="number" class="field" id="f-pengalaman" placeholder="Contoh: 10" min="0" max="60">
+                    </div>
+
+                </div>
+            </div>
+
+            <hr class="section-divider fade-up fade-up-3">
+
+            <!-- ── Section: Pendidikan & Lokasi ── -->
+            <div class="fade-up fade-up-3">
+                <p class="section-heading">Pendidikan & <span>Lokasi</span></p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Universitas / Institusi</label>
+                        <input type="text" class="field" id="f-lulusan" placeholder="Nama universitas">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jurusan / Program Studi</label>
+                        <input type="text" class="field" id="f-jurusan" placeholder="Ilmu Hukum">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Kota / Kabupaten</label>
+                        <input type="text" class="field" id="f-kabupaten" placeholder="Kota Bandung">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Provinsi</label>
+                        <input type="text" class="field" id="f-provinsi" placeholder="Jawa Barat">
+                    </div>
+                </div>
+            </div>
+
+            <hr class="section-divider fade-up fade-up-4">
+
+            <!-- ── Section: Bio ── -->
+            <div class="fade-up fade-up-4">
+                <p class="section-heading">Bio <span>Singkat</span></p>
+                <div class="form-group">
+                    <label class="form-label">Deskripsi untuk klien (maks. 500 karakter)</label>
+                    <textarea class="form-textarea" id="f-bio" maxlength="500"
+                        placeholder="Ceritakan keahlian, pengalaman, dan pendekatan Anda dalam menangani kasus hukum..."
+                        oninput="updateBioCount(this)"></textarea>
+                    <p id="bio-count" style="font-size:9px;font-weight:600;color:var(--text-3);text-align:right;margin:0;">0/500</p>
+                </div>
+            </div>
+
+            <hr class="section-divider fade-up fade-up-5">
+
+            <!-- ── Section: Ketersediaan ── -->
+            <div class="fade-up fade-up-5">
+                <p class="section-heading">Status <span>Ketersediaan</span></p>
+                <div class="avail-toggle-wrap">
+                    <div>
+                        <p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0 0 3px;" id="avail-label">Menerima Klien Baru</p>
+                        <p style="font-size:11px;font-weight:500;color:var(--text-3);margin:0;" id="avail-sub">Profil Anda terlihat di direktori mitra</p>
+                    </div>
+                    <div class="avail-toggle" id="avail-toggle" onclick="showLALToast('warning','Segera Hadir','Fitur ketersediaan sedang dikembangkan.')" title="Segera tersedia">
+                        <div class="avail-toggle-knob"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Save Bar ── -->
+            <div class="save-bar fade-up">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <button class="btn-primary" onclick="saveProfile()" id="save-btn" style="flex:1;justify-content:center;">
+                        <i class="fas fa-floppy-disk"></i> Simpan Perubahan
+                    </button>
+                    <button class="btn-ghost" onclick="loadProfile()" style="padding:12px 20px;">
+                        <i class="fas fa-rotate-left"></i> Reset
+                    </button>
+                </div>
+                <p id="save-hint" style="font-size:10px;font-weight:500;color:var(--text-3);margin:10px 0 0;text-align:center;"></p>
+            </div>
+
+        </div>
+    </div>
+
+</div><!-- #adv-app -->
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let currentMitra = null;        // row mitra_ahli
+let allConvs = [];              // cache konversasi
+let selectedConvId = null;
+let selectedClientId = null;
+let selectedClientName = '';
+let selectedClientAv = '';
+let filterMode = 'all';
+let rtChannel = null;
+let typingTimer = null;
+let typingDebounce = null;
+let isAvailable = true;
+let totalUnread = 0;
+
+const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
+const SUPA_HDRS = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' };
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init() {
+    const { data: { session } } = await window.supabase.auth.getSession();
+    if (!session) { location.href = 'login.html'; return; }
+
+    // Ambil data mitra
+    const { data: mitra, error } = await window.supabase
+        .from('mitra_ahli').select('*').eq('user_id', session.user.id).single();
+
+    if (error || !mitra) {
+        await laiAlert?.({ type:'warning', title:'Akses Ditolak', message:'Akun Anda bukan mitra advokat terverifikasi.' });
+        location.href = 'index.html'; return;
+    }
+    if (mitra.status_verifikasi !== 'verified') {
+        await laiAlert?.({ type:'warning', title:'Belum Terverifikasi', message:'Akun mitra Anda masih dalam proses verifikasi admin.' });
+        location.href = 'index.html'; return;
+    }
+
+    currentMitra = mitra;
+    isAvailable = true; // kolom is_available belum ada di schema
+    updateSidebarUI();
+    updateAvailUI();
+
+    await loadConvList();
+    subscribeRealtime();
+    document.getElementById('load-overlay').style.display = 'none';
+}
+
+function updateSidebarUI() {
+    const av = currentMitra.foto_profil_url ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(currentMitra.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
+    document.getElementById('side-avatar').src = av;
+    document.getElementById('side-name').textContent = currentMitra.nama_lengkap || 'Advokat';
+    document.getElementById('side-spec').textContent = currentMitra.spesialisasi || 'Advokat';
+}
+
+// ══════════════════════════════════════════════
+// TAB SWITCH
+// ══════════════════════════════════════════════
+function switchTab(tab, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    if (tab === 'profil') loadProfile();
+}
+
+// ══════════════════════════════════════════════
+// INBOX — LOAD CONVERSATIONS
+// ══════════════════════════════════════════════
+async function loadConvList() {
+    const icon = document.getElementById('refresh-icon');
+    icon.style.animation = 'spin 0.8s linear infinite';
+
+    const { data: messages, error } = await window.supabase
+        .from('messages').select('*')
+        .eq('lawyer_id', currentMitra.id)
+        .order('created_at', { ascending: false });
+
+    icon.style.animation = '';
+
+    if (error || !messages?.length) {
+        renderEmptyConvList(error ? 'Gagal memuat. Coba lagi.' : null);
+        document.getElementById('conv-count').textContent = '0 percakapan';
+        return;
+    }
+
+    // Dedupe by conversation_id (keep latest)
+    const convMap = new Map();
+    for (const m of messages) {
+        if (!convMap.has(m.conversation_id)) convMap.set(m.conversation_id, m);
+    }
+    const uniqueConvs = [...convMap.values()];
+
+    // Collect unique client IDs
+    const clientIds = [...new Set(uniqueConvs.map(m => {
+        return m.sender_id === currentMitra.user_id ? m.receiver_id : m.sender_id;
+    }).filter(id => id && id !== currentMitra.user_id))];
+
+    // Batch-fetch profiles
+    const { data: profiles } = await window.supabase
+        .from('profiles').select('id, full_name, avatar_url').in('id', clientIds);
+    const profMap = {};
+    (profiles || []).forEach(p => { profMap[p.id] = p; });
+
+    // Unread counts per conv
+    const { data: unreadRows } = await window.supabase
+        .from('messages').select('conversation_id')
+        .eq('lawyer_id', currentMitra.id)
+        .eq('receiver_id', currentMitra.user_id)
+        .eq('is_read', false);
+    const unreadMap = {};
+    (unreadRows || []).forEach(r => { unreadMap[r.conversation_id] = (unreadMap[r.conversation_id] || 0) + 1; });
+
+    allConvs = uniqueConvs.map(msg => {
+        const isMe = msg.sender_id === currentMitra.user_id;
+        const cid = isMe ? msg.receiver_id : msg.sender_id;
+        const prof = profMap[cid];
+        const name = prof?.full_name || 'Klien';
+        const av = prof?.avatar_url ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=EFF6FF&color=2563EB&bold=true`;
+        return {
+            convId: msg.conversation_id,
+            clientId: cid,
+            clientName: name,
+            clientAv: av,
+            lastMsg: msg.message_text || '',
+            lastTime: msg.created_at,
+            isMe,
+            unread: unreadMap[msg.conversation_id] || 0
+        };
+    });
+
+    totalUnread = allConvs.reduce((s, c) => s + c.unread, 0);
+    updateUnreadBadges();
+    document.getElementById('conv-count').textContent = `${allConvs.length} percakapan`;
+    renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
+}
+
+function renderEmptyConvList(errMsg) {
+    document.getElementById('conv-list').innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 24px;gap:12px;opacity:0.4;text-align:center;">
+            <i class="fas fa-${errMsg ? 'wifi-slash' : 'inbox'}" style="font-size:28px;color:var(--text-3);"></i>
+            <p style="font-size:12px;font-weight:700;color:var(--text-2);margin:0;">${errMsg || 'Belum ada konsultasi masuk'}</p>
+            ${errMsg ? `<button onclick="loadConvList()" class="btn-ghost" style="padding:8px 16px;font-size:10px;">Coba Lagi</button>` : ''}
+        </div>`;
+}
+
+function renderConvList(convs) {
+    if (!convs.length) { renderEmptyConvList(); return; }
+    const html = convs.map(cv => `
+        <div class="conv-item ${cv.convId === selectedConvId ? 'active' : ''}"
+             onclick="openConv('${cv.convId}','${esc(cv.clientId)}','${esc(cv.clientName)}','${esc(cv.clientAv)}')">
+            <div style="position:relative;flex-shrink:0;">
+                <img src="${cv.clientAv}" class="conv-avatar"
+                     onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(cv.clientName)}&background=EFF6FF&color=2563EB&bold=true'"
+                     alt="${esc(cv.clientName)}">
+                ${cv.unread > 0 ? `<span class="conv-unread-dot"></span>` : ''}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
+                    <span style="font-size:13px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cv.clientName)}</span>
+                    <span style="font-size:9.5px;color:var(--text-3);flex-shrink:0;font-weight:500;">${fmtTime(cv.lastTime)}</span>
+                </div>
+                <p style="font-size:11.5px;color:${cv.unread > 0 ? 'var(--text-2)' : 'var(--text-3)'};font-weight:${cv.unread > 0 ? 600 : 400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:3px 0 0;">
+                    ${cv.isMe ? '<span style="color:var(--accent);font-weight:700;">Anda: </span>' : ''}${esc(cv.lastMsg.slice(0, 55))}
+                </p>
+            </div>
+            ${cv.unread > 0 ? `<span class="unread-badge">${cv.unread > 9 ? '9+' : cv.unread}</span>` : ''}
+        </div>`).join('');
+    document.getElementById('conv-list').innerHTML = html;
+}
+
+function filterConvs(q) {
+    const ql = q.toLowerCase();
+    const base = filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs;
+    renderConvList(ql ? base.filter(c => c.clientName.toLowerCase().includes(ql) || c.lastMsg.toLowerCase().includes(ql)) : base);
+}
+
+function setFilter(mode, btn) {
+    filterMode = mode;
+    document.querySelectorAll('.conv-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const base = mode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs;
+    renderConvList(base);
+}
+
+function updateUnreadBadges() {
+    const badge = document.getElementById('inbox-badge');
+    const bellBadge = document.getElementById('bell-badge');
+    if (totalUnread > 0) {
+        badge.textContent = totalUnread > 9 ? '9+' : totalUnread;
+        badge.classList.add('show');
+        bellBadge.textContent = totalUnread > 9 ? '9+' : totalUnread;
+        bellBadge.style.display = 'flex';
+    } else {
+        badge.classList.remove('show');
+        bellBadge.style.display = 'none';
+    }
+}
+
+// ══════════════════════════════════════════════
+// OPEN CONVERSATION
+// ══════════════════════════════════════════════
+async function openConv(convId, clientId, clientName, clientAv) {
+    selectedConvId = convId;
+    selectedClientId = clientId;
+    selectedClientName = clientName;
+    selectedClientAv = clientAv;
+
+    // Update header
+    document.getElementById('active-client-name').textContent = clientName;
+    const avEl = document.getElementById('active-client-av');
+    avEl.src = clientAv;
+    avEl.onerror = () => { avEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=EFF6FF&color=2563EB&bold=true`; };
+    const typingAvEl = document.getElementById('typing-av');
+    typingAvEl.src = clientAv;
+
+    // Show chat view
+    document.getElementById('chat-empty-state').style.display = 'none';
+    const cv = document.getElementById('chat-view');
+    cv.style.display = 'flex';
+
+    // Mobile: hide conv list
+    if (window.innerWidth <= 768) {
+        document.getElementById('conv-sidebar').classList.add('mobile-hidden');
+        document.getElementById('back-btn').style.display = 'flex';
+    }
+
+    renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
+    await loadMessages();
+
+    // Mark as read
+    await window.supabase.from('messages')
+        .update({ is_read: true })
+        .eq('conversation_id', selectedConvId)
+        .eq('receiver_id', currentMitra.user_id);
+
+    // Reset unread in cache
+    const conv = allConvs.find(c => c.convId === convId);
+    if (conv) {
+        totalUnread = Math.max(0, totalUnread - conv.unread);
+        conv.unread = 0;
+        updateUnreadBadges();
+        renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
+    }
+}
+
+function backToConvList() {
+    document.getElementById('conv-sidebar').classList.remove('mobile-hidden');
+    document.getElementById('back-btn').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════
+// LOAD MESSAGES
+// ══════════════════════════════════════════════
+async function loadMessages() {
+    if (!selectedConvId) return;
+    const { data: msgs } = await window.supabase
+        .from('messages').select('*')
+        .eq('conversation_id', selectedConvId)
+        .order('created_at', { ascending: true });
+
+    const box = document.getElementById('chat-box');
+    box.innerHTML = '';
+
+    if (!msgs?.length) {
+        box.innerHTML = `<div style="margin:auto;text-align:center;opacity:0.3;padding:40px;">
+            <i class="fas fa-comment-dots" style="font-size:28px;color:var(--text-3);display:block;margin-bottom:12px;"></i>
+            <p style="font-size:12px;font-weight:600;color:var(--text-2);">Belum ada pesan dalam percakapan ini</p></div>`;
+        return;
+    }
+
+    // Avatar advokat (saya)
+    const myAv = currentMitra.foto_profil_url ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(currentMitra.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
+    const myInit = (currentMitra.nama_lengkap || 'A')[0].toUpperCase();
+
+    let lastDate = '';
+
+    msgs.forEach(m => {
+        const isMe = m.sender_id === currentMitra.user_id;
+        const d = new Date(m.created_at);
+        const dateStr = d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+        if (dateStr !== lastDate) {
+            lastDate = dateStr;
+            const sep = document.createElement('div');
+            sep.className = 'date-sep';
+            sep.innerHTML = `<span>${dateStr}</span>`;
+            box.appendChild(sep);
+        }
+
+        const time = d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const txt = escHtml(m.message_text || '').replace(/\n/g, '<br>');
+
+        const row = document.createElement('div');
+        row.className = `msg-row ${isMe ? 'me' : 'them'}`;
+
+        // Avatar kiri (klien)
+        if (!isMe) {
+            const img = document.createElement('img');
+            img.src = selectedClientAv;
+            img.className = 'msg-av';
+            img.alt = selectedClientName;
+            img.onerror = () => { img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedClientName)}&background=EFF6FF&color=2563EB&bold=true`; };
+            row.appendChild(img);
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className = 'msg-bubble-wrap';
+
+        const bubble = document.createElement('div');
+        bubble.className = `msg-bubble ${isMe ? 'bubble-out' : 'bubble-in'}`;
+        bubble.innerHTML = `<p>${txt}</p>`;
+
+        const meta = document.createElement('div');
+        meta.className = `msg-meta ${isMe ? '' : ''}`;
+        meta.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
+        meta.innerHTML = `<span>${time}</span>${isMe
+            ? (m.is_read
+                ? '<i class="fas fa-check-double" style="font-size:9px;color:#60A5FA;"></i>'
+                : '<i class="fas fa-check" style="font-size:9px;color:var(--text-3);"></i>')
+            : ''}`;
+
+        wrap.appendChild(bubble);
+        wrap.appendChild(meta);
+        row.appendChild(wrap);
+
+        // Avatar kanan (advokat/saya)
+        if (isMe) {
+            const img = document.createElement('img');
+            img.src = myAv;
+            img.className = 'msg-av';
+            img.alt = currentMitra.nama_lengkap;
+            img.onerror = () => {
+                img.onerror = null;
+                const init = document.createElement('div');
+                init.className = 'msg-av-init';
+                init.textContent = myInit;
+                img.replaceWith(init);
+            };
+            row.appendChild(img);
+        }
+
+        box.appendChild(row);
+    });
+
+    box.scrollTop = box.scrollHeight;
+}
+
+// ══════════════════════════════════════════════
+// SEND MESSAGE
+// ══════════════════════════════════════════════
+async function sendMessage() {
+    const inp = document.getElementById('msg-textarea');
+    const text = inp.value.trim();
+    if (!text || !selectedConvId) return;
+
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+    inp.value = '';
+    inp.style.height = 'auto';
+
+    try {
+        const { error } = await window.supabase.from('messages').insert([{
+            sender_id:       currentMitra.user_id,
+            receiver_id:     selectedClientId,
+            lawyer_id:       currentMitra.id,
+            conversation_id: selectedConvId,
+            message_text:    text,
+            is_read:         false
+        }]);
+        if (error) throw error;
+        await loadMessages();
+
+        // Update preview in conv list
+        const conv = allConvs.find(c => c.convId === selectedConvId);
+        if (conv) { conv.lastMsg = text; conv.isMe = true; conv.lastTime = new Date().toISOString(); }
+        renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
+    } catch(e) {
+        showLALToast?.('error', 'Gagal Kirim', e.message);
+    } finally {
+        btn.disabled = false;
+        inp.focus();
+    }
+}
+
+function handleMsgKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+function notifyTyping() {
+    if (!selectedConvId || !rtChannel) return;
+    clearTimeout(typingDebounce);
+    typingDebounce = setTimeout(() => {
+        rtChannel.send({ type: 'broadcast', event: 'typing', payload: { from: currentMitra.user_id } });
+    }, 350);
+}
+
+// ══════════════════════════════════════════════
+// CLEAR CHAT
+// ══════════════════════════════════════════════
+async function clearChatConfirm() {
+    if (!selectedConvId) return;
+    const ok = await laiConfirm?.({
+        type: 'danger',
+        title: 'Hapus Riwayat Chat',
+        message: `Semua pesan dengan <strong>${escHtml(selectedClientName)}</strong> akan dihapus permanen.`,
+        confirmText: 'Ya, Hapus',
+        cancelText: 'Batal'
+    }) ?? confirm('Yakin hapus semua pesan?');
+    if (!ok) return;
+    await window.supabase.from('messages').delete().eq('conversation_id', selectedConvId);
+    await loadMessages();
+    await loadConvList();
+    showLALToast?.('success', 'Dihapus', 'Riwayat chat berhasil dihapus.');
+}
+
+// ══════════════════════════════════════════════
+// REALTIME
+// ══════════════════════════════════════════════
+function subscribeRealtime() {
+    if (rtChannel) window.supabase.removeChannel(rtChannel);
+
+    rtChannel = window.supabase
+        .channel('adv-rt-' + currentMitra.id)
+        .on('postgres_changes', {
+            event: 'INSERT', schema: 'public', table: 'messages',
+            filter: `lawyer_id=eq.${currentMitra.id}`
+        }, async (payload) => {
+            const m = payload.new;
+
+            // Jika chat ini sedang terbuka
+            if (m.conversation_id === selectedConvId) {
+                await loadMessages();
+                await window.supabase.from('messages')
+                    .update({ is_read: true })
+                    .eq('conversation_id', selectedConvId)
+                    .eq('receiver_id', currentMitra.user_id);
+            } else {
+                // Pesan di konversasi lain — bell shake + toast
+                ringBell();
+                const conv = allConvs.find(c => c.convId === m.conversation_id);
+                const senderName = conv?.clientName || 'Klien baru';
+                showLALToast?.('info', `💬 ${senderName}`, m.message_text?.slice(0, 60) || 'Pesan baru', 5000);
+            }
+
+            await loadConvList();
+        })
+        .on('broadcast', { event: 'typing' }, (p) => {
+            if (p.payload?.from === selectedClientId) showTyping();
+        })
+        .subscribe((status) => {
+            const el = document.getElementById('rt-status');
+            if (status === 'SUBSCRIBED') {
+                el.textContent = 'Realtime ✓';
+                el.style.color = '#10B981';
+            } else {
+                el.textContent = 'Reconnecting...';
+                el.style.color = 'var(--text-3)';
+            }
+        });
+}
+
+function ringBell() {
+    const bell = document.getElementById('notif-bell');
+    bell.classList.remove('bell-shake');
+    void bell.offsetWidth; // reflow
+    bell.classList.add('bell-shake');
+    bell.style.color = '#F59E0B';
+    setTimeout(() => { bell.style.color = ''; }, 800);
+}
+
+function showTyping() {
+    document.getElementById('typing-label').style.display = '';
+    document.getElementById('typing-indicator-row').style.display = 'flex';
+    const box = document.getElementById('chat-box');
+    box.scrollTop = box.scrollHeight;
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => {
+        document.getElementById('typing-label').style.display = 'none';
+        document.getElementById('typing-indicator-row').style.display = 'none';
+    }, 3500);
+}
+
+// ══════════════════════════════════════════════
+// PROFIL — LOAD
+// ══════════════════════════════════════════════
+async function loadProfile() {
+    if (!currentMitra) return;
+    const m = currentMitra;
+
+    document.getElementById('profil-nama-display').textContent = m.nama_lengkap || 'Nama Advokat';
+    document.getElementById('profil-spec-badge').textContent = m.spesialisasi || 'Hukum Umum';
+    document.getElementById('profil-avatar-img').src = m.foto_profil_url ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(m.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
+
+    // Fill form
+    setField('f-nama', m.nama_lengkap);
+    setField('f-nia', m.nomor_nia);
+    document.getElementById('f-spesialisasi').value = m.spesialisasi || '';
+    setField('f-pengalaman', m.pengalaman);
+
+    setField('f-lulusan', m.lulusan);
+    setField('f-jurusan', m.jurusan);
+    setField('f-kabupaten', m.kabupaten);
+    setField('f-provinsi', m.provinsi);
+    setField('f-bio', m.bio_singkat);
+    updateBioCount(document.getElementById('f-bio'));
+
+    // isAvailable tidak disimpan ke DB karena kolom belum ada
+    updateAvailUI();
+    document.getElementById('save-hint').textContent = '';
+}
+
+function setField(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+}
+
+// ══════════════════════════════════════════════
+// PROFIL — SAVE
+// ══════════════════════════════════════════════
+async function saveProfile() {
+    const btn = document.getElementById('save-btn');
+    const hint = document.getElementById('save-hint');
+
+    // Kumpulkan data lebih dulu
+    const updates = {
+        nama_lengkap:  document.getElementById('f-nama').value.trim(),
+        nomor_nia:     document.getElementById('f-nia').value.trim(),
+        spesialisasi:  document.getElementById('f-spesialisasi').value,
+        pengalaman:    parseInt(document.getElementById('f-pengalaman').value) || 0,
+        lulusan:       document.getElementById('f-lulusan').value.trim(),
+        jurusan:       document.getElementById('f-jurusan').value.trim(),
+        kabupaten:     document.getElementById('f-kabupaten').value.trim(),
+        provinsi:      document.getElementById('f-provinsi').value.trim(),
+        bio_singkat:   document.getElementById('f-bio').value.trim(),
+    };
+
+    // Validasi SEBELUM disable button — supaya button tidak stuck disabled
+    if (!updates.nama_lengkap) {
+        hint.textContent = '⚠️ Nama lengkap wajib diisi!';
+        hint.style.color = '#F87171';
+        if (typeof showLALToast === 'function') showLALToast('warning', 'Nama Wajib Diisi', 'Isi nama lengkap terlebih dahulu.');
+        document.getElementById('f-nama').focus();
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
+    hint.textContent = '';
+    hint.style.color = '';
+
+    try {
+        // Gunakan access_token sesi aktif agar RLS policy UPDATE terpenuhi
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) throw new Error('Sesi habis, silakan login ulang.');
+
+        const res = await fetch(
+            SUPA_URL + '/rest/v1/mitra_ahli?id=eq.' + encodeURIComponent(currentMitra.id),
+            {
+                method: 'PATCH',
+                headers: {
+                    'apikey': SUPA_KEY,
+                    'Authorization': 'Bearer ' + session.access_token,
+                    'Content-Type': 'application/json',
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(updates)
+            }
+        );
+
+        if (!res.ok) {
+            const errText = await res.text();
+            let msg = 'HTTP ' + res.status;
+            try { msg = JSON.parse(errText)?.message || msg; } catch(_) {}
+            throw new Error(msg);
+        }
+
+        const rows = await res.json();
+        const saved = (Array.isArray(rows) && rows.length) ? rows[0] : updates;
+
+        currentMitra = { ...currentMitra, ...saved };
+        updateSidebarUI();
+        document.getElementById('profil-nama-display').textContent = updates.nama_lengkap;
+        document.getElementById('profil-spec-badge').textContent = updates.spesialisasi || 'Hukum Umum';
+        hint.textContent = '✓ Tersimpan pada ' + new Date().toLocaleTimeString('id-ID');
+        hint.style.color = '#34D399';
+        if (typeof showLALToast === 'function') showLALToast('success', 'Profil Diperbarui', 'Data berhasil disimpan ke server.');
+
+    } catch(e) {
+        console.error('[saveProfile]', e);
+        hint.textContent = '❌ Gagal menyimpan: ' + e.message;
+        hint.style.color = '#F87171';
+        if (typeof showLALToast === 'function') showLALToast('error', 'Gagal Simpan', e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Simpan Perubahan';
+    }
+}
+
+// ══════════════════════════════════════════════
+// PROFIL — AVATAR UPLOAD
+// ══════════════════════════════════════════════
+async function uploadAvatar(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+        showLALToast?.('warning', 'File Terlalu Besar', 'Maksimal 3MB');
+        return;
+    }
+
+    const btn = document.querySelector('.profil-avatar-upload');
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+
+    try {
+        const ext = file.name.split('.').pop();
+        const path = `mitra/${currentMitra.id}/avatar-${Date.now()}.${ext}`;
+
+        const { error: upErr } = await window.supabase.storage
+            .from('avatars').upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+
+        const { data: urlData } = window.supabase.storage.from('avatars').getPublicUrl(path);
+        const publicUrl = urlData.publicUrl;
+
+        const { error: dbErr } = await window.supabase
+            .from('mitra_ahli').update({ foto_profil_url: publicUrl }).eq('id', currentMitra.id);
+        if (dbErr) throw dbErr;
+
+        currentMitra.foto_profil_url = publicUrl;
+        document.getElementById('profil-avatar-img').src = publicUrl;
+        document.getElementById('side-avatar').src = publicUrl;
+        showLALToast?.('success', 'Foto Diperbarui', 'Foto profil berhasil diunggah.');
+    } catch(e) {
+        showLALToast?.('error', 'Upload Gagal', e.message);
+    } finally {
+        btn.innerHTML = '<i class="fas fa-camera"></i>';
+        input.value = '';
+    }
+}
+
+// ══════════════════════════════════════════════
+// AVAILABILITY TOGGLE
+// ══════════════════════════════════════════════
+function toggleAvailability() {
+    isAvailable = !isAvailable;
+    updateAvailUI();
+}
+
+function updateAvailUI() {
+    const toggle = document.getElementById('avail-toggle');
+    const label = document.getElementById('avail-label');
+    const sub = document.getElementById('avail-sub');
+    if (isAvailable) {
+        toggle.classList.remove('off');
+        label.textContent = 'Menerima Klien Baru';
+        label.style.color = '#10B981';
+        sub.textContent = 'Profil Anda terlihat di direktori mitra';
+    } else {
+        toggle.classList.add('off');
+        label.textContent = 'Tidak Menerima Klien';
+        label.style.color = 'var(--text-3)';
+        sub.textContent = 'Profil Anda disembunyikan dari direktori';
+    }
+}
+
+function updateBioCount(el) {
+    document.getElementById('bio-count').textContent = `${el.value.length}/500`;
+}
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function esc(s) { return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+function fmtTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso), now = new Date(), df = now - d;
+    if (df < 60000) return 'Baru';
+    if (df < 3600000) return Math.floor(df/60000) + 'm';
+    if (df < 86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    if (df < 604800000) return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
+    return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+}
+
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
+init().catch(err => {
+    console.error('[Dashboard Advokat] Fatal:', err);
+    document.getElementById('load-overlay').innerHTML = `
+        <div style="text-align:center;padding:40px;max-width:360px;">
+            <i class="fas fa-triangle-exclamation" style="font-size:32px;color:#F59E0B;margin-bottom:16px;display:block;"></i>
+            <p style="font-size:14px;font-weight:700;color:var(--text-1);margin:0 0 8px;">Gagal Memuat Dashboard</p>
+            <p style="font-size:12px;color:var(--text-3);margin:0 0 20px;">${err.message}</p>
+            <button onclick="location.reload()" class="btn-primary">Coba Lagi</button>
+        </div>`;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lawyers AI — Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared-modal.js"></script>
+    <script src="shared-sidebar.js" defer></script>
+
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+
+        /* Hero card */
+        .hero-card {
+            background: var(--hero-grad);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Stats */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 1px 4px var(--shadow);
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .stat-card:hover { border-color: var(--border-hover); background: var(--bg-hover); }
+        body.light .stat-card { box-shadow: 0 2px 14px rgba(0,0,0,0.06); }
+        body.light .stat-card .stat-num { color: #0F172A !important; }
+
+        /* Category cards */
+        .cat-card {
+            flex-shrink: 0;
+            width: 104px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .cat-card:hover { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.3); transform: translateY(-3px); }
+        .cat-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 15px; }
+        .cat-label { font-size: 9px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.07em; }
+
+        /* Notif card */
+        .notif-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .notif-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:0 2px 2px 0; }
+        .notif-card.unread::before { background:#3B82F6; }
+        .notif-card.success::before { background:#10B981; }
+        .notif-card.warning::before { background:#F59E0B; }
+        .notif-card.info::before { background:#8B5CF6; }
+        .notif-card:hover { background: var(--bg-input); transform: translateX(2px); }
+        .notif-dot { width:7px; height:7px; border-radius:50%; background:#3B82F6; flex-shrink:0; margin-left:auto; animation: pulseDot 2s infinite; }
+        @keyframes pulseDot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.7); } }
+
+        /* Action cards */
+        .action-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .action-card:hover { border-color: var(--border-hover); background: var(--bg-hover); }
+
+        /* About feature row */
+        .feature-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .feature-row:hover { background: var(--bg-hover); }
+    </style>
+</head>
+<body>
+
+    <!-- ── MAIN ── -->
+    <div class="main-scroll">
+        <div style="max-width:1000px; margin:0 auto; padding: 20px 24px 40px; padding-top: 72px;" class="lg-pt-fix">
+            <style>@media(min-width:1024px){.lg-pt-fix{padding-top:36px!important}}</style>
+
+            <!-- Header -->
+            <header class="fade-up" style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:36px;">
+                <div>
+                    <p style="font-size:10px; font-weight:700; color:var(--text-4); text-transform:uppercase; letter-spacing:0.14em; margin-bottom:4px;">Dashboard</p>
+                    <h2 style="font-size:28px; font-weight:900; color:var(--text-1); margin:0 0 8px; line-height:1.1;">Halo, <span id="welcome-name" style="color:#60A5FA;">Sultan</span> 👋</h2>
+                    <span id="member-status-tag" style="font-size:9px; font-weight:700; background:var(--bg-input); color:var(--text-3); padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.1em; border:1px solid var(--border);">Standard</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:4px; flex-shrink:0;">
+                    <button onclick="window.toggleTheme?.()" class="theme-toggle" title="Mode Siang/Malam"><div class="knob">🌙</div></button>
+                    <button onclick="toggleNotifPanel()" id="notifBtn" style="width:40px;height:40px;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--text-2);cursor:pointer;position:relative;" title="Notifikasi">
+                        <i class="fas fa-bell" style="font-size:14px;"></i>
+                        <span id="notif-count-badge" style="display:none;position:absolute;top:-6px;right:-6px;width:18px;height:18px;background:#3B82F6;color:white;font-size:8px;font-weight:900;border-radius:50%;align-items:center;justify-content:center;"></span>
+                    </button>
+                    <button onclick="handleLogout()" style="width:40px;height:40px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#F87171;cursor:pointer;" title="Logout">
+                        <i class="fas fa-sign-out-alt" style="font-size:13px;"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Notif Panel -->
+            <div id="notifPanel" style="display:none; margin-bottom:28px;" class="fade-up">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span class="section-label" style="margin-bottom:0;">Notifikasi</span>
+                    <button onclick="markAllRead()" style="font-size:9px;font-weight:700;color:#60A5FA;background:none;border:none;cursor:pointer;text-transform:uppercase;letter-spacing:0.1em;">Tandai semua dibaca</button>
+                </div>
+                <div id="notifList" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+
+            <!-- Hero -->
+            <section class="hero-card fade-up fade-up-1" style="padding:32px 36px; margin-bottom:28px;">
+                <div style="position:relative; z-index:1; display:flex; flex-direction:column; gap:20px;">
+                    <div>
+                        <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); padding:5px 12px; border-radius:20px; margin-bottom:14px;">
+                            <span style="width:6px;height:6px;border-radius:50%;background:#60A5FA;display:block;"></span>
+                            <span style="font-size:9px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.12em;">Legal Intelligence Platform</span>
+                        </div>
+                        <h3 style="font-size:26px; font-weight:900; color:white; margin:0 0 10px; line-height:1.2;">Solusi Hukum<br>Canggih & Instan.</h3>
+                        <p style="color:rgba(148,163,184,0.9); font-size:13px; font-weight:400; line-height:1.6; max-width:420px;">Analisis kasus dalam hitungan detik dengan AI atau hubungi Advokat profesional berlisensi NIA.</p>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <a href="konsultasi.html" style="display:inline-flex; align-items:center; gap:8px; background:#2563EB; color:white; font-size:12px; font-weight:700; padding:11px 20px; border-radius:12px; text-decoration:none; transition:background 0.2s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                            <i class="fas fa-robot" style="font-size:11px;"></i> Tanya AI Sekarang
+                        </a>
+                        <a href="mitra.html" style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:rgba(226,232,240,0.85); font-size:12px; font-weight:700; padding:11px 20px; border-radius:12px; text-decoration:none;">
+                            <i class="fas fa-user-tie" style="font-size:11px;"></i> Cari Advokat
+                        </a>
+                    </div>
+                </div>
+                <i class="fas fa-balance-scale" style="position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-size:150px;color:rgba(255,255,255,0.03);pointer-events:none;"></i>
+            </section>
+
+            <!-- Stats -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; margin-bottom:28px;" class="stats-grid fade-up fade-up-2">
+                <style>@media(max-width:768px){.stats-grid{grid-template-columns:1fr 1fr!important}}</style>
+                <div class="stat-card">
+                    <span class="section-label">Analisis AI</span>
+                    <p id="stat-chat-ai" class="stat-num" style="font-size:28px; font-weight:900; color:var(--text-1); margin:0 0 2px;">—</p>
+                    <p style="font-size:10px; color:var(--text-3); font-weight:500;">konsultasi total</p>
+                </div>
+                <div class="stat-card">
+                    <span class="section-label">Pesan Chat</span>
+                    <p id="stat-konsultasi" class="stat-num" style="font-size:28px; font-weight:900; color:var(--text-1); margin:0 0 2px;">—</p>
+                    <p style="font-size:10px; color:var(--text-3); font-weight:500;">dengan advokat</p>
+                </div>
+                <div class="stat-card" style="grid-column:span 2; display:flex; align-items:center; justify-content:space-between; gap:16px;">
+                    <div>
+                        <span class="section-label" style="margin-bottom:4px;">Status Akun</span>
+                        <p id="stat-plan" class="stat-num" style="font-size:18px; font-weight:900; color:var(--text-1); margin:0 0 2px;">Standard</p>
+                        <p style="font-size:10px; color:var(--text-3); font-weight:500;">plan aktif</p>
+                    </div>
+                    <button onclick="location.href='upgrade.html'" id="upgrade-cta" style="flex-shrink:0; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.22); color:#F59E0B; font-size:10px; font-weight:700; padding:8px 16px; border-radius:10px; cursor:pointer; text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap;">Upgrade</button>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div style="margin-bottom:28px;" class="fade-up fade-up-3">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <span class="section-label" style="margin-bottom:0;">Bidang Konsultasi</span>
+                    <span style="font-size:9px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.1em; display:none;" class="cat-hint">Geser →</span>
+                    <style>@media(max-width:1024px){.cat-hint{display:block!important}}</style>
+                </div>
+                <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:8px;" class="hide-scrollbar">
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=pidana'">
+                        <div class="cat-icon" style="background:rgba(239,68,68,0.1); color:#F87171;"><i class="fas fa-gavel"></i></div>
+                        <p class="cat-label">Pidana</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=perdata'">
+                        <div class="cat-icon" style="background:rgba(59,130,246,0.1); color:#60A5FA;"><i class="fas fa-file-signature"></i></div>
+                        <p class="cat-label">Perdata</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=keluarga'">
+                        <div class="cat-icon" style="background:rgba(139,92,246,0.1); color:#A78BFA;"><i class="fas fa-house-chimney-user"></i></div>
+                        <p class="cat-label">Keluarga</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=ite'">
+                        <div class="cat-icon" style="background:rgba(6,182,212,0.1); color:#22D3EE;"><i class="fas fa-shield-virus"></i></div>
+                        <p class="cat-label">Cyber/ITE</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=kerja'">
+                        <div class="cat-icon" style="background:rgba(249,115,22,0.1); color:#FB923C;"><i class="fas fa-user-gear"></i></div>
+                        <p class="cat-label">TK</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=tanah'">
+                        <div class="cat-icon" style="background:rgba(16,185,129,0.1); color:#34D399;"><i class="fas fa-map-location-dot"></i></div>
+                        <p class="cat-label">Tanah</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=bisnis'">
+                        <div class="cat-icon" style="background:rgba(99,102,241,0.1); color:#818CF8;"><i class="fas fa-briefcase"></i></div>
+                        <p class="cat-label">Bisnis</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=pajak'">
+                        <div class="cat-icon" style="background:rgba(245,158,11,0.1); color:#FBBF24;"><i class="fas fa-receipt"></i></div>
+                        <p class="cat-label">Pajak</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=haki'">
+                        <div class="cat-icon" style="background:rgba(236,72,153,0.1); color:#F472B6;"><i class="fas fa-copyright"></i></div>
+                        <p class="cat-label">HAKI</p>
+                    </div>
+                    <div class="cat-card" onclick="location.href='konsultasi.html?cat=imigrasi'">
+                        <div class="cat-icon" style="background:rgba(100,116,139,0.1); color:#94A3B8;"><i class="fas fa-passport"></i></div>
+                        <p class="cat-label">Imigrasi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action cards -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:28px;" class="action-grid fade-up fade-up-4">
+                <style>@media(max-width:768px){.action-grid{grid-template-columns:1fr!important}}</style>
+                <div class="action-card group-arc" onclick="location.href='arsip-kasus.html'" style="cursor:pointer;">
+                    <div>
+                        <span class="section-label">Arsip Kasus</span>
+                        <p style="font-size:13px; font-weight:800; color:var(--text-1); margin:0 0 2px;">Riwayat Konsultasi</p>
+                        <p style="font-size:10px; color:var(--text-3); font-weight:500;">Semua rekam jejak kasus lu</p>
+                    </div>
+                    <div class="ac-icon" style="width:38px;height:38px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(59,130,246,0.15)';this.style.color='#60A5FA'" onmouseout="this.style.background='var(--bg-input)';this.style.color='var(--text-3)'">
+                        <i class="fas fa-folder-open" style="font-size:14px;"></i>
+                    </div>
+                </div>
+                <div class="action-card" onclick="handleMitraRedirect()" style="cursor:pointer;">
+                    <div>
+                        <span class="section-label" id="mitra-label">Jadi Mitra</span>
+                        <p id="mitra-title" style="font-size:13px; font-weight:800; color:var(--text-1); margin:0 0 2px;">Daftarkan Diri</p>
+                        <p id="mitra-desc" style="font-size:10px; color:var(--text-3); font-weight:500;">Bergabung sebagai advokat</p>
+                    </div>
+                    <div style="width:38px;height:38px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0;" onmouseover="this.style.background='rgba(16,185,129,0.15)';this.style.color='#34D399'" onmouseout="this.style.background='var(--bg-input)';this.style.color='var(--text-3)'">
+                        <i class="fas fa-plus" id="mitra-icon" style="font-size:13px;"></i>
+                    </div>
+                </div>
+                <div class="action-card" onclick="location.href='chat-advokat.html'" style="cursor:pointer;">
+                    <div>
+                        <span class="section-label">Pesan Masuk</span>
+                        <p style="font-size:13px; font-weight:800; color:var(--text-1); margin:0 0 2px;">Inbox Chat</p>
+                        <p style="font-size:10px; color:var(--text-3); font-weight:500;">Cek pesan dari advokat</p>
+                    </div>
+                    <div style="position:relative; flex-shrink:0;">
+                        <div style="width:38px;height:38px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-3);" onmouseover="this.style.background='rgba(139,92,246,0.15)';this.style.color='#A78BFA'" onmouseout="this.style.background='var(--bg-input)';this.style.color='var(--text-3)'">
+                            <i class="fas fa-comments" style="font-size:13px;"></i>
+                        </div>
+                        <span id="inbox-unread" style="display:none; position:absolute; top:-6px; right:-6px; min-width:16px; height:16px; background:#3B82F6; color:white; font-size:8px; font-weight:900; border-radius:8px; padding:0 4px; align-items:center; justify-content:center;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About -->
+            <div class="stat-card fade-up fade-up-5">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                    <div style="width:38px;height:38px;border-radius:10px;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-shield-alt" style="color:#60A5FA;font-size:14px;"></i>
+                    </div>
+                    <div>
+                        <span class="section-label" style="margin-bottom:2px;">Platform</span>
+                        <h3 style="font-size:17px;font-weight:900;color:var(--text-1);margin:0;line-height:1.1;">Tentang Lawyers<span style="color:#60A5FA;">AI</span></h3>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="about-grid">
+                    <style>@media(max-width:640px){.about-grid{grid-template-columns:1fr!important}}</style>
+                    <p style="font-size:13px; color:var(--text-3); font-weight:400; line-height:1.7; margin:0;">Platform pionir yang menggabungkan <span style="color:var(--text-2);font-weight:600;">kecerdasan buatan</span> dengan keahlian hukum manusia untuk transparansi dan akurasi tinggi.</p>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div class="feature-row">
+                            <div style="width:30px;height:30px;border-radius:8px;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-robot" style="color:#60A5FA;font-size:11px;"></i></div>
+                            <div>
+                                <p style="font-size:12px;font-weight:700;color:var(--text-1);margin:0 0 1px;">Analisis AI Instan</p>
+                                <p style="font-size:10px;color:var(--text-3);margin:0;">Identifikasi hukum dalam detik</p>
+                            </div>
+                        </div>
+                        <div class="feature-row">
+                            <div style="width:30px;height:30px;border-radius:8px;background:rgba(16,185,129,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user-check" style="color:#34D399;font-size:11px;"></i></div>
+                            <div>
+                                <p style="font-size:12px;font-weight:700;color:var(--text-1);margin:0 0 1px;">Advokat Berlisensi NIA</p>
+                                <p style="font-size:10px;color:var(--text-3);margin:0;">Terverifikasi & terpercaya</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /max-width -->
+    </div><!-- /main-scroll -->
+
+    <script>
+        // Override handleLogout pakai laiConfirm
+        window.handleLogout = function() {
+            laiConfirm({
+                title: 'Keluar dari Lawyers AI?',
+                message: 'Sesi kamu akan diakhiri. Sampai jumpa lagi!',
+                confirmText: 'Ya, Keluar',
+                cancelText: 'Batal',
+                danger: true,
+                onConfirm: async () => {
+                    try {
+                        await window.supabase.auth.signOut();
+                        localStorage.clear();
+                        window.location.href = 'login.html';
+                    } catch (e) {
+                        window.showToast?.('Gagal logout.', 'error');
+                    }
+                }
+            });
+        };
+
+        let isUserMitra = false;
+        let mitraStatus = null;
+
+        async function checkSession() {
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+            currentUserId = session.user.id;
+            const { data: mitra } = await window.supabase.from('mitra_ahli').select('id, status_verifikasi').eq('user_id', session.user.id).maybeSingle();
+            if (mitra) { isUserMitra = true; mitraStatus = mitra.status_verifikasi; }
+            fetchDashboardData(session.user);
+            loadNotifications(session.user.id);
+            subscribeNotifications(session.user.id);
+        }
+
+        function handleMitraRedirect() {
+            if (isUserMitra && mitraStatus === 'verified') window.location.href = 'dashboard-mitra.html';
+            else window.location.href = 'daftar-mitra.html';
+        }
+
+        // ── NOTIF SYSTEM — Real-time dari Supabase ──
+        let notifData = [];
+        let notifPanelOpen = false;
+        const readNotifIds = new Set(JSON.parse(localStorage.getItem('lai_read_notifs') || '[]'));
+
+        function timeAgo(dateStr) {
+            const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+            if (diff < 60) return 'Baru saja';
+            if (diff < 3600) return Math.floor(diff/60) + ' menit lalu';
+            if (diff < 86400) return Math.floor(diff/3600) + ' jam lalu';
+            return Math.floor(diff/86400) + ' hari lalu';
+        }
+
+        async function loadNotifications(userId) {
+            const notifs = [];
+
+            // 1. Pesan masuk dari advokat (unread)
+            try {
+                const { data: msgs } = await window.supabase
+                    .from('messages')
+                    .select('id, message_text, created_at, sender_id, conversation_id')
+                    .eq('receiver_id', userId)
+                    .eq('is_read', false)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+
+                (msgs || []).forEach(m => {
+                    notifs.push({
+                        id: 'msg_' + m.id,
+                        type: 'unread',
+                        icon: 'fa-comments',
+                        iconBg: 'rgba(59,130,246,0.15)',
+                        iconColor: '#60A5FA',
+                        title: 'Pesan baru dari Advokat',
+                        body: (m.message_text || '').substring(0, 60) + (m.message_text?.length > 60 ? '...' : ''),
+                        time: timeAgo(m.created_at),
+                        href: 'chat-advokat.html',
+                        unread: true,
+                        createdAt: m.created_at,
+                    });
+                });
+            } catch(e) {}
+
+            // 2. Konsultasi AI terbaru (3 terakhir)
+            try {
+                const { data: konsul } = await window.supabase
+                    .from('riwayat_konsultasi')
+                    .select('id, query, category, created_at')
+                    .eq('user_id', userId)
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+
+                (konsul || []).forEach(k => {
+                    notifs.push({
+                        id: 'ai_' + k.id,
+                        type: 'success',
+                        icon: 'fa-robot',
+                        iconBg: 'rgba(16,185,129,0.15)',
+                        iconColor: '#34D399',
+                        title: 'Konsultasi AI — ' + (k.category || 'Umum'),
+                        body: (k.query || '').substring(0, 60) + (k.query?.length > 60 ? '...' : ''),
+                        time: timeAgo(k.created_at),
+                        href: 'arsip-kasus.html',
+                        unread: !readNotifIds.has('ai_' + k.id),
+                        createdAt: k.created_at,
+                    });
+                });
+            } catch(e) {}
+
+            // Sort by date
+            notifs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            notifData = notifs;
+            renderNotifList();
+        }
+
+        function subscribeNotifications(userId) {
+            // Real-time: pesan baru masuk
+            window.supabase.channel('notif_messages')
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: `receiver_id=eq.${userId}`
+                }, payload => {
+                    const msg = payload.new;
+                    const notif = {
+                        id: 'msg_' + msg.id,
+                        type: 'unread',
+                        icon: 'fa-comments',
+                        iconBg: 'rgba(59,130,246,0.15)',
+                        iconColor: '#60A5FA',
+                        title: 'Pesan baru dari Advokat',
+                        body: (msg.message_text || '').substring(0, 60),
+                        time: 'Baru saja',
+                        href: 'chat-advokat.html',
+                        unread: true,
+                        createdAt: msg.created_at,
+                    };
+                    notifData.unshift(notif);
+                    renderNotifList();
+                    showLALToast('info', 'Pesan Baru', notif.body, 5000);
+                })
+                .subscribe();
+
+            // Real-time: konsultasi AI baru tersimpan
+            window.supabase.channel('notif_konsultasi')
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'riwayat_konsultasi',
+                    filter: `user_id=eq.${userId}`
+                }, payload => {
+                    const k = payload.new;
+                    const notif = {
+                        id: 'ai_' + k.id,
+                        type: 'success',
+                        icon: 'fa-robot',
+                        iconBg: 'rgba(16,185,129,0.15)',
+                        iconColor: '#34D399',
+                        title: 'Konsultasi AI tersimpan',
+                        body: (k.query || '').substring(0, 60),
+                        time: 'Baru saja',
+                        href: 'arsip-kasus.html',
+                        unread: true,
+                        createdAt: k.created_at,
+                    };
+                    notifData.unshift(notif);
+                    renderNotifList();
+                })
+                .subscribe();
+        }
+
+        function renderNotifList() {
+            const container = document.getElementById('notifList');
+            const badge = document.getElementById('notif-count-badge');
+            const unreadCount = notifData.filter(n => n.unread && !readNotifIds.has(n.id)).length;
+
+            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+            if (unreadCount > 0) badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+
+            if (notifData.length === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:28px 16px;">
+                    <i class="fas fa-bell-slash" style="font-size:24px;color:var(--text-4);margin-bottom:8px;display:block;"></i>
+                    <p style="font-size:11px;color:var(--text-3);font-weight:700;">Belum ada notifikasi</p>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = notifData.map(n => {
+                const isRead = readNotifIds.has(n.id) || !n.unread;
+                return `<div class="notif-card ${n.type}" onclick="handleNotifClick('${n.id}','${n.href}')">
+                    <div style="width:38px;height:38px;border-radius:10px;background:${n.iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;">
+                        <i class="fas ${n.icon}" style="color:${n.iconColor};"></i>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <p style="font-size:12px;font-weight:700;color:${isRead?'var(--text-3)':'var(--text-1)'};margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.title}</p>
+                        <p style="font-size:10px;color:var(--text-3);margin:0 0 3px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;">${n.body}</p>
+                        <p style="font-size:9px;color:var(--text-4);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0;">${n.time}</p>
+                    </div>
+                    ${!isRead ? '<div class="notif-dot"></div>' : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function handleNotifClick(id, href) {
+            readNotifIds.add(id);
+            localStorage.setItem('lai_read_notifs', JSON.stringify([...readNotifIds]));
+            renderNotifList();
+            location.href = href;
+        }
+
+        async function markAllRead() {
+            notifData.forEach(n => readNotifIds.add(n.id));
+            localStorage.setItem('lai_read_notifs', JSON.stringify([...readNotifIds]));
+            // Mark messages as read in DB
+            if (currentUserId) {
+                await window.supabase.from('messages')
+                    .update({ is_read: true })
+                    .eq('receiver_id', currentUserId)
+                    .eq('is_read', false);
+            }
+            renderNotifList();
+            showLALToast('success', 'Semua dibaca', '');
+        }
+
+        function toggleNotifPanel() {
+            notifPanelOpen = !notifPanelOpen;
+            const panel = document.getElementById('notifPanel');
+            panel.style.display = notifPanelOpen ? 'block' : 'none';
+            if (notifPanelOpen) renderNotifList();
+        }
+
+        let currentUserId = null;
+
+        async function fetchDashboardData(user) {
+            const { data: profile } = await window.supabase.from('profiles').select('*').eq('id', user.id).single();
+            if (profile) {
+                const name = (profile.full_name || 'Sultan').split(' ')[0];
+                document.getElementById('welcome-name').textContent = name;
+                const sn = document.getElementById('side-name');
+                const sa = document.getElementById('side-avatar');
+                if (sn) sn.textContent = profile.full_name || 'User';
+                if (sa) sa.src = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name||'U')}&background=1E3A5F&color=60A5FA&bold=true`;
+                if (profile.is_premium) {
+                    document.getElementById('member-status-tag').innerHTML = '<i class="fas fa-crown" style="margin-right:4px;"></i>PRO Sultan';
+                    document.getElementById('member-status-tag').style.background = 'rgba(245,158,11,0.12)';
+                    document.getElementById('member-status-tag').style.color = '#F59E0B';
+                    document.getElementById('member-status-tag').style.borderColor = 'rgba(245,158,11,0.25)';
+                    const pt = document.getElementById('side-premium-tag');
+                    if (pt) pt.textContent = 'PRO';
+                    document.getElementById('stat-plan').textContent = 'PRO Sultan';
+                    const uc = document.getElementById('upgrade-cta');
+                    uc.textContent = 'Aktif ✓'; uc.disabled = true;
+                }
+            }
+            if (isUserMitra) {
+                document.getElementById('mitra-label').textContent = 'Status Mitra';
+                document.getElementById('mitra-title').textContent = 'Mitra Ahli';
+                document.getElementById('mitra-desc').textContent = 'Cek dashboard & kasus';
+                document.getElementById('mitra-icon').className = 'fas fa-user-check';
+            }
+            const { count: aiCount } = await window.supabase.from('riwayat_konsultasi').select('*',{count:'exact',head:true}).eq('user_id', user.id);
+            document.getElementById('stat-chat-ai').textContent = aiCount ?? 0;
+            const { count: msgCount } = await window.supabase.from('messages').select('*',{count:'exact',head:true}).eq('sender_id', user.id);
+            document.getElementById('stat-konsultasi').textContent = msgCount ?? 0;
+            const { count: unread } = await window.supabase.from('messages').select('*',{count:'exact',head:true}).eq('receiver_id', user.id).eq('is_read', false);
+            if (unread > 0) {
+                const b = document.getElementById('inbox-unread');
+                b.textContent = unread > 9 ? '9+' : unread;
+                b.style.display = 'flex';
+            }
+            setTimeout(() => showLALToast('info', `Selamat datang, ${(profile?.full_name||'Sultan').split(' ')[0]}!`, 'Sistem AI siap membantu kasus hukum kamu.', 5000), 900);
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Advokat — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared-sidebar.js" defer></script>
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+        .page-wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 72px; }
+        @media(min-width:1024px){ .page-wrap { padding-top: 36px; } }
+
+        /* ── Page Loading ── */
+        #page-loading {
+            position: fixed; inset: 0; z-index: 500;
+            background: var(--bg-base);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 14px;
+            transition: opacity 0.3s;
+        }
+        .spin-lg {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 3px solid var(--border); border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Hero Banner ── */
+        .hero-banner {
+            width: 100%; height: 150px; border-radius: 24px;
+            background: linear-gradient(135deg, #0B1628 0%, #1E3A6E 50%, #2563EB 100%);
+            position: relative; overflow: visible; margin-bottom: 64px; flex-shrink: 0;
+        }
+        .hero-banner::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 80% 40%, rgba(99,102,241,0.4), transparent 55%),
+                        radial-gradient(circle at 20% 80%, rgba(16,185,129,0.15), transparent 50%);
+            border-radius: inherit;
+        }
+        .hero-banner::after {
+            content: 'LAWYERS AI';
+            position: absolute; bottom: 16px; right: 20px;
+            font-size: 42px; font-weight: 900; font-style: italic;
+            color: rgba(255,255,255,0.05); letter-spacing: -2px;
+            user-select: none; line-height: 1;
+        }
+
+        /* ── Avatar ── */
+        .avatar-wrap { position: absolute; bottom: -48px; left: 28px; z-index: 2; }
+        .avatar-img {
+            width: 96px; height: 96px; border-radius: 50%; object-fit: cover;
+            border: 3px solid var(--bg-base);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5); display: block;
+        }
+        body.light .avatar-img { border-color: #EEF2F7; }
+        .verified-ring {
+            position: absolute; bottom: 2px; right: -2px;
+            width: 24px; height: 24px; border-radius: 7px;
+            background: #10B981; display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--bg-base); font-size: 11px; color: #fff;
+        }
+        body.light .verified-ring { border-color: #EEF2F7; }
+
+        /* ── Name & Badges ── */
+        .name-block { margin-bottom: 20px; }
+        .adv-name {
+            font-size: 26px; font-weight: 900; font-style: italic;
+            color: var(--text-1); letter-spacing: -0.5px; margin: 0 0 10px; line-height: 1.2;
+        }
+        .badge-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border-radius: 20px;
+            font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .badge-green  { background: rgba(16,185,129,0.12);  color: #34D399; }
+        .badge-blue   { background: rgba(59,130,246,0.12);  color: #60A5FA; }
+        .badge-amber  { background: rgba(245,158,11,0.12);  color: #FBBF24; }
+        .badge-slate  { background: var(--bg-input); color: var(--text-2); border: 1px solid var(--border); }
+
+        /* ── Stats ── */
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+        .stat-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 16px; text-align: center;
+        }
+        body.light .stat-box { background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .stat-val { font-size: 22px; font-weight: 900; font-style: italic; color: var(--text-1); margin: 0 0 3px; }
+        .stat-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); margin: 0; }
+
+        /* ── Info card ── */
+        .info-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 22px 24px; margin-bottom: 14px;
+        }
+        body.light .info-card { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .info-card-title {
+            font-size: 11px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.12em; color: var(--text-3); margin: 0 0 16px;
+        }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+        @media(max-width:500px){ .info-grid { grid-template-columns: 1fr; } }
+        .info-item-lbl {
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text-3); margin: 0 0 3px;
+        }
+        .info-item-val { font-size: 14px; font-weight: 700; color: var(--text-1); margin: 0; }
+
+        /* ── Bio ── */
+        .bio-text { font-size: 13.5px; font-weight: 500; color: var(--text-2); line-height: 1.75; margin: 0; }
+
+        /* ── CTA Buttons ── */
+
+
+        .cta-btn {
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+            padding: 14px 20px; border-radius: 14px;
+            font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+            cursor: pointer; transition: all 0.2s; text-decoration: none; border: none;
+        }
+        .cta-chat { background: var(--accent-dark); color: #fff; box-shadow: 0 4px 20px rgba(37,99,235,0.3); }
+        .cta-chat:hover { background: #1D4ED8; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(37,99,235,0.35); }
+
+        .cta-full { grid-column: 1 / -1; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); }
+        .cta-full:hover { background: var(--bg-hover); border-color: var(--border-hover); color: var(--text-1); }
+
+        /* ── Rating ── */
+        .stars { color: #F59E0B; font-size: 13px; letter-spacing: 1px; }
+
+        /* ── Skeleton ── */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-input) 25%, var(--border) 50%, var(--bg-input) 75%);
+            background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px;
+        }
+        @keyframes shimmer { to { background-position: -200% 0; } }
+
+        /* ── Not found ── */
+        .not-found {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 80px 24px; gap: 16px; text-align: center; opacity: 0.5;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<!-- Page loading overlay -->
+<div id="page-loading">
+    <div class="spin-lg"></div>
+    <span style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);">Memuat profil...</span>
+</div>
+
+<div class="main-scroll">
+<div class="page-wrap">
+
+    <!-- Back + Theme row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;" class="fade-up">
+        <button onclick="history.back()" class="btn-ghost" style="padding:9px 16px;font-size:11px;gap:7px;">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <button onclick="window.toggleTheme?.()" class="theme-toggle"><div class="knob">🌙</div></button>
+    </div>
+
+    <!-- Content replaced by JS -->
+    <div id="content">
+        <div class="hero-banner skeleton" style="opacity:0.25;margin-bottom:16px;"></div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+            <div class="skeleton" style="height:32px;width:240px;"></div>
+            <div class="skeleton" style="height:16px;width:180px;"></div>
+            <div class="skeleton" style="height:80px;width:100%;border-radius:16px;"></div>
+            <div class="skeleton" style="height:120px;width:100%;border-radius:20px;"></div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const advisorId = params.get('id');
+
+const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
+const HDRS = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+
+function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function hideLoading() {
+    const el = document.getElementById('page-loading');
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 300);
+}
+
+async function loadAdvokat() {
+    if (!advisorId) { hideLoading(); renderNotFound('ID advokat tidak ditemukan di URL.'); return; }
+
+    let adv = null;
+    try {
+        // 1. By user_id (tidak filter status supaya bisa lihat semua mitra)
+        let r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=*&user_id=eq.${encodeURIComponent(advisorId)}&limit=1`, { headers: HDRS });
+        let d = await r.json();
+        if (Array.isArray(d) && d.length) {
+            adv = d[0];
+        } else {
+            // 2. Fallback by id tabel
+            r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=*&id=eq.${encodeURIComponent(advisorId)}&limit=1`, { headers: HDRS });
+            d = await r.json();
+            if (Array.isArray(d) && d.length) adv = d[0];
+        }
+    } catch (e) {
+        hideLoading();
+        renderNotFound('Gagal memuat data: ' + e.message);
+        return;
+    }
+
+    hideLoading();
+    if (!adv) { renderNotFound('Advokat tidak ditemukan atau belum terdaftar.'); return; }
+    document.title = `${adv.nama_lengkap} — Lawyers AI`;
+    renderProfile(adv);
+    loadRating(adv.user_id || adv.id);
+}
+
+function renderProfile(adv) {
+    const isVerified = adv.status_verifikasi === 'verified';
+    const fotoUrl = adv.foto_profil_url ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(adv.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true&size=200`;
+    const lokasi = [adv.kabupaten, adv.provinsi].filter(Boolean).join(', ') || '—';
+    const pengalaman = adv.pengalaman ? `${adv.pengalaman} Tahun` : '—';
+    const lulusan = [adv.jurusan, adv.lulusan].filter(Boolean).join(' — ') || '—';
+
+
+    // Gunakan user_id sebagai chat target, fallback ke id tabel
+    const chatId = adv.user_id || adv.id;
+    const chatHref = `chat-advokat.html?id=${encodeURIComponent(chatId)}`;
+    const onerrorSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(adv.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true&size=200`;
+
+    document.getElementById('content').innerHTML = `
+        <!-- Hero Banner -->
+        <div class="hero-banner fade-up">
+            <div class="avatar-wrap">
+                <img src="${esc(fotoUrl)}" class="avatar-img" alt="${esc(adv.nama_lengkap)}"
+                     onerror="this.onerror=null;this.src='${onerrorSrc}'">
+                <div class="verified-ring" title="${isVerified ? 'Terverifikasi' : 'Menunggu Verifikasi'}">
+                    <i class="fas ${isVerified ? 'fa-check' : 'fa-clock'}"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Name & Badges -->
+        <div class="name-block fade-up fade-up-1">
+            <h1 class="adv-name">${esc(adv.nama_lengkap)}</h1>
+            <div class="badge-row">
+                ${isVerified
+                    ? `<span class="badge badge-green"><i class="fas fa-circle-check"></i> Terverifikasi NIA</span>`
+                    : `<span class="badge badge-amber"><i class="fas fa-clock"></i> Proses Verifikasi</span>`
+                }
+                ${adv.spesialisasi ? `<span class="badge badge-blue"><i class="fas fa-gavel"></i> ${esc(adv.spesialisasi)}</span>` : ''}
+                ${lokasi !== '—' ? `<span class="badge badge-slate"><i class="fas fa-location-dot"></i> ${esc(lokasi)}</span>` : ''}
+            </div>
+            <div id="rating-display" style="display:none;align-items:center;gap:8px;">
+                <span class="stars" id="rating-stars"></span>
+                <span id="rating-score" style="font-size:13px;font-weight:700;color:var(--text-1);"></span>
+                <span id="rating-count" style="font-size:11px;color:var(--text-3);font-weight:500;"></span>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row fade-up fade-up-2">
+            <div class="stat-box">
+                <p class="stat-val">${adv.pengalaman || '—'}</p>
+                <p class="stat-lbl">Tahun<br>Pengalaman</p>
+            </div>
+            <div class="stat-box">
+                <p class="stat-val" style="font-size:${(adv.nomor_nia||'').length > 8 ? '11px' : '20px'};">${esc(adv.nomor_nia || '—')}</p>
+                <p class="stat-lbl">Nomor<br>NIA</p>
+            </div>
+            <div class="stat-box" id="rating-stat-box" style="display:none;">
+                <p class="stat-val" id="rating-stat-val">—</p>
+                <p class="stat-lbl">Rating<br>Klien</p>
+            </div>
+        </div>
+
+
+
+        <!-- Bio -->
+        ${adv.bio_singkat ? `
+        <div class="info-card fade-up fade-up-3">
+            <p class="info-card-title"><i class="fas fa-quote-left" style="margin-right:6px;color:var(--accent);"></i>Tentang</p>
+            <p class="bio-text">${esc(adv.bio_singkat).replace(/\n/g,'<br>')}</p>
+        </div>` : ''}
+
+        <!-- Data Profesional -->
+        <div class="info-card fade-up fade-up-3">
+            <p class="info-card-title"><i class="fas fa-id-badge" style="margin-right:6px;color:var(--accent);"></i>Data Profesional</p>
+            <div class="info-grid">
+                <div>
+                    <p class="info-item-lbl">Spesialisasi</p>
+                    <p class="info-item-val">${esc(adv.spesialisasi || '—')}</p>
+                </div>
+                <div>
+                    <p class="info-item-lbl">Pengalaman</p>
+                    <p class="info-item-val">${esc(pengalaman)}</p>
+                </div>
+                <div>
+                    <p class="info-item-lbl">Nomor NIA</p>
+                    <p class="info-item-val" style="font-family:monospace;letter-spacing:0.05em;font-size:12px;">${esc(adv.nomor_nia || '—')}</p>
+                </div>
+                <div>
+                    <p class="info-item-lbl">Domisili</p>
+                    <p class="info-item-val">${esc(lokasi)}</p>
+                </div>
+                ${adv.lulusan || adv.jurusan ? `
+                <div style="grid-column:1/-1;">
+                    <p class="info-item-lbl">Pendidikan</p>
+                    <p class="info-item-val">${esc(lulusan)}</p>
+                </div>` : ''}
+            </div>
+        </div>
+
+
+
+        <!-- Share + Copy link -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;" class="fade-up fade-up-4">
+<button onclick="copyProfileLink('${esc(chatId)}',this)" class="btn-ghost" style="flex:1;font-size:11px;padding:10px 14px;">
+                <i class="fas fa-link"></i> Salin Link
+            </button>
+        </div>
+
+        <!-- Bottom CTA -->
+        <div class="fade-up fade-up-5">
+            <a href="${esc(chatHref)}" class="cta-btn cta-chat" style="width:100%;box-sizing:border-box;margin-bottom:10px;">
+                <i class="fas fa-comments"></i> Mulai Konsultasi Sekarang
+            </a>
+            <a href="mitra.html" class="cta-btn cta-full" style="width:100%;box-sizing:border-box;">
+                <i class="fas fa-users"></i> Lihat Advokat Lain
+            </a>
+        </div>
+    `;
+}
+
+function renderNotFound(msg) {
+    document.getElementById('content').innerHTML = `
+        <div class="not-found">
+            <div style="width:64px;height:64px;border-radius:18px;background:var(--bg-input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--text-3);">
+                <i class="fas fa-user-slash"></i>
+            </div>
+            <p style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);margin:0;">${esc(msg)}</p>
+            <a href="mitra.html" class="btn-primary" style="margin-top:6px;">← Kembali ke Direktori</a>
+        </div>`;
+}
+
+function copyText(text, btn) {
+    const orig = btn.innerHTML;
+    const done = () => {
+        btn.innerHTML = '<i class="fas fa-check"></i> Tersalin!';
+        btn.style.color = '#34D399';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+    };
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else {
+        fallbackCopy(text, done);
+    }
+}
+function fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); cb(); } catch(e) {}
+    ta.remove();
+}
+function copyProfileLink(id, btn) {
+    const url = location.origin + location.pathname + '?id=' + id;
+    const done = () => {
+        if (typeof showToast === 'function') showToast('Link profil disalin!', 'success');
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Tersalin!';
+            btn.style.color = '#34D399';
+            setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+        }
+    };
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(done).catch(() => fallbackCopy(url, done));
+    } else {
+        fallbackCopy(url, done);
+    }
+}
+
+
+loadAdvokat();
+
+async function loadRating(advisorUserId) {
+    try {
+        const { data, error } = await window.supabase
+            .from('ratings')
+            .select('score')
+            .eq('advokat_id', advisorUserId);
+
+        if (error || !data || data.length === 0) return;
+
+        const count = data.length;
+        const avg = (data.reduce((s, r) => s + r.score, 0) / count).toFixed(1);
+        const stars = '★'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg));
+
+        // Tampilkan di name-block
+        const ratingDisplay = document.getElementById('rating-display');
+        if (ratingDisplay) {
+            document.getElementById('rating-stars').textContent = stars;
+            document.getElementById('rating-score').textContent = avg;
+            document.getElementById('rating-count').textContent = `· ${count} ulasan`;
+            ratingDisplay.style.display = 'flex';
+        }
+
+        // Tampilkan di stat-box
+        const statBox = document.getElementById('rating-stat-box');
+        if (statBox) {
+            document.getElementById('rating-stat-val').textContent = avg;
+            statBox.style.display = '';
+        }
+    } catch(e) { /* tabel belum ada atau error, cukup sembunyikan saja */ }
+}
+</script>
+</body>
+</html>

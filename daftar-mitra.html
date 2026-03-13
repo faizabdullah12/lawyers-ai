@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Mitra — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="shared-modal.js" onerror="window.laiConfirm=({message=''}={})=>new Promise(r=>r(confirm(message)));window.laiAlert=({message=''}={})=>new Promise(r=>{alert(message);r();});"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared-sidebar.js" defer></script>
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+
+        .form-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 640px;
+        }
+        body.light .form-wrap { background: #FFFFFF; box-shadow: 0 2px 16px rgba(0,0,0,0.06); }
+
+        .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); display: block; margin-bottom: 8px; }
+        body.light .field-label { color: #64748B; }
+
+        select.field { cursor: pointer; }
+        select.field option { background: #0F172A; color: #E2E8F0; }
+        body.light select.field option { background: #FFFFFF; color: #0F172A; }
+
+        .file-input-wrap {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1.5px dashed var(--border);
+            border-radius: 12px;
+            font-size: 12px;
+            color: var(--text-3);
+            cursor: pointer;
+        }
+        .file-input-wrap:hover { border-color: var(--accent); }
+
+        .status-card { animation: fadeUp 0.5s ease; }
+    </style>
+</head>
+<body>
+    <div class="main-scroll">
+        <div style="max-width:720px; margin:0 auto; padding:20px 20px 60px; padding-top:72px;" class="dm-fix">
+        <style>@media(min-width:1024px){.dm-fix{padding-top:36px!important}}</style>
+
+            <!-- Payment Gate -->
+            <div id="paymentGate" style="display:none;" class="fade-up">
+                <div style="margin-bottom:24px;">
+                    <p style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Registrasi Mitra</p>
+                    <h2 style="font-size:24px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Daftar Mitra <span style="color:#60A5FA;">Ahli</span></h2>
+                    <p style="font-size:12px;color:var(--text-3);margin-top:6px;">Bergabung sebagai advokat profesional di platform LawyersAI</p>
+                </div>
+
+                <!-- Biaya card -->
+                <div class="form-wrap fade-up fade-up-1" style="max-width:none;margin-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                        <div style="width:48px;height:48px;border-radius:14px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas fa-crown" style="color:#F59E0B;font-size:18px;"></i>
+                        </div>
+                        <div>
+                            <p style="font-size:13px;font-weight:900;color:var(--text-1);margin:0 0 2px;font-style:italic;">Biaya Pendaftaran Mitra</p>
+                            <p style="font-size:10px;color:var(--text-3);">Satu kali pembayaran, akses seumur hidup</p>
+                        </div>
+                        <div style="margin-left:auto;text-align:right;">
+                            <p style="font-size:22px;font-weight:900;color:var(--text-1);margin:0;letter-spacing:-0.5px;">Rp 500.000</p>
+                            <p style="font-size:9px;color:var(--text-3);font-weight:700;text-transform:uppercase;">sekali bayar</p>
+                        </div>
+                    </div>
+
+                    <!-- Benefits -->
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;padding:16px;background:var(--bg-input);border-radius:14px;border:1px solid var(--border);">
+                        <p style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;">Yang kamu dapatkan:</p>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
+                            <span style="font-size:12px;color:var(--text-2);">Profil terverifikasi di direktori advokat LawyersAI</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
+                            <span style="font-size:12px;color:var(--text-2);">Akses dashboard mitra & inbox klien</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
+                            <span style="font-size:12px;color:var(--text-2);">Terima konsultasi langsung dari ribuan pengguna</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
+                            <span style="font-size:12px;color:var(--text-2);">Badge "Verified Partner" di profil kamu</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
+                            <span style="font-size:12px;color:var(--text-2);">Support prioritas dari tim LawyersAI</span>
+                        </div>
+                    </div>
+
+                    <!-- CTA -->
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <button onclick="handlePaymentIntent()" class="btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:13px;">
+                            <i class="fas fa-lock"></i> Bayar & Lanjut Daftar
+                        </button>
+                        <p style="font-size:10px;color:var(--text-3);text-align:center;margin:0;">
+                            <i class="fas fa-shield-alt" style="color:#34D399;margin-right:4px;"></i>
+                            Pembayaran aman · Setelah bayar, isi form pendaftaran
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Cara Daftar -->
+                <div class="form-wrap fade-up fade-up-2" style="max-width:none;">
+                    <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 14px;">Cara Mendaftar</p>
+                    <div style="display:flex;flex-direction:column;gap:12px;">
+                        <div style="display:flex;align-items:flex-start;gap:12px;">
+                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-credit-card" style="color:#60A5FA;font-size:12px;"></i>
+                            </div>
+                            <div>
+                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Bayar Rp 500.000</p>
+                                <p style="font-size:11px;color:var(--text-3);margin:0;">Klik tombol di atas, transfer ke rekening admin</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:12px;">
+                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fab fa-whatsapp" style="color:#34D399;font-size:12px;"></i>
+                            </div>
+                            <div>
+                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Konfirmasi ke Admin</p>
+                                <p style="font-size:11px;color:var(--text-3);margin:0;">Kirim bukti bayar via WhatsApp ke admin</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:12px;">
+                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-file-alt" style="color:#FBBF24;font-size:12px;"></i>
+                            </div>
+                            <div>
+                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Isi Form Pendaftaran</p>
+                                <p style="font-size:11px;color:var(--text-3);margin:0;">Admin aktifkan akses form setelah konfirmasi</p>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:flex-start;gap:12px;">
+                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="fas fa-check-circle" style="color:#A78BFA;font-size:12px;"></i>
+                            </div>
+                            <div>
+                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Akun Diverifikasi</p>
+                                <p style="font-size:11px;color:var(--text-3);margin:0;">Tim verifikasi NIA & dokumen dalam 1-3 hari kerja</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Section -->
+            <div id="formSection">
+                <div style="margin-bottom:24px;" class="fade-up">
+                    <p style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Registrasi</p>
+                    <h2 style="font-size:24px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Daftar Mitra <span style="color:#60A5FA;">Ahli</span></h2>
+                    <p style="font-size:12px;color:var(--text-3);margin-top:6px;">Lengkapi profil profesional Anda untuk verifikasi sistem.</p>
+                </div>
+
+                <div class="form-wrap fade-up fade-up-1">
+                    <form id="mitraForm" style="display:flex;flex-direction:column;gap:14px;">
+                        <div>
+                            <label class="field-label">Nama Lengkap & Gelar</label>
+                            <input type="text" id="nama" placeholder="Contoh: Ahmad Santoso, S.H., M.H." class="field" required>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="grid-2">
+                        <style>@media(max-width:500px){.grid-2{grid-template-columns:1fr!important}}</style>
+                            <div>
+                                <label class="field-label">Nomor NIA</label>
+                                <input type="text" id="nia" placeholder="Nomor Induk Advokat" class="field" required>
+                            </div>
+                            <div>
+                                <label class="field-label">Tahun Pengalaman</label>
+                                <input type="number" id="pengalaman" placeholder="Contoh: 5" class="field" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label">Bidang Keahlian</label>
+                            <select id="spesialisasi" class="field" required>
+                                <option value="" disabled selected>Pilih Bidang Keahlian</option>
+                                <option value="Hukum Pidana">Hukum Pidana</option>
+                                <option value="Hukum Perdata">Hukum Perdata</option>
+                                <option value="Hukum Keluarga & Waris">Hukum Keluarga & Waris</option>
+                                <option value="Hukum Bisnis & Korporasi">Hukum Bisnis & Korporasi</option>
+                                <option value="Hukum Pertanahan / Agraria">Hukum Pertanahan / Agraria</option>
+                                <option value="Hukum Ketenagakerjaan">Hukum Ketenagakerjaan</option>
+                            </select>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="grid-2">
+                            <div>
+                                <label class="field-label">Universitas Lulusan</label>
+                                <input type="text" id="lulusan" placeholder="Universitas..." class="field" required>
+                            </div>
+                            <div>
+                                <label class="field-label">Fakultas / Jurusan</label>
+                                <input type="text" id="jurusan" placeholder="Hukum..." class="field" required>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="grid-2">
+                            <div>
+                                <label class="field-label">Provinsi</label>
+                                <input type="text" id="provinsi" placeholder="Provinsi Domisili" class="field" required>
+                            </div>
+                            <div>
+                                <label class="field-label">Kabupaten / Kota</label>
+                                <input type="text" id="kabupaten" placeholder="Kab/Kota" class="field" required>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label">Deskripsi Singkat</label>
+                            <textarea id="deskripsi" placeholder="Pengalaman dan spesialisasi Anda..." class="field" style="height:80px;resize:none;"></textarea>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="grid-2">
+                            <div>
+                                <label class="field-label">Foto Profil</label>
+                                <label class="file-input-wrap" style="display:flex;align-items:center;gap:8px;">
+                                    <i class="fas fa-image" style="color:var(--accent);"></i>
+                                    <span id="foto-label">Pilih gambar...</span>
+                                    <input type="file" id="input-foto" accept="image/*" style="display:none;" required onchange="document.getElementById('foto-label').textContent=this.files[0]?.name||'Pilih gambar...'">
+                                </label>
+                            </div>
+                            <div>
+                                <label class="field-label">Foto KTP</label>
+                                <label class="file-input-wrap" style="display:flex;align-items:center;gap:8px;">
+                                    <i class="fas fa-id-card" style="color:var(--accent);"></i>
+                                    <span id="ktp-label">Pilih gambar...</span>
+                                    <input type="file" id="input-ktp" accept="image/*" style="display:none;" required onchange="document.getElementById('ktp-label').textContent=this.files[0]?.name||'Pilih gambar...'">
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" id="btnSubmit" class="btn-primary" style="width:100%;justify-content:center;padding:14px;margin-top:6px;">
+                            <i class="fas fa-paper-plane"></i> Kirim Pendaftaran
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div id="statusSection" style="display:none;" class="status-card">
+                <div class="form-wrap" style="max-width:none;text-align:center;padding:40px 32px;">
+                    <div id="statusIcon" style="width:64px;height:64px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;"></div>
+                    <h3 id="statusTitle" style="font-size:20px;font-weight:900;font-style:italic;color:var(--text-1);margin:0 0 10px;">Status Pendaftaran</h3>
+                    <p id="statusDesc" style="font-size:13px;color:var(--text-3);margin:0 0 24px;line-height:1.7;max-width:380px;display:inline-block;"></p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;" class="grid-2">
+                        <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+                            <p style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;">ID Pendaftaran</p>
+                            <p id="regID" style="font-size:12px;font-weight:800;font-style:italic;color:var(--text-1);margin:0;">#---</p>
+                        </div>
+                        <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;">
+                            <p style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;">Tanggal Daftar</p>
+                            <p id="regDate" style="font-size:12px;font-weight:800;color:var(--text-1);margin:0;">--/--/--</p>
+                        </div>
+                    </div>
+                    <a href="index.html" class="btn-primary" style="display:inline-flex;padding:12px 28px;">Kembali ke Beranda</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        const ADMIN_WA = '6285965988346'; 
+
+        function handlePaymentIntent() {
+            const waMsg = encodeURIComponent(
+                `Halo Admin LawyersAI,\n\nSaya ingin mendaftar sebagai Mitra Ahli.\n\nNama: -\nEmail: ${currentUser?.email || '-'}\n\nMohon info rekening untuk pembayaran Rp 500.000.\n\nTerima kasih.`
+            );
+            window.open(`https://wa.me/${ADMIN_WA}?text=${waMsg}`, '_blank');
+            laiAlert({
+                type: 'info',
+                title: 'Hubungi Admin',
+                message: 'WhatsApp admin sudah dibuka. Setelah konfirmasi pembayaran, admin akan mengaktifkan akses form pendaftaran kamu.',
+                okText: 'Mengerti'
+            });
+        }
+
+        async function checkSession() {
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+            currentUser = session.user;
+
+            // Cek apakah sudah terdaftar
+            const { data: existingMitra } = await window.supabase
+                .from('mitra_ahli').select('*').eq('user_id', currentUser.id).maybeSingle();
+            if (existingMitra) { showStatus(existingMitra); return; }
+
+            // Cek apakah admin sudah aktifkan akses form (flag di profiles)
+            const { data: profile } = await window.supabase
+                .from('profiles').select('mitra_payment_confirmed').eq('id', currentUser.id).single();
+
+            if (profile?.mitra_payment_confirmed) {
+                // Bayar sudah dikonfirmasi admin → tampilkan form
+                document.getElementById('paymentGate').style.display = 'none';
+                document.getElementById('formSection').style.display = 'block';
+            } else {
+                // Belum bayar → tampilkan payment gate
+                document.getElementById('paymentGate').style.display = 'block';
+                document.getElementById('formSection').style.display = 'none';
+            }
+        }
+
+        function showStatus(mitra) {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('statusSection').style.display = 'block';
+            const iconBox = document.getElementById('statusIcon');
+            document.getElementById('regID').textContent = '#' + mitra.id.slice(0,8).toUpperCase();
+            document.getElementById('regDate').textContent = new Date(mitra.created_at).toLocaleDateString('id-ID');
+            if (mitra.status_verifikasi === 'pending') {
+                iconBox.style.background = 'rgba(245,158,11,0.12)'; iconBox.style.color = '#F59E0B';
+                iconBox.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+                document.getElementById('statusTitle').textContent = 'Dalam Verifikasi';
+                document.getElementById('statusDesc').textContent = 'Data kamu sedang diperiksa tim kami. Biasanya 1-3 hari kerja.';
+            } else if (mitra.status_verifikasi === 'verified') {
+                iconBox.style.background = 'rgba(16,185,129,0.12)'; iconBox.style.color = '#34D399';
+                iconBox.innerHTML = '<i class="fas fa-check-circle"></i>';
+                document.getElementById('statusTitle').textContent = 'Akun Terverifikasi ✓';
+                document.getElementById('statusDesc').textContent = 'Selamat! Akun kamu sudah aktif sebagai Partner Ahli.';
+            } else {
+                iconBox.style.background = 'rgba(239,68,68,0.12)'; iconBox.style.color = '#F87171';
+                iconBox.innerHTML = '<i class="fas fa-times-circle"></i>';
+                document.getElementById('statusTitle').textContent = 'Pendaftaran Ditolak';
+                document.getElementById('statusDesc').textContent = 'Mohon maaf, berkas kamu belum sesuai kriteria. Hubungi support.';
+            }
+        }
+
+        async function uploadToStorage(bucket, file, folder) {
+            const ext = file.name.split('.').pop();
+            const fileName = `${folder}/${currentUser.id}-${Date.now()}.${ext}`;
+            const { error } = await window.supabase.storage.from(bucket).upload(fileName, file);
+            if (error) throw error;
+            return window.supabase.storage.from(bucket).getPublicUrl(fileName).data.publicUrl;
+        }
+
+        document.getElementById('mitraForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Mengirim...';
+            try {
+                const fotoFile = document.getElementById('input-foto').files[0];
+                const ktpFile = document.getElementById('input-ktp').files[0];
+                if (!fotoFile || !ktpFile) throw new Error('Foto profil & KTP wajib diisi');
+                const fotoUrl = await uploadToStorage('avatars', fotoFile, 'mitra-profil');
+                const ktpUrl = await uploadToStorage('dokumen-mitra', ktpFile, 'mitra-ktp');
+                const { error } = await window.supabase.from('mitra_ahli').insert([{
+                    user_id: currentUser.id,
+                    nama_lengkap: document.getElementById('nama').value,
+                    nomor_nia: document.getElementById('nia').value,
+                    pengalaman: document.getElementById('pengalaman').value,
+                    spesialisasi: document.getElementById('spesialisasi').value,
+                    lulusan: document.getElementById('lulusan').value,
+                    jurusan: document.getElementById('jurusan').value,
+                    provinsi: document.getElementById('provinsi').value,
+                    kabupaten: document.getElementById('kabupaten').value,
+                    bio_singkat: document.getElementById('deskripsi').value,
+                    foto_profil_url: fotoUrl,
+                    foto_ktp_url: ktpUrl,
+                    status_verifikasi: 'pending'
+                }]);
+                if (error) throw error;
+                showLALToast('success', 'Pendaftaran Terkirim!', 'Data kamu sudah masuk sistem. Tunggu verifikasi.');
+                setTimeout(() => location.reload(), 2000);
+            } catch(err) {
+                showLALToast('error', 'Gagal Mendaftar', err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Pendaftaran';
+            }
+        });
+
+        checkSession();
+    </script>
+</body>
+</html>

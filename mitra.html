@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Ahli — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared-sidebar.js" defer></script>
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+
+        .partner-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 28px 24px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            position: relative; overflow: hidden;
+            transition: transform 0.25s ease, border-color 0.25s, box-shadow 0.25s;
+        }
+        .partner-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 40px var(--shadow);
+        }
+        body.light .partner-card { background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        body.light .partner-card:hover { box-shadow: 0 16px 40px rgba(0,0,0,0.10); }
+
+        .filter-btn {
+            padding: 8px 16px; border-radius: 20px;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            background: var(--bg-input); border: 1px solid var(--border);
+            color: var(--text-3); cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+        }
+        .filter-btn:hover { background: var(--bg-hover); border-color: var(--border-hover); color: var(--text-2); }
+        .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+        .adv-avatar-wrap {
+            width: 80px; height: 80px;
+            border-radius: 20px; overflow: hidden;
+            margin-bottom: 14px; border: 2px solid var(--border);
+            flex-shrink: 0;
+        }
+        .adv-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .stat-mini {
+            text-align: left;
+        }
+        .stat-mini-label {
+            font-size: 9px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--text-3); margin: 0 0 2px;
+        }
+        .stat-mini-val {
+            font-size: 13px; font-weight: 800; color: var(--text-1); margin: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .empty-state {
+            grid-column: 1/-1; text-align: center;
+            padding: 60px 20px; border: 1.5px dashed var(--border);
+            border-radius: 20px; display: flex; flex-direction: column;
+            align-items: center; gap: 12px; opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-scroll">
+        <div style="max-width:1100px; margin:0 auto; padding:20px 20px 48px; padding-top:72px;" class="mp-fix">
+        <style>@media(min-width:1024px){.mp-fix{padding-top:36px!important}}</style>
+
+            <!-- Header -->
+            <header style="margin-bottom:28px;" class="fade-up">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px;">
+                    <div>
+                        <p style="font-size:10px; font-weight:700; color:var(--text-4); text-transform:uppercase; letter-spacing:0.14em; margin-bottom:4px;">Direktori</p>
+                        <h2 style="font-size:26px; font-weight:900; color:var(--text-1); margin:0; font-style:italic;">Partner <span style="color:#60A5FA;">Ahli Hukum</span></h2>
+                        <p style="font-size:10px; color:var(--text-3); font-weight:600; margin-top:6px; text-transform:uppercase; letter-spacing:0.12em;">Advokat & Praktisi Hukum Terverifikasi</p>
+                    </div>
+                    <button onclick="window.toggleTheme?.()" class="theme-toggle" style="margin-top:4px;flex-shrink:0;"><div class="knob">🌙</div></button>
+                </div>
+
+                <!-- Search + filter -->
+                <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                    <div style="position:relative; flex:1; min-width:200px; max-width:360px;">
+                        <i class="fas fa-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:12px;pointer-events:none;"></i>
+                        <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Cari nama, keahlian, kota..." class="field" style="padding-left:36px;">
+                    </div>
+                    <div id="filter-container" style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">Semua</button>
+                        <button class="filter-btn" data-filter="Pidana" onclick="setFilter('Pidana',this)">Pidana</button>
+                        <button class="filter-btn" data-filter="Perdata" onclick="setFilter('Perdata',this)">Perdata</button>
+                        <button class="filter-btn" data-filter="Bisnis" onclick="setFilter('Bisnis',this)">Bisnis</button>
+                        <button class="filter-btn" data-filter="Keluarga" onclick="setFilter('Keluarga',this)">Keluarga</button>
+                        <button class="filter-btn" data-filter="Properti" onclick="setFilter('Properti',this)">Properti</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Result count -->
+            <p id="result-count" style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;display:none;"></p>
+
+            <!-- Grid -->
+            <div id="partner-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;">
+                <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size:28px;color:var(--accent);margin-bottom:12px;display:block;"></i>
+                    <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;">Memuat data mitra...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
+        const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
+        const SUPA_HEADERS = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
+
+        let allPartnersData = [];
+        let activeFilter = 'all';
+        let searchDebounce = null;
+
+        function esc(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function fetchPartners(filter = 'all') {
+            activeFilter = filter;
+            const grid = document.getElementById('partner-grid');
+            grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+                <i class="fas fa-circle-notch fa-spin" style="font-size:28px;color:var(--accent);margin-bottom:12px;display:block;"></i>
+                <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;">Memuat...</p>
+            </div>`;
+            document.getElementById('result-count').style.display = 'none';
+
+            try {
+                // Fetch semua verified (filter spesialisasi di client-side untuk konsistensi)
+                let url = `${SUPA_URL}/rest/v1/mitra_ahli?select=*&status_verifikasi=eq.verified&order=created_at.desc`;
+                const res = await fetch(url, { headers: SUPA_HEADERS });
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                const data = await res.json();
+                allPartnersData = Array.isArray(data) ? data : [];
+                applyFilterAndSearch();
+            } catch (err) {
+                console.error('[Mitra] fetch error:', err);
+                grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+                    <div style="width:56px;height:56px;background:rgba(239,68,68,0.1);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                        <i class="fas fa-wifi-slash" style="color:#F87171;font-size:20px;"></i>
+                    </div>
+                    <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0 0 6px;">Gagal Memuat Data</p>
+                    <p style="font-size:11px;color:var(--text-3);margin:0 0 16px;">${esc(err.message)}</p>
+                    <button onclick="fetchPartners(activeFilter)" class="btn-primary">
+                        <i class="fas fa-rotate-right"></i> Coba Lagi
+                    </button>
+                </div>`;
+            }
+        }
+
+        function setFilter(filter, btn) {
+            activeFilter = filter;
+            document.querySelectorAll('#filter-container button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilterAndSearch();
+        }
+
+        function handleSearch() {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(applyFilterAndSearch, 200);
+        }
+
+        function applyFilterAndSearch() {
+            const kw = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+            let filtered = allPartnersData;
+
+            // Apply spesialisasi filter
+            if (activeFilter !== 'all') {
+                filtered = filtered.filter(p =>
+                    (p.spesialisasi || '').toLowerCase().includes(activeFilter.toLowerCase())
+                );
+            }
+
+            // Apply search
+            if (kw) {
+                filtered = filtered.filter(p =>
+                    (p.nama_lengkap || '').toLowerCase().includes(kw) ||
+                    (p.spesialisasi || '').toLowerCase().includes(kw) ||
+                    (p.kabupaten || '').toLowerCase().includes(kw) ||
+                    (p.provinsi || '').toLowerCase().includes(kw) ||
+                    (p.lulusan || '').toLowerCase().includes(kw)
+                );
+            }
+
+            renderCards(filtered);
+        }
+
+        function renderCards(partners) {
+            const grid = document.getElementById('partner-grid');
+            const countEl = document.getElementById('result-count');
+
+            if (!partners || partners.length === 0) {
+                countEl.style.display = 'none';
+                const kw = document.getElementById('searchInput').value.trim();
+                grid.innerHTML = `<div class="empty-state">
+                    <i class="fas fa-user-magnifying-glass" style="font-size:28px;color:var(--text-3);"></i>
+                    <p style="font-size:13px;font-weight:800;color:var(--text-2);margin:0;">
+                        ${kw ? `Tidak ada advokat cocok dengan "${esc(kw)}"` : 'Belum ada mitra terdaftar'}
+                    </p>
+                    ${kw ? `<button onclick="document.getElementById('searchInput').value='';applyFilterAndSearch();" class="btn-ghost" style="font-size:11px;padding:8px 16px;">Hapus pencarian</button>` : ''}
+                </div>`;
+                return;
+            }
+
+            countEl.textContent = `${partners.length} advokat ditemukan`;
+            countEl.style.display = 'block';
+            grid.innerHTML = '';
+
+            partners.forEach(p => {
+                const img = p.foto_profil_url ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
+                const lokasi = [p.kabupaten, p.provinsi].filter(Boolean).join(', ') || 'Indonesia';
+                // Gunakan user_id sebagai chat ID (fallback ke id tabel)
+                const chatId = p.user_id || p.id;
+
+                const div = document.createElement('div');
+                div.className = 'partner-card';
+                div.innerHTML = `
+                    <div style="position:absolute;top:14px;right:14px;font-size:8px;font-weight:800;background:rgba(16,185,129,0.12);color:#34D399;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;">✓ Verified</div>
+                    <div class="adv-avatar-wrap">
+                        <img src="${esc(img)}" alt="${esc(p.nama_lengkap)}"
+                             onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama_lengkap)}&background=1E3A5F&color=60A5FA'">
+                    </div>
+                    <span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:inline-block;">${esc(p.spesialisasi || 'Legal Expert')}</span>
+                    <h3 style="font-size:15px;font-weight:900;font-style:italic;color:var(--text-1);margin:0 0 4px;letter-spacing:-0.2px;">${esc(p.nama_lengkap)}</h3>
+                    <p style="font-size:10px;color:var(--text-3);font-weight:600;margin:0 0 8px;max-width:180px;text-align:center;line-height:1.4;">${esc(p.lulusan || 'Universitas Hukum')}</p>
+                    <div style="display:flex;align-items:center;gap:5px;margin-bottom:16px;font-size:9px;font-weight:700;color:var(--accent);">
+                        <i class="fas fa-location-dot"></i>
+                        <span>${esc(lokasi)}</span>
+                    </div>
+                    <div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;padding-top:14px;border-top:1px solid var(--border);">
+                        <div class="stat-mini">
+                            <p class="stat-mini-label">Pengalaman</p>
+                            <p class="stat-mini-val">${esc(p.pengalaman ? p.pengalaman + ' Thn' : '—')}</p>
+                        </div>
+                        <div class="stat-mini">
+                            <p class="stat-mini-label">Jurusan</p>
+                            <p class="stat-mini-val">${esc(p.jurusan || '—')}</p>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">
+                        <a href="profil-advokat.html?id=${encodeURIComponent(chatId)}" class="btn-ghost" style="justify-content:center;padding:10px 12px;font-size:11px;">
+                            <i class="fas fa-id-card"></i> Profil
+                        </a>
+                        <a href="chat-advokat.html?id=${encodeURIComponent(chatId)}" class="btn-primary" style="justify-content:center;padding:10px 12px;font-size:11px;">
+                            <i class="fas fa-comments"></i> Chat
+                        </a>
+                    </div>`;
+                grid.appendChild(div);
+            });
+        }
+
+        window.onload = () => { fetchPartners(); };
+    </script>
+</body>
+</html>

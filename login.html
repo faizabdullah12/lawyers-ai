@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Login - Lawyers AI Enterprise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="shared-modal.js" onerror="window.laiAlert=({message=''}={})=>new Promise(r=>{alert(message);r()});window.laiConfirm=({message=''}={})=>new Promise(r=>r(confirm(message)));"></script>
+    <script src="shared-otp.js"></script>
+
+    <script>
+        // --- SECURITY: JIKA SUDAH LOGIN, TENDANG KE DASHBOARD ---
+        async function checkAlreadyLogin() {
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (session) {
+                window.location.href = "index.html";
+            }
+        }
+        checkAlreadyLogin();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f172a;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated Diagonal Stripes Background */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .stripe {
+            position: absolute;
+            width: 200%;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(59, 130, 246, 0.3) 50%, 
+                transparent 100%);
+            animation: moveStripe 8s linear infinite;
+        }
+
+        .stripe:nth-child(1) { top: 10%; animation-delay: 0s; opacity: 0.4; }
+        .stripe:nth-child(2) { top: 25%; animation-delay: 2s; opacity: 0.6; }
+        .stripe:nth-child(3) { top: 40%; animation-delay: 4s; opacity: 0.3; }
+        .stripe:nth-child(4) { top: 55%; animation-delay: 1s; opacity: 0.5; }
+        .stripe:nth-child(5) { top: 70%; animation-delay: 3s; opacity: 0.4; }
+        .stripe:nth-child(6) { top: 85%; animation-delay: 5s; opacity: 0.6; }
+
+        @keyframes moveStripe {
+            0% { transform: translateX(-100%) rotate(-5deg); }
+            100% { transform: translateX(0%) rotate(-5deg); }
+        }
+
+        /* Glowing Orbs */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: floatOrb 20s ease-in-out infinite;
+        }
+
+        .orb1 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, transparent 70%);
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
+
+        .orb2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%);
+            bottom: -250px;
+            right: -250px;
+            animation-delay: 5s;
+        }
+
+        .orb3 {
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 10s;
+        }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.1); }
+            66% { transform: translate(-50px, 50px) scale(0.9); }
+        }
+
+        /* Grid Pattern Overlay */
+        .grid-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .main-container { 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .form-card {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 50px 45px;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Logo Section */
+        .logo-section {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease 0.3s both;
+        }
+
+        .logo {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 42px;
+            font-weight: 800;
+            font-style: italic;
+            color: #0f172a;
+            letter-spacing: -2px;
+            margin-bottom: 8px;
+        }
+
+        .logo span {
+            color: #3b82f6;
+        }
+
+        .logo-tagline {
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Form Header */
+        .form-header {
+            text-align: center;
+            margin-bottom: 35px;
+            animation: fadeIn 1s ease 0.5s both;
+        }
+
+        .form-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .form-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 22px;
+            animation: fadeIn 1s ease both;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.6s; }
+        .form-group:nth-child(2) { animation-delay: 0.7s; }
+
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+
+        .forgot-link {
+            font-size: 11px;
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+            color: #2563eb;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 18px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #0f172a;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .form-input::placeholder {
+            color: #cbd5e1;
+        }
+
+        .form-input:focus {
+            background: white;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-input.input-error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 15px;
+            pointer-events: none;
+        }
+
+        .input-with-icon {
+            padding-left: 50px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px;
+        }
+
+        .toggle-password:hover {
+            color: #3b82f6;
+        }
+
+        /* Error Messages */
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 6px;
+            margin-left: 4px;
+            display: none;
+            animation: shake 0.3s ease;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Remember Me */
+        .remember-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            animation: fadeIn 1s ease 0.8s both;
+        }
+
+        .form-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        .remember-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Submit Button */
+        .submit-button {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: white;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 1s ease 0.9s both;
+        }
+
+        .submit-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .submit-button:hover::before {
+            left: 100%;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.5);
+        }
+
+        .submit-button:active {
+            transform: translateY(-1px);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 28px 0;
+            animation: fadeIn 1s ease 1s both;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider-text {
+            padding: 0 16px;
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        /* Footer Link */
+        .form-footer {
+            text-align: center;
+            margin-top: 28px;
+            animation: fadeIn 1s ease 1.1s both;
+        }
+
+        .form-footer p {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .form-footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .form-card {
+                padding: 40px 32px;
+                max-width: 450px;
+            }
+
+            .logo {
+                font-size: 36px;
+            }
+
+            .form-title {
+                font-size: 24px;
+            }
+
+            .form-input {
+                padding: 14px 16px;
+                font-size: 16px;
+            }
+
+            .input-with-icon {
+                padding-left: 46px;
+            }
+
+            .input-icon {
+                left: 16px;
+            }
+
+            .toggle-password {
+                right: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-container {
+                padding: 16px;
+            }
+
+            .form-card {
+                padding: 35px 24px;
+                border-radius: 24px;
+            }
+
+            .logo {
+                font-size: 32px;
+            }
+
+            .form-title {
+                font-size: 22px;
+            }
+
+            .form-input {
+                padding: 13px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="stripe"></div>
+        <div class="stripe"></div>
+        <div class="stripe"></div>
+        <div class="stripe"></div>
+        <div class="stripe"></div>
+        <div class="stripe"></div>
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+        <div class="grid-pattern"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p class="loading-text">Memverifikasi akun...</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="form-card">
+            
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <h1 class="logo">Lawyers<span>AI</span></h1>
+                <p class="logo-tagline">Enterprise Platform</p>
+            </div>
+
+            <!-- Form Header -->
+            <div class="form-header">
+                <h2 class="form-title">Selamat Datang Kembali</h2>
+                <p class="form-subtitle">Masuk ke akun LawyersAI Anda</p>
+            </div>
+
+            <form id="loginForm" novalidate>
+                <!-- Email -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span>Email</span>
+                    </label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="loginEmail" class="form-input input-with-icon" 
+                               placeholder="nama@gmail.com" required>
+                    </div>
+                    <div class="error-message" id="emailError">Format email tidak valid</div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <span>Password</span>
+                        <a href="#" class="forgot-link" onclick="handleForgotPassword(event)">Lupa Password?</a>
+                    </label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="loginPassword" class="form-input input-with-icon" 
+                               placeholder="Masukkan password" required>
+                        <span class="toggle-password" id="togglePassword">
+                            <i class="far fa-eye" id="eyeIcon"></i>
+                        </span>
+                    </div>
+                    <div class="error-message" id="passwordError">Password wajib diisi</div>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="remember-wrapper">
+                    <input type="checkbox" id="rememberMe" class="form-checkbox">
+                    <label for="rememberMe" class="remember-label">Ingat saya</label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-button" id="btnLogin">
+                    Masuk Sekarang
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">ATAU</span>
+                <div class="divider-line"></div>
+            </div>
+
+            <!-- Footer -->
+            <div class="form-footer">
+                <p>Belum punya akun? <a href="register.html">Daftar di sini</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Email validation
+        function isValidEmail(email) {
+            const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return re.test(String(email).toLowerCase());
+        }
+
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('loginPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.className = 'far fa-eye';
+            }
+        });
+
+        // Real-time validation
+        document.getElementById('loginEmail').addEventListener('blur', function() {
+            if (this.value && !isValidEmail(this.value)) {
+                this.classList.add('input-error');
+                document.getElementById('emailError').classList.add('show');
+            } else {
+                this.classList.remove('input-error');
+                document.getElementById('emailError').classList.remove('show');
+            }
+        });
+
+        // Clear errors on input
+        document.getElementById('loginEmail').addEventListener('input', function() {
+            this.classList.remove('input-error');
+            document.getElementById('emailError').classList.remove('show');
+        });
+
+        document.getElementById('loginPassword').addEventListener('input', function() {
+            this.classList.remove('input-error');
+            document.getElementById('passwordError').classList.remove('show');
+        });
+
+        // Form submission
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            // Validation
+            let hasError = false;
+            
+            if (!isValidEmail(email)) {
+                document.getElementById('loginEmail').classList.add('input-error');
+                document.getElementById('emailError').classList.add('show');
+                hasError = true;
+            }
+            
+            if (!password) {
+                document.getElementById('loginPassword').classList.add('input-error');
+                document.getElementById('passwordError').classList.add('show');
+                hasError = true;
+            }
+            
+            if (hasError) {
+                return;
+            }
+            
+            // Show loading overlay
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            const btn = document.getElementById('btnLogin');
+            btn.disabled = true;
+
+            try {
+                const { data, error } = await window.supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                    
+                    let errorMsg = error.message;
+                    if (error.message.includes('Invalid login credentials')) {
+                        errorMsg = 'Email atau password salah. Silakan coba lagi.';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMsg = 'Email belum diverifikasi. Silakan cek email Anda.';
+                    }
+                    
+                    laiAlert({ type: "danger", title: "Gagal Masuk", message: errorMsg });
+                    btn.disabled = false;
+                } else {
+                    // Login successful
+                    window.location.href = "index.html";
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                document.getElementById('loadingOverlay').classList.remove('active');
+                laiAlert({ type:'danger', title:'Kesalahan Sistem', message:'Terjadi kesalahan tak terduga. Silakan coba lagi.' });
+                btn.disabled = false;
+            }
+        });
+
+        // ── LUPA SANDI FLOW ──
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('loginEmail');
+            const email = emailInput?.value?.trim();
+
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                laiAlert({ type:'warning', title:'Email Diperlukan', message:'Masukkan email kamu di kolom email terlebih dahulu, lalu klik Lupa Password.' });
+                emailInput?.focus();
+                return;
+            }
+
+            const ok = await laiConfirm({
+                type: 'info',
+                title: 'Reset Kata Sandi',
+                message: `Kode OTP akan dikirim ke <strong>${email}</strong> untuk mereset kata sandi kamu.`,
+                confirmText: 'Kirim OTP',
+                cancelText: 'Batal'
+            });
+            if (!ok) return;
+
+            document.getElementById('loadingOverlay').classList.add('active');
+            try {
+                const { error } = await window.supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: window.location.origin + '/reset-sandi.html'
+                });
+                if (error) throw error;
+                document.getElementById('loadingOverlay').classList.remove('active');
+
+                showOTPModal({
+                    email,
+                    type: 'recovery',
+                    title: 'Verifikasi Reset Sandi',
+                    subtitle: `Kode OTP 6 digit untuk reset sandi telah dikirim ke<br><strong>${email}</strong>`,
+                    onSuccess: async (data) => {
+                        // Setelah OTP valid, user sudah login via recovery — tampil form sandi baru
+                        showNewPasswordModal();
+                    }
+                });
+            } catch(err) {
+                document.getElementById('loadingOverlay').classList.remove('active');
+                laiAlert({ type:'danger', title:'Gagal Mengirim OTP', message: err.message });
+            }
+        }
+
+        // ── MODAL SANDI BARU (setelah OTP recovery berhasil) ──
+        function showNewPasswordModal() {
+            const overlay = document.createElement('div');
+            overlay.className = 'lai-modal-overlay';
+            overlay.id = 'lai-newpass-modal';
+            overlay.innerHTML = `
+                <div class="lai-modal-card" style="max-width:400px;">
+                    <div class="lai-modal-icon" style="background:rgba(16,185,129,0.12);">
+                        <i class="fas fa-lock-open" style="color:#34D399;"></i>
+                    </div>
+                    <p class="lai-modal-title">Buat Kata Sandi Baru</p>
+                    <p class="lai-modal-body">OTP berhasil diverifikasi. Masukkan kata sandi baru kamu.</p>
+                    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+                        <div style="position:relative;">
+                            <input type="password" id="np-pass1" placeholder="Kata sandi baru (min. 6 karakter)"
+                                style="width:100%;padding:12px 44px 12px 14px;background:var(--bg-input,rgba(255,255,255,0.05));border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:12px;color:var(--text-1,#F1F5F9);font-size:13px;font-weight:600;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.2s;">
+                            <button type="button" onclick="toggleNP('np-pass1',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3,#64748B);"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <div style="position:relative;">
+                            <input type="password" id="np-pass2" placeholder="Ulangi kata sandi baru"
+                                style="width:100%;padding:12px 44px 12px 14px;background:var(--bg-input,rgba(255,255,255,0.05));border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:12px;color:var(--text-1,#F1F5F9);font-size:13px;font-weight:600;font-family:inherit;outline:none;box-sizing:border-box;transition:border-color 0.2s;">
+                            <button type="button" onclick="toggleNP('np-pass2',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3,#64748B);"><i class="fas fa-eye"></i></button>
+                        </div>
+                        <p id="np-status" style="font-size:11px;color:#F87171;margin:0;min-height:14px;font-weight:600;"></p>
+                    </div>
+                    <div class="lai-modal-actions">
+                        <button class="lai-modal-btn lai-modal-btn-success" onclick="submitNewPassword()" style="width:100%;justify-content:center;background:#10B981;box-shadow:0 4px 14px rgba(16,185,129,0.3);">
+                            <i class="fas fa-shield-check" style="margin-right:6px;"></i>Simpan Kata Sandi Baru
+                        </button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+            document.getElementById('np-pass1').focus();
+            document.getElementById('np-pass2').addEventListener('keydown', e => { if(e.key==='Enter') submitNewPassword(); });
+        }
+
+        function toggleNP(id, btn) {
+            const inp = document.getElementById(id);
+            const hidden = inp.type === 'password';
+            inp.type = hidden ? 'text' : 'password';
+            btn.querySelector('i').className = hidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+        }
+
+        async function submitNewPassword() {
+            const p1 = document.getElementById('np-pass1').value;
+            const p2 = document.getElementById('np-pass2').value;
+            const status = document.getElementById('np-status');
+            if (p1.length < 6) { status.textContent = 'Minimal 6 karakter.'; return; }
+            if (p1 !== p2) { status.textContent = 'Kata sandi tidak cocok.'; return; }
+            status.textContent = '';
+
+            const { error } = await window.supabase.auth.updateUser({ password: p1 });
+            if (error) { status.textContent = error.message; return; }
+
+            document.getElementById('lai-newpass-modal')?.remove();
+            await laiAlert({ type:'success', title:'Kata Sandi Diperbarui! 🔐', message:'Kata sandi baru berhasil disimpan. Silakan login dengan sandi baru kamu.' });
+            await window.supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

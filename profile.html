@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Saya — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared-sidebar.js" defer></script>
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+
+        /* Profile hero */
+        .profile-banner { height: 100px; background: linear-gradient(135deg, #1E3A6E 0%, #2563EB 60%, #7C3AED 100%); border-radius: 20px 20px 0 0; position: relative; overflow: hidden; }
+        .profile-banner::after { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+
+        .profile-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; margin-bottom: 16px; }
+        body.light .profile-card { background: #FFFFFF; box-shadow: 0 2px 14px rgba(0,0,0,0.06); }
+
+        /* Tabs */
+        .tab-nav { display: flex; border-bottom: 1px solid var(--border); padding: 0 24px; gap: 4px; overflow-x: auto; }
+        .tab-nav::-webkit-scrollbar { display: none; }
+        .tab-btn { padding: 14px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); cursor: pointer; border: none; background: none; white-space: nowrap; position: relative; }
+        .tab-btn:hover { color: var(--text-2); }
+        .tab-btn.active { color: var(--accent); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: var(--accent); border-radius: 2px 2px 0 0; }
+        body.light .tab-btn { color: #94A3B8; }
+        body.light .tab-btn.active { color: #2563EB; }
+        .tab-panel { display: none; padding: 24px; animation: fadeUp 0.3s ease; }
+        .tab-panel.active { display: block; }
+
+        /* Form labels */
+        .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); display: block; margin-bottom: 8px; }
+        body.light .field-label { color: #64748B; }
+
+        /* Stats mini */
+        .stat-mini { background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; text-align: center; }
+        body.light .stat-mini { background: #F8FAFC; }
+
+        /* Strength bar */
+        .strength-bar { height: 3px; border-radius: 4px; background: var(--border); flex: 1; transition: background 0.3s; }
+        .strength-bar.weak { background: #EF4444; }
+        .strength-bar.medium { background: #F59E0B; }
+        .strength-bar.strong { background: #10B981; }
+
+        /* Danger zone */
+        .danger-btn { background: var(--bg-input); border: 1px solid rgba(239,68,68,0.2); color: #F87171; font-size: 12px; font-weight: 700; padding: 12px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s, border-color 0.2s; }
+        .danger-btn:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); }
+        body.light .danger-btn { background: #FEF2F2; }
+    </style>
+</head>
+<body>
+    <div class="main-scroll">
+        <div style="max-width:760px; margin:0 auto; padding:20px 20px 40px; padding-top:68px;" class="lp-fix">
+        <style>@media(min-width:1024px){.lp-fix{padding-top:28px!important}}</style>
+
+            <!-- Profile Card -->
+            <div class="profile-card fade-up">
+                <div class="profile-banner"></div>
+                <div style="padding:0 24px 24px; margin-top:-40px;">
+                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin-bottom:16px; padding-top:48px;">
+                        <!-- Avatar -->
+                        <label style="cursor:pointer; position:relative; flex-shrink:0;" title="Ganti foto profil">
+                            <div style="width:80px;height:80px;border-radius:16px;overflow:hidden;border:3px solid var(--bg-sidebar);box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                                <img id="avatar-preview" src="" style="width:100%;height:100%;object-fit:cover;" alt="Avatar">
+                            </div>
+                            <div style="position:absolute;inset:0;border-radius:16px;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;border:3px solid var(--bg-sidebar);" class="avatar-hover">
+                                <i class="fas fa-camera" style="color:white;font-size:14px;margin-bottom:2px;"></i>
+                                <span style="color:white;font-size:8px;font-weight:700;text-transform:uppercase;">Ganti</span>
+                            </div>
+                            <input type="file" id="file-input" style="display:none;" accept="image/jpeg,image/png,image/webp" onchange="previewImage(this)">
+                            <div style="position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;background:#10B981;border-radius:50%;border:2px solid var(--bg-sidebar);"></div>
+                        </label>
+                        <style>.avatar-hover:hover{opacity:1!important} label:hover .avatar-hover{opacity:1;}</style>
+
+                        <!-- Info -->
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                                <h2 id="profile-name-display" style="font-size:18px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;letter-spacing:-0.3px;">Memuat...</h2>
+                                <span id="premium-badge" style="display:none;font-size:8px;font-weight:800;background:linear-gradient(135deg,#F59E0B,#D97706);color:white;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;">💎 PRO</span>
+                            </div>
+                            <p id="profile-email-display" style="font-size:12px;color:var(--text-3);margin:0 0 6px;"></p>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                                <span id="plan-badge" style="font-size:9px;font-weight:700;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;">Standard</span>
+                                <span id="member-since" style="font-size:9px;color:var(--text-4);"></span>
+                            </div>
+                        </div>
+
+                        <!-- Save btn -->
+                        <button onclick="saveProfile()" id="btnSave" class="btn-primary" style="flex-shrink:0;">
+                            <i class="fas fa-cloud-arrow-up"></i> Simpan
+                        </button>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tab-nav" style="margin: 0 -24px; padding: 0 24px;">
+                        <button class="tab-btn active" onclick="switchTab('data-diri',this)"><i class="fas fa-user" style="margin-right:6px;"></i>Data Diri</button>
+                        <button class="tab-btn" onclick="switchTab('keamanan',this)"><i class="fas fa-shield-halved" style="margin-right:6px;"></i>Keamanan</button>
+                        <button class="tab-btn" onclick="switchTab('akun',this)"><i class="fas fa-gear" style="margin-right:6px;"></i>Akun</button>
+                    </div>
+
+                    <!-- DATA DIRI -->
+                    <div id="data-diri" class="tab-panel active" style="padding:20px 0 0;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;" class="form-grid">
+                        <style>@media(max-width:600px){.form-grid{grid-template-columns:1fr!important}}</style>
+                            <div>
+                                <label class="field-label">Nama Lengkap</label>
+                                <input type="text" id="full_name" placeholder="Nama lengkap kamu..." class="field">
+                            </div>
+                            <div>
+                                <label class="field-label">Nomor WhatsApp</label>
+                                <div style="position:relative;">
+                                    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:600;color:var(--text-3);">+62</span>
+                                    <input type="tel" id="wa_number" placeholder="8xx xxxx xxxx" class="field" style="padding-left:46px;">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="field-label">Kota</label>
+                                <input type="text" id="kota" placeholder="Jakarta, Bandung..." class="field">
+                            </div>
+                            <div>
+                                <label class="field-label">Pekerjaan</label>
+                                <input type="text" id="pekerjaan" placeholder="Wiraswasta, Karyawan..." class="field">
+                            </div>
+                            <div style="grid-column:span 2;" class="full-col">
+                            <style>@media(max-width:600px){.full-col{grid-column:span 1!important}}</style>
+                                <label class="field-label">Alamat Domisili</label>
+                                <textarea id="address_ktp" placeholder="Jl. Contoh No. 1, Kelurahan, Kecamatan..." class="field" style="height:90px; resize:none;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Stats mini -->
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:20px; padding-top:20px; border-top:1px solid var(--border);">
+                            <div class="stat-mini">
+                                <p id="stat-konsultasi" style="font-size:22px; font-weight:900; color:#60A5FA; margin:0 0 2px;">—</p>
+                                <p style="font-size:9px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:0.08em; margin:0;">Konsultasi AI</p>
+                            </div>
+                            <div class="stat-mini">
+                                <p id="stat-pesan" style="font-size:22px; font-weight:900; color:#34D399; margin:0 0 2px;">—</p>
+                                <p style="font-size:9px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:0.08em; margin:0;">Pesan Chat</p>
+                            </div>
+                            <div class="stat-mini">
+                                <p id="stat-plan" style="font-size:22px; font-weight:900; color:#A78BFA; margin:0 0 2px;">FREE</p>
+                                <p style="font-size:9px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:0.08em; margin:0;">Status Akun</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KEAMANAN -->
+                    <div id="keamanan" class="tab-panel" style="padding:20px 0 0;">
+                        <div style="max-width:400px;">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                                <div style="width:38px;height:38px;background:rgba(59,130,246,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-key" style="color:#60A5FA;font-size:14px;"></i></div>
+                                <div>
+                                    <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Ganti Kata Sandi</p>
+                                    <p style="font-size:10px;color:var(--text-3);margin:0;">Minimal 6 karakter</p>
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:12px;">
+                                <div>
+                                    <label class="field-label">Sandi Baru</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="new_password" oninput="checkPassStrength(this.value)" placeholder="Masukkan sandi baru..." class="field" style="padding-right:44px;">
+                                        <button type="button" onclick="togglePassword('new_password',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:13px;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                    <div style="display:flex;gap:5px;margin-top:8px;">
+                                        <div id="bar-1" class="strength-bar"></div>
+                                        <div id="bar-2" class="strength-bar"></div>
+                                        <div id="bar-3" class="strength-bar"></div>
+                                    </div>
+                                    <p id="strength-label" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px;color:var(--text-3);"></p>
+                                </div>
+                                <div>
+                                    <label class="field-label">Konfirmasi Sandi</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="confirm_password" placeholder="Ulangi sandi baru..." class="field" style="padding-right:44px;">
+                                        <button type="button" onclick="togglePassword('confirm_password',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:13px;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                                <button onclick="updatePassword()" id="btnPass" class="btn-primary" style="width:100%; justify-content:center; margin-top:4px;">
+                                    <i class="fas fa-shield-check"></i> Perbarui Kata Sandi
+                                </button>
+                            </div>
+
+                            <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                                <p class="field-label" style="margin-bottom:10px;">Info Akun</p>
+                                <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-input);border-radius:12px;border:1px solid var(--border);">
+                                    <div style="width:32px;height:32px;background:var(--bg-card);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border);"><i class="fas fa-envelope" style="color:var(--text-3);font-size:12px;"></i></div>
+                                    <div style="flex:1;min-width:0;">
+                                        <p style="font-size:11px;font-weight:700;color:var(--text-1);margin:0 0 1px;">Email Login</p>
+                                        <p id="security-email" style="font-size:10px;color:var(--text-3);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">-</p>
+                                    </div>
+                                    <span style="flex-shrink:0;font-size:8px;font-weight:800;background:rgba(16,185,129,0.12);color:#34D399;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;">✓ Aktif</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AKUN -->
+                    <div id="akun" class="tab-panel" style="padding:20px 0 0;">
+                        <!-- Plan cards -->
+                        <div id="plan-card-free" style="background:var(--bg-input);border:1.5px dashed var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                            <div style="width:42px;height:42px;background:var(--bg-card);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border);font-size:18px;">👤</div>
+                            <div style="flex:1;">
+                                <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0 0 3px;">Paket Standard</p>
+                                <p style="font-size:10px;color:var(--text-3);margin:0;">Chat AI tanpa batas · Chat Advokat terkunci</p>
+                            </div>
+                            <a href="upgrade.html" class="btn-primary" style="flex-shrink:0;font-size:10px;padding:8px 14px;">Upgrade</a>
+                        </div>
+                        <div id="plan-card-pro" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.05));border:1.5px solid rgba(245,158,11,0.3);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                            <div style="width:42px;height:42px;background:rgba(245,158,11,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">👑</div>
+                            <div>
+                                <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0 0 3px;">PRO Sultan Aktif</p>
+                                <p style="font-size:10px;color:var(--text-3);margin:0;">Semua fitur terbuka · Konsultasi tak terbatas</p>
+                            </div>
+                        </div>
+
+                        <!-- Theme -->
+                        <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <i class="fas fa-moon" style="color:var(--text-3);font-size:14px;width:16px;text-align:center;"></i>
+                                <div>
+                                    <p style="font-size:12px;font-weight:700;color:var(--text-1);margin:0;">Mode Tampilan</p>
+                                    <p style="font-size:10px;color:var(--text-3);margin:0;">Gelap / Terang</p>
+                                </div>
+                            </div>
+                            <button onclick="window.toggleTheme?.()" class="theme-toggle"><div class="knob">🌙</div></button>
+                        </div>
+
+                        <!-- Danger zone -->
+                        <div style="border:1px solid rgba(239,68,68,0.15);border-radius:14px;padding:16px;background:rgba(239,68,68,0.04);">
+                            <p class="field-label" style="margin-bottom:12px;color:#F87171;">Zona Berbahaya</p>
+                            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                                <button onclick="confirmLogout()" class="danger-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                                <button onclick="confirmDeleteAccount()" class="danger-btn"><i class="fas fa-trash-alt"></i> Hapus Akun</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /card body -->
+            </div><!-- /profile-card -->
+
+        </div>
+    </div>
+
+    <script src="shared-modal.js" onerror="
+        window.laiConfirm=({confirmText='Ya',cancelText='Batal',message=''}={})=>new Promise(r=>{r(window.confirm(message))});
+        window.laiAlert=({message=''}={})=>new Promise(r=>{window.alert(message);r()});
+        window.laiPrompt=({message='',placeholder=''}={})=>new Promise(r=>{r(window.prompt(message,placeholder))});
+    "></script>
+    <script>
+        let currentUser = null;
+
+        async function checkSession() {
+            try {
+                const { data: { session } } = await window.supabase.auth.getSession();
+                if (!session) { window.location.href = 'login.html'; return; }
+                currentUser = session.user;
+                await loadUserData();
+            } catch(e) {
+                console.error('checkSession error:', e);
+                // Tampilkan email minimal jika ada error
+                const el = document.getElementById('profile-name-display');
+                if (el) el.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 2 * 1024 * 1024) { showLALToast('error', 'Ukuran foto maks 2MB'); input.value=''; return; }
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('avatar-preview').src = e.target.result;
+                    const sa = document.getElementById('side-avatar');
+                    if (sa) sa.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function togglePassword(id, btn) {
+            const input = document.getElementById(id);
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            btn.querySelector('i').className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+        }
+
+        async function loadUserData() {
+            try {
+                // Selalu tampilkan nama dari metadata dulu (instant, tidak perlu tunggu DB)
+                const metaName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Sultan';
+                document.getElementById('profile-name-display').textContent = metaName;
+
+                // Ambil profil dari DB
+                let { data: profile } = await window.supabase
+                    .from('profiles').select('*')
+                    .eq('id', currentUser.id).maybeSingle();
+
+                // Jika belum ada profil, buat baru
+                if (!profile) {
+                    const { data: np } = await window.supabase.from('profiles')
+                        .upsert([{ id: currentUser.id, full_name: metaName }])
+                        .select().single();
+                    profile = np || {};
+                }
+
+                const name = profile?.full_name || metaName;
+                const email = currentUser.email || '-';
+                const avatar = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563EB&color=fff&bold=true&size=128`;
+                const isPremium = profile?.is_premium || false;
+                const createdAt = new Date(currentUser.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long' });
+
+                document.getElementById('profile-name-display').textContent = name;
+                document.getElementById('profile-email-display').textContent = email;
+                document.getElementById('avatar-preview').src = avatar;
+                document.getElementById('security-email').textContent = email;
+                document.getElementById('member-since').textContent = `Bergabung ${createdAt}`;
+                const sn = document.getElementById('side-name'); if (sn) sn.textContent = name;
+                const sa = document.getElementById('side-avatar'); if (sa) sa.src = avatar;
+
+                if (isPremium) {
+                    document.getElementById('premium-badge').style.display = 'inline';
+                    document.getElementById('plan-badge').textContent = 'PRO Sultan';
+                    document.getElementById('plan-badge').style.background = 'linear-gradient(135deg,#F59E0B,#D97706)';
+                    document.getElementById('plan-badge').style.color = 'white';
+                    document.getElementById('stat-plan').textContent = 'PRO';
+                    document.getElementById('plan-card-free').style.display = 'none';
+                    document.getElementById('plan-card-pro').style.display = 'flex';
+                }
+
+                document.getElementById('full_name').value = name;
+                document.getElementById('wa_number').value = profile?.wa_number || '';
+                document.getElementById('address_ktp').value = profile?.address_ktp || '';
+                document.getElementById('kota').value = profile?.kota || '';
+                document.getElementById('pekerjaan').value = profile?.pekerjaan || '';
+
+                loadStats();
+            } catch(err) { showLALToast('error', 'Gagal memuat profil', err.message); }
+        }
+
+        async function loadStats() {
+            try {
+                const { count: msgCount } = await window.supabase.from('messages').select('*',{count:'exact',head:true}).eq('sender_id', currentUser.id);
+                document.getElementById('stat-pesan').textContent = msgCount ?? 0;
+            } catch(e) {}
+            try {
+                const { count: aiCount } = await window.supabase.from('riwayat_konsultasi').select('*',{count:'exact',head:true}).eq('user_id', currentUser.id);
+                document.getElementById('stat-konsultasi').textContent = aiCount ?? 0;
+            } catch(e) {}
+        }
+
+        async function saveProfile() {
+            const btn = document.getElementById('btnSave');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
+            try {
+                let finalAvatarUrl = document.getElementById('avatar-preview').src;
+                const fileInput = document.getElementById('file-input');
+                if (fileInput.files && fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    const fileName = `${currentUser.id}-${Date.now()}.${ext}`;
+                    const { error: upErr } = await window.supabase.storage.from('avatars').upload(`avatars/${fileName}`, file, { upsert: true });
+                    if (!upErr) finalAvatarUrl = window.supabase.storage.from('avatars').getPublicUrl(`avatars/${fileName}`).data.publicUrl;
+                }
+                // Base payload — kolom yang pasti ada di semua versi tabel
+                const payload = {
+                    id: currentUser.id,
+                    full_name: document.getElementById('full_name').value.trim() || 'Sultan',
+                    wa_number: document.getElementById('wa_number').value.trim(),
+                    address_ktp: document.getElementById('address_ktp').value.trim(),
+                    avatar_url: finalAvatarUrl,
+                    updated_at: new Date().toISOString()
+                };
+
+                // Coba simpan dengan kolom extended (kota, pekerjaan)
+                // Jika kolom belum ada di Supabase, fallback ke payload dasar
+                const extPayload = { ...payload,
+                    kota: document.getElementById('kota').value.trim(),
+                    pekerjaan: document.getElementById('pekerjaan').value.trim()
+                };
+                let { error } = await window.supabase.from('profiles').upsert(extPayload);
+                if (error && (error.message.includes('kota') || error.message.includes('pekerjaan') || error.message.includes('schema cache'))) {
+                    // Kolom belum ada — simpan tanpa kota/pekerjaan
+                    const { error: err2 } = await window.supabase.from('profiles').upsert(payload);
+                    error = err2;
+                    if (!err2) showLALToast('warning', 'Tersimpan (sebagian)', 'Kolom kota/pekerjaan belum tersedia di database. Jalankan migrasi SQL untuk mengaktifkannya.');
+                }
+                if (error) throw error;
+                document.getElementById('profile-name-display').textContent = payload.full_name;
+                const sn = document.getElementById('side-name'); if (sn) sn.textContent = payload.full_name;
+                showLALToast('success', 'Profil disimpan', 'Data kamu berhasil diperbarui.');
+            } catch(err) { showLALToast('error', 'Gagal menyimpan', err.message); }
+            finally { btn.disabled = false; btn.innerHTML = orig; }
+        }
+
+        function checkPassStrength(pass) {
+            const bars = [document.getElementById('bar-1'), document.getElementById('bar-2'), document.getElementById('bar-3')];
+            const label = document.getElementById('strength-label');
+            bars.forEach(b => { b.className = 'strength-bar'; });
+            if (!pass) { label.textContent = ''; return; }
+            const score = [pass.length >= 6, pass.length >= 10, /[A-Z]/.test(pass)||/[0-9]/.test(pass), /[^A-Za-z0-9]/.test(pass)].filter(Boolean).length;
+            if (score <= 1) { bars[0].classList.add('weak'); label.textContent = 'Lemah'; label.style.color = '#EF4444'; }
+            else if (score <= 2) { bars[0].classList.add('medium'); bars[1].classList.add('medium'); label.textContent = 'Cukup'; label.style.color = '#F59E0B'; }
+            else { bars.forEach(b => b.classList.add('strong')); label.textContent = 'Kuat 💪'; label.style.color = '#10B981'; }
+        }
+
+        async function updatePassword() {
+            const newPass = document.getElementById('new_password').value;
+            const confirmPass = document.getElementById('confirm_password').value;
+            const btn = document.getElementById('btnPass');
+            if (!newPass) { showLALToast('warning', 'Masukkan sandi baru'); return; }
+            if (newPass.length < 6) { showLALToast('warning', 'Sandi minimal 6 karakter'); return; }
+            if (newPass !== confirmPass) { showLALToast('error', 'Konfirmasi sandi tidak cocok'); return; }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Memperbarui...';
+            const { error } = await window.supabase.auth.updateUser({ password: newPass });
+            if (error) { showLALToast('error', 'Gagal update', error.message); }
+            else { showLALToast('success', 'Kata sandi diperbarui 🔐'); document.getElementById('new_password').value = ''; document.getElementById('confirm_password').value = ''; checkPassStrength(''); }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-shield-check"></i> Perbarui Kata Sandi';
+        }
+
+        async function confirmLogout() {
+            const ok = await laiConfirm({
+                type: 'logout',
+                title: 'Keluar dari Akun',
+                message: 'Yakin ingin keluar? Sesi kamu akan diakhiri dan kamu perlu login kembali.',
+                confirmText: 'Ya, Keluar', cancelText: 'Batal'
+            });
+            if (!ok) return;
+            window.supabase.auth.signOut().then(() => { localStorage.clear(); window.location.href = 'login.html'; });
+        }
+
+        async function confirmDeleteAccount() {
+            const val = await laiPrompt({
+                type: 'danger',
+                title: 'Hapus Akun Permanen',
+                message: 'Tindakan ini <strong>tidak bisa dibatalkan</strong>. Ketik <strong>HAPUS</strong> untuk konfirmasi:',
+                placeholder: 'Ketik HAPUS di sini...', expectedValue: 'HAPUS',
+                confirmText: 'Hapus Akun Saya', cancelText: 'Batal'
+            });
+            if (val === 'HAPUS') showLALToast('warning', 'Hapus Akun', 'Fitur ini memerlukan konfirmasi support. Hubungi kami.');
+            else if (val !== null) laiAlert({ type: 'danger', title: 'Konfirmasi Tidak Valid', message: 'Teks yang kamu ketik tidak sesuai.' });
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>

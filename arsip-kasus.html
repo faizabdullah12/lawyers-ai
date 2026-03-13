@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arsip Kasus — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="shared-modal.js" onerror="window.laiConfirm=({message=''}={})=>new Promise(r=>r(confirm(message)));window.laiAlert=({message=''}={})=>new Promise(r=>{alert(message);r();});"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared-sidebar.js" defer></script>
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+
+        .case-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px 22px;
+            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+        }
+        .case-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 24px var(--shadow); }
+        body.light .case-card { background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+
+        /* Detail modal */
+        .modal-overlay { position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:16px; }
+        .modal-bg { position:absolute;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px); }
+        .modal-box { position:relative;z-index:1;background:var(--bg-sidebar);border:1px solid var(--border);border-radius:24px;width:100%;max-width:640px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden; }
+        body.light .modal-box { background:#FFFFFF; }
+        .modal-head { padding:20px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between; }
+        .modal-body { overflow-y:auto;padding:20px 22px;flex:1; }
+        .detail-block { background:var(--bg-input);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px; }
+        body.light .detail-block { background:#F8FAFC; }
+    </style>
+</head>
+<body>
+    <div class="main-scroll">
+        <div style="max-width:900px; margin:0 auto; padding:20px 20px 48px; padding-top:72px;" class="ak-fix">
+        <style>@media(min-width:1024px){.ak-fix{padding-top:36px!important}}</style>
+
+            <!-- Header -->
+            <header style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;" class="fade-up">
+                <div>
+                    <p style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Riwayat</p>
+                    <h2 style="font-size:26px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;">Arsip <span style="color:#60A5FA;">Kasus</span></h2>
+                    <p style="font-size:10px;color:var(--text-3);font-weight:600;margin-top:6px;text-transform:uppercase;letter-spacing:0.12em;">Riwayat Konsultasi & Analisis Hukum</p>
+                </div>
+                <button onclick="window.toggleTheme?.()" class="theme-toggle" style="flex-shrink:0;margin-top:4px;"><div class="knob">🌙</div></button>
+            </header>
+
+            <!-- Cases -->
+            <div id="cases-container" style="display:flex;flex-direction:column;gap:12px;"></div>
+
+            <!-- Empty -->
+            <div id="empty-state" style="display:none;text-align:center;padding:60px 20px;" class="fade-up">
+                <div style="width:64px;height:64px;background:var(--bg-input);border:1px solid var(--border);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+                    <i class="fas fa-folder-open" style="font-size:24px;color:var(--text-3);"></i>
+                </div>
+                <h3 style="font-size:16px;font-weight:800;color:var(--text-1);margin:0 0 8px;">Belum Ada Riwayat</h3>
+                <p style="font-size:13px;color:var(--text-3);margin:0 0 20px;">Mulai konsultasi untuk melihat arsip kasus kamu di sini</p>
+                <a href="konsultasi.html" class="btn-primary">Mulai Konsultasi AI</a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        async function checkSession() {
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+            currentUser = session.user;
+            loadCaseHistory();
+        }
+
+        async function loadCaseHistory() {
+            try {
+                let aiConsultations = [];
+                const { data: aiData, error: aiError } = await window.supabase.from('riwayat_konsultasi').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+                if (!aiError) aiConsultations = aiData || [];
+
+                const { data: lawyerMessages, error: msgError } = await window.supabase.from('messages').select('*, lawyer:lawyer_id(nama_lengkap,spesialisasi)').eq('sender_id', currentUser.id).order('created_at', { ascending: false });
+
+                const container = document.getElementById('cases-container');
+                const emptyState = document.getElementById('empty-state');
+                const msgs = lawyerMessages || [];
+
+                if (aiConsultations.length === 0 && msgs.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                const allCases = [];
+                aiConsultations.forEach(c => allCases.push({ type:'ai', id:c.id, title: c.query ? c.query.substring(0,60)+'...' : 'Konsultasi AI', category: c.category || 'Umum', date: new Date(c.created_at), content: c.response || 'Analisis AI telah dilakukan' }));
+                const convMap = new Map();
+                msgs.forEach(m => { const cid = m.conversation_id || m.id; if (!convMap.has(cid)) convMap.set(cid, { type:'lawyer', id:cid, title: m.message_text ? m.message_text.substring(0,60)+'...' : 'Konsultasi Advokat', date: new Date(m.created_at), lawyer: m.lawyer?.nama_lengkap || 'Advokat', specialization: m.lawyer?.spesialisasi || 'Umum' }); });
+                convMap.forEach(c => allCases.push(c));
+                allCases.sort((a,b) => b.date - a.date);
+
+                container.innerHTML = '';
+                allCases.forEach((c, i) => {
+                    const dateStr = c.date.toLocaleDateString('id-ID', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+                    const el = document.createElement('div');
+                    el.className = 'case-card fade-up';
+                    el.style.animationDelay = `${i*0.05}s`;
+                    if (c.type === 'ai') {
+                        el.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div style="width:38px;height:38px;background:rgba(59,130,246,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-robot" style="color:#60A5FA;font-size:14px;"></i></div>
+                                <div>
+                                    <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">${c.title}</p>
+                                    <span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.07em;">${c.category}</span>
+                                </div>
+                            </div>
+                            <span style="font-size:10px;color:var(--text-3);white-space:nowrap;">${dateStr}</span>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-3);margin:0 0 12px;line-height:1.6;">${(c.content||'').substring(0,180)}${c.content?.length>180?'...':''}</p>
+                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                            <button onclick="viewAICase('${c.id}')" style="font-size:11px;font-weight:700;color:#60A5FA;background:none;border:none;cursor:pointer;padding:0;">Lihat Detail →</button>
+                            <button onclick="exportCasePDF('${c.id}')" style="font-size:11px;font-weight:700;color:#34D399;background:none;border:none;cursor:pointer;padding:0;"><i class="fas fa-file-pdf" style="margin-right:4px;"></i>Export PDF</button>
+                            <button onclick="deleteCase('${c.id}','ai')" style="font-size:11px;font-weight:700;color:#F87171;background:none;border:none;cursor:pointer;padding:0;margin-left:auto;"><i class="fas fa-trash" style="margin-right:4px;"></i>Hapus</button>
+                        </div>`;
+                    } else {
+                        el.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div style="width:38px;height:38px;background:rgba(16,185,129,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user-tie" style="color:#34D399;font-size:14px;"></i></div>
+                                <div>
+                                    <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">${c.title}</p>
+                                    <span style="font-size:10px;color:var(--text-3);">dengan ${c.lawyer} · ${c.specialization}</span>
+                                </div>
+                            </div>
+                            <span style="font-size:10px;color:var(--text-3);white-space:nowrap;">${dateStr}</span>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-3);margin:0 0 12px;">Konsultasi dengan advokat profesional berlisensi NIA</p>
+                        <button onclick="location.href='chat-advokat.html?conversation=${c.id}'" style="font-size:11px;font-weight:700;color:#34D399;background:none;border:none;cursor:pointer;padding:0;">Lihat Percakapan →</button>`;
+                    }
+                    container.appendChild(el);
+                });
+            } catch(err) {
+                document.getElementById('cases-container').innerHTML = `<div style="text-align:center;padding:60px 20px;"><i class="fas fa-exclamation-circle" style="font-size:36px;color:#F87171;margin-bottom:12px;display:block;"></i><p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0 0 8px;">Gagal Memuat Data</p><p style="font-size:11px;color:var(--text-3);margin:0 0 16px;">${err.message}</p><button onclick="location.reload()" class="btn-primary">Coba Lagi</button></div>`;
+            }
+        }
+
+        function viewAICase(caseId) {
+            window.supabase.from('riwayat_konsultasi').select('*').eq('id', caseId).single().then(({ data, error }) => {
+                if (error || !data) { showLALToast('error', 'Data tidak ditemukan'); return; }
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-bg" onclick="this.closest('.modal-overlay').remove()"></div>
+                    <div class="modal-box">
+                        <div class="modal-head">
+                            <div>
+                                <h3 style="font-size:16px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;">Detail <span style="color:#60A5FA;">Konsultasi AI</span></h3>
+                                <p style="font-size:10px;color:var(--text-3);margin:4px 0 0;">${new Date(data.created_at).toLocaleDateString('id-ID',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
+                            </div>
+                            <button onclick="this.closest('.modal-overlay').remove()" style="width:32px;height:32px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);font-size:12px;"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="detail-block">
+                                <p style="font-size:9px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;">Pertanyaan Anda</p>
+                                <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${data.query || '-'}</p>
+                            </div>
+                            <div class="detail-block">
+                                <p style="font-size:9px;font-weight:700;color:#34D399;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;">Analisis AI</p>
+                                <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${data.response || '-'}</p>
+                            </div>
+                            ${data.category ? `<span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:4px 12px;border-radius:20px;text-transform:uppercase;">${data.category}</span>` : ''}
+                        </div>
+                    </div>`;
+                document.body.appendChild(modal);
+            });
+        }
+
+
+        async function deleteCase(caseId, type) {
+            const confirmed = await laiConfirm({
+                type: 'danger',
+                title: 'Hapus Kasus?',
+                message: 'Riwayat konsultasi ini akan dihapus permanen dan tidak bisa dikembalikan.',
+                confirmText: 'Ya, Hapus',
+                cancelText: 'Batal'
+            });
+            if (!confirmed) return;
+            try {
+                const { error } = await window.supabase
+                    .from('riwayat_konsultasi')
+                    .delete()
+                    .eq('id', caseId)
+                    .eq('user_id', currentUser.id);
+                if (error) throw error;
+                showLALToast('success', 'Kasus dihapus', 'Riwayat konsultasi berhasil dihapus.');
+                loadCaseHistory();
+            } catch(err) {
+                showLALToast('error', 'Gagal Hapus', err.message);
+            }
+        }
+
+        async function exportCasePDF(caseId) {
+            try {
+                const { data, error } = await window.supabase
+                    .from('riwayat_konsultasi')
+                    .select('*')
+                    .eq('id', caseId)
+                    .single();
+                if (error || !data) { showLALToast('error', 'Data tidak ditemukan'); return; }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+                const W = 210, M = 20, TW = W - M * 2;
+                let y = 20;
+
+                // Header
+                doc.setFillColor(37, 99, 235);
+                doc.rect(0, 0, W, 36, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(18); doc.setFont('helvetica', 'bolditalic');
+                doc.text('LawyersAI', M, 16);
+                doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                doc.text('Dokumen Konsultasi Hukum', M, 24);
+                doc.setFontSize(8);
+                const dateStr = new Date(data.created_at).toLocaleDateString('id-ID', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' });
+                doc.text(dateStr, W - M, 24, { align: 'right' });
+                y = 50;
+
+                // Category badge
+                if (data.category) {
+                    doc.setFillColor(239, 246, 255);
+                    doc.setDrawColor(191, 219, 254);
+                    doc.roundedRect(M, y - 5, 50, 10, 3, 3, 'FD');
+                    doc.setTextColor(37, 99, 235);
+                    doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+                    doc.text(data.category.toUpperCase(), M + 4, y + 2);
+                    y += 14;
+                }
+
+                // Pertanyaan
+                doc.setTextColor(15, 23, 42);
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+                doc.text('PERTANYAAN ANDA', M, y);
+                y += 6;
+                doc.setDrawColor(59, 130, 246);
+                doc.setLineWidth(0.5);
+                doc.line(M, y, M + TW, y);
+                y += 6;
+                doc.setFontSize(11); doc.setFont('helvetica', 'normal');
+                doc.setTextColor(30, 41, 59);
+                const qLines = doc.splitTextToSize(data.query || '-', TW);
+                doc.text(qLines, M, y);
+                y += qLines.length * 6 + 10;
+
+                // Analisis AI
+                doc.setTextColor(15, 23, 42);
+                doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+                doc.text('ANALISIS AI LAWYERS AI', M, y);
+                y += 6;
+                doc.setDrawColor(16, 185, 129);
+                doc.line(M, y, M + TW, y);
+                y += 6;
+                doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+                doc.setTextColor(30, 41, 59);
+                const aLines = doc.splitTextToSize(data.response || '-', TW);
+                aLines.forEach(line => {
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    doc.text(line, M, y);
+                    y += 6;
+                });
+
+                // Footer
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(7); doc.setTextColor(148, 163, 184);
+                    doc.text('Dokumen ini dibuat otomatis oleh LawyersAI. Bukan merupakan nasihat hukum resmi.', M, 290);
+                    doc.text(`Halaman ${i} / ${totalPages}`, W - M, 290, { align: 'right' });
+                }
+
+                const filename = `LawyersAI_Konsultasi_${new Date(data.created_at).toISOString().slice(0,10)}.pdf`;
+                doc.save(filename);
+                showLALToast('success', 'PDF Diunduh', filename);
+            } catch(err) {
+                showLALToast('error', 'Gagal Export', err.message);
+            }
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>
