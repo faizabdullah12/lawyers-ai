@@ -437,26 +437,43 @@
             input.value = '';
 
             try {
-                const fullPrompt = `Kamu adalah asisten hukum AI bernama "Lawyers AI" yang ramah dan fasih Bahasa Indonesia.
-
-ATURAN WAJIB: Selalu balas HANYA dalam format JSON valid. Jangan ada teks di luar JSON.
-
-Jika pesan adalah salam, basa-basi, atau pertanyaan non-hukum, gunakan MODE CHAT:
-{"mode":"chat","reply":"Jawaban santai dan ramah dalam Bahasa Indonesia"}
-
-Jika pesan mengandung kasus, masalah hukum, atau pertanyaan hukum, gunakan MODE LEGAL:
-{"mode":"legal","summary":"Analisis lengkap minimal 150 kata berdasarkan hukum Indonesia","pasal":"Pasal relevan misal Pasal 362 KUHP","isi_pasal":"Bunyi lengkap pasal","kategori":"Kategori hukum","saran":"Saran langkah hukum konkret"}
-
-PENTING: Respons HANYA JSON valid. Tidak ada markdown. Tidak ada teks tambahan.
-
-Pesan user: ${msg}`;
+                const isLegal = msg.length > 30 || /hukum|kasus|pasal|pidana|perdata|gugat|lapor|tilang|cerai|kontrak|sengketa|warisan|tanah|kerja|PHK|utang|penipuan|penganiayaan|pencurian|narkoba|korupsi|advokat|pengacara|hakim|polisi|jaksa|pengadilan/i.test(msg);
+                const modeInstr = isLegal
+                    ? 'Use LEGAL MODE: {"mode":"legal","summary":"[analisis hukum lengkap minimal 150 kata dalam Bahasa Indonesia]","pasal":"[pasal relevan, contoh: Pasal 362 KUHP]","isi_pasal":"[bunyi pasal]","kategori":"[kategori hukum]","saran":"[saran langkah hukum]"}'
+                    : 'Use CHAT MODE: {"mode":"chat","reply":"[jawaban ramah dalam Bahasa Indonesia]"}';
+                const fullPrompt = `You are Lawyers AI, an Indonesian legal assistant. Respond ONLY with a valid JSON object, zero text outside it.
+${modeInstr}
+User: ${msg}
+OUTPUT ONLY JSON:`;
 
                 const data = await fetchWithFallback(fullPrompt);
                 let raw = data.choices[0].message.content;
-                let jsonStr = raw.trim().replace(/```json\s*/g,'').replace(/```\s*/g,'');
+
+                // Bersihkan markdown code blocks
+                let jsonStr = raw.trim()
+                    .replace(/```json\s*/gi,'')
+                    .replace(/```\s*/g,'')
+                    .trim();
+
+                // Coba ekstrak JSON dari dalam teks
                 const js = jsonStr.indexOf('{'), je = jsonStr.lastIndexOf('}') + 1;
-                if (js === -1 || je === 0) throw new Error('Format respons AI tidak valid');
-                const parsed = JSON.parse(jsonStr.substring(js, je));
+
+                let parsed;
+                if (js !== -1 && je > 0) {
+                    try {
+                        parsed = JSON.parse(jsonStr.substring(js, je));
+                    } catch(e) {
+                        // JSON tidak valid — fallback ke chat mode dengan raw text
+                        parsed = { mode: 'chat', reply: raw.trim() };
+                    }
+                } else {
+                    // Tidak ada JSON sama sekali — tampilkan raw response sebagai chat
+                    parsed = { mode: 'chat', reply: raw.trim() };
+                }
+
+                // Validasi struktur parsed
+                if (!parsed.mode) parsed.mode = 'chat';
+                if (parsed.mode === 'chat' && !parsed.reply) parsed.reply = raw.trim();
 
                 if (parsed.mode === 'chat') {
                     appendToChat(`
