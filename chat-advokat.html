@@ -579,17 +579,10 @@ window.onload = async () => {
     isPremium = !!profile?.is_premium;
     currentProfile = profile;
 
-    // Ambil data mitra_ahli untuk user saat ini (jika dia advokat)
-    const { data: mitraSelf } = await window.supabase
-        .from('mitra_ahli')
-        .select('nama_lengkap, foto_profil_url')
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-
-    // Sidebar UI — prioritaskan data mitra_ahli jika ada
-    {
-        const n = mitraSelf?.nama_lengkap || profile?.full_name || 'Sultan';
-        const av = mitraSelf?.foto_profil_url || profile?.avatar_url || avatarFallback(n);
+    // Sidebar UI
+    if (profile) {
+        const n = profile.full_name || 'Sultan';
+        const av = profile.avatar_url || avatarFallback(n);
         document.getElementById('side-name').textContent = n;
         document.getElementById('side-avatar').src = av;
         document.getElementById('side-avatar').onerror = function() { this.src = avatarFallback(n); };
@@ -786,22 +779,13 @@ async function loadChatMode() {
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // Fallback ke profiles (hanya jika bukan diri sendiri)
+        // mitra_ahli tidak ditemukan — tetap pakai advName dari inbox list (JANGAN ambil dari profiles)
         console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
-        if (receiverId && receiverId !== currentUser.id) {
-            const { data: prof } = await window.supabase.from('profiles')
-                .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
-            if (prof) {
-                advName = prof.full_name || 'Advokat';
-                document.getElementById('adv-name').textContent = advName;
-                const advImgEl = document.getElementById('adv-img');
-                advImgEl.src = prof.avatar_url || avatarFallback(advName);
-                advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
-            }
-        } else {
-            document.getElementById('adv-name').textContent = 'Advokat';
-            document.getElementById('adv-img').src = avatarFallback('Advokat');
-        }
+        const displayName = advName || 'Advokat';
+        document.getElementById('adv-name').textContent = displayName;
+        const advImgEl = document.getElementById('adv-img');
+        advImgEl.src = avatarFallback(displayName);
+        advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(displayName); };
     }
 
     // Cari atau buat conversation_id
@@ -832,16 +816,9 @@ async function renderMessages() {
     const advAv = advData?.foto_profil_url
         ? imgSrc(advData.foto_profil_url, advName || 'A')
         : avatarFallback(advName || 'A');
-
-    // Ambil data mitra_ahli untuk user saat ini (nama & foto di bubble "me")
-    const { data: myMitra } = await window.supabase
-        .from('mitra_ahli')
-        .select('nama_lengkap, foto_profil_url')
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-    const myProfileName = myMitra?.nama_lengkap || currentProfile?.full_name || currentUser.email || 'U';
+    const myProfileName = currentProfile?.full_name || currentUser.email || 'U';
     const myInit = myProfileName[0].toUpperCase();
-    const myAvatar = myMitra?.foto_profil_url || currentProfile?.avatar_url || null;
+    const myAvatar = currentProfile?.avatar_url || null;
 
     let lastDate = '';
 
