@@ -41,7 +41,7 @@ exports.handler = async function(event, context) {
                 'X-Title': 'Lawyers AI'
             },
             body: JSON.stringify({
-                model: model || 'openrouter/free',
+                model: model || 'deepseek/deepseek-r1:free',
                 messages,
                 temperature: temperature || 0.7,
                 max_tokens: max_tokens || 3000
