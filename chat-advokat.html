@@ -41,10 +41,16 @@
         @media (max-width: 1024px) {
             #sidebar { position: fixed; z-index: 200; height: 100vh; transform: translateX(-100%); }
             #sidebar.open { transform: translateX(0); }
+            #app { height: 100vh; overflow: hidden; }
         }
         @media (max-width: 768px) {
             #inbox-panel { width: 100%; position: absolute; z-index: 10; height: 100%; }
             #inbox-panel.hidden-mobile { display: none; }
+            /* Chat area tidak tertimpa hamburger */
+            #chat-area { padding-top: 0; }
+            .chat-header { padding-left: 16px !important; }
+            /* Input area */
+            #input-area { padding: 10px 12px; }
         }
 
         /* ─── SIDEBAR ─── */

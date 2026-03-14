@@ -14,18 +14,28 @@
 
     <style>
         body { display: flex; min-height: 100vh; }
+        @media(max-width:1023px) {
+            body { display: block; }
+            .main-scroll { display: block; overflow-y: visible; }
+        }
         .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
 
         .konsultasi-wrap {
             display: flex;
             flex-direction: column;
-            height: 100vh;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 72px 20px 0;
+            padding: 72px 16px 24px;
+            gap: 16px;
         }
         @media(min-width:1024px) {
-            .konsultasi-wrap { padding-top: 36px; flex-direction: row; gap: 20px; }
+            .konsultasi-wrap {
+                padding-top: 36px;
+                flex-direction: row;
+                gap: 20px;
+                height: 100vh;
+                padding-bottom: 0;
+            }
         }
 
         /* ── CHAT COLUMN ── */
@@ -36,6 +46,15 @@
             min-height: 0;
             overflow: hidden;
             padding-bottom: 16px;
+        }
+
+        /* Mobile: chat col punya tinggi fixed */
+        @media(max-width:1023px) {
+            .chat-col {
+                height: 58vh;
+                min-height: 320px;
+                padding-bottom: 0;
+            }
         }
 
         .chat-window {
@@ -111,9 +130,15 @@
             flex-direction: column;
             gap: 14px;
             padding-bottom: 20px;
+            flex-shrink: 0;
         }
         @media(min-width:1024px) {
-            .right-col { width: 320px; flex-shrink: 0; overflow-y: auto; }
+            .right-col { width: 320px; flex-shrink: 0; overflow-y: auto; padding-bottom: 20px; }
+        }
+        /* Mobile: right col row layout (panel berdampingan) */
+        @media(max-width:640px) {
+            .right-col { flex-direction: row; flex-wrap: wrap; gap: 10px; }
+            .right-col > * { flex: 1; min-width: 0; }
         }
 
         .panel-box {
@@ -369,43 +394,81 @@
             chatHistory.push({ role, html, ts: Date.now() });
             saveHistory();
         }
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
         async function fetchWithFallback(prompt) {
             let lastError = null;
             for (const model of MODEL_CHAIN) {
-                try {
-                    console.log(`🤖 Mencoba model: ${model}`);
-                    const endpoint = getProxyEndpoint();
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            model,
-                            messages: [{ role: 'user', content: prompt }],
-                            temperature: 0.7,
-                            max_tokens: 3000
-                        })
-                    });
-                    if (res.status === 429 || res.status === 503 || res.status === 404) {
-                        console.warn(`⚠️ ${model} tidak tersedia (${res.status}), mencoba model berikutnya...`);
-                        lastError = new Error(`Model ${model} tidak tersedia (${res.status})`);
-                        continue;
+                for (let attempt = 1; attempt <= 2; attempt++) { // 2x percobaan per model
+                    try {
+                        console.log(`🤖 Mencoba model: ${model} (attempt ${attempt})`);
+                        const endpoint = getProxyEndpoint();
+                        const res = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                model,
+                                messages: [{ role: 'user', content: prompt }],
+                                temperature: 0.7,
+                                max_tokens: 2000
+                            })
+                        });
+                        if (res.status === 429 || res.status === 503) {
+                            console.warn(`⚠️ ${model} rate limit (${res.status}), tunggu 2 detik...`);
+                            lastError = new Error(`Model ${model} rate limit (${res.status})`);
+                            await sleep(2000);
+                            continue; // retry attempt berikutnya
+                        }
+                        if (res.status === 404 || res.status === 400) {
+                            console.warn(`⚠️ ${model} tidak tersedia (${res.status}), skip.`);
+                            lastError = new Error(`Model ${model} tidak tersedia (${res.status})`);
+                            break; // langsung ke model berikutnya
+                        }
+                        if (!res.ok) {
+                            const errTxt = await res.text();
+                            lastError = new Error(`API Error ${res.status}: ${errTxt.substring(0,100)}`);
+                            break;
+                        }
+                        const data = await res.json();
+                        console.log(`✅ Berhasil: ${model}`);
+                        return data;
+                    } catch(e) {
+                        lastError = e;
+                        if (attempt < 2) await sleep(1500);
                     }
-                    if (!res.ok) {
-                        const errTxt = await res.text();
-                        throw new Error(`API Error ${res.status}: ${errTxt.substring(0,120)}`);
-                    }
-                    const data = await res.json();
-                    console.log(`✅ Berhasil dengan model: ${model}`);
-                    return data;
-                } catch(e) {
-                    lastError = e;
-                    if (e.message.includes('429') || e.message.includes('503') || e.message.includes('404') || e.message.includes('rate') || e.message.includes('penuh') || e.message.includes('tersedia')) {
-                        continue; // coba model berikutnya
-                    }
-                    throw e; // error lain langsung lempar
                 }
             }
             throw new Error(`Semua model AI sedang overload. Coba lagi dalam beberapa menit.\n(${lastError?.message || 'Rate limit'})`);
+        }
+
+        // ── SIMPAN ANALISIS KE SUPABASE ──
+        async function saveToArsip(userMsg, analysis) {
+            try {
+                const { data: { session } } = await window.supabase.auth.getSession();
+                if (!session) return; // tidak login, skip
+
+                const { error } = await window.supabase
+                    .from('riwayat_konsultasi')
+                    .insert({
+                        user_id:    session.user.id,
+                        query:      userMsg,
+                        response:   analysis.summary,
+                        pasal:      analysis.pasal,
+                        isi_pasal:  analysis.isi_pasal,
+                        category:   analysis.kategori || 'Hukum Umum',
+                        saran:      analysis.saran || null,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (error) {
+                    console.warn('⚠️ Gagal simpan ke arsip:', error.message);
+                } else {
+                    console.log('✅ Kasus tersimpan ke arsip');
+                    if (window.showLALToast) showLALToast('success', 'Tersimpan ke Arsip', 'Kasus ini bisa dilihat di halaman Arsip Kasus.');
+                }
+            } catch(e) {
+                console.warn('⚠️ saveToArsip error:', e.message);
+            }
         }
 
         async function sendMessage() {
@@ -495,6 +558,9 @@ Pesan user: ${msg}`;
                     pdfBtn.disabled = false;
                     pdfBtn.style.cssText = 'width:100%;padding:14px;background:#2563EB;border:none;border-radius:16px;font-size:10px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;font-family:inherit;';
                     pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Download Somasi';
+
+                    // ── SIMPAN KE SUPABASE (arsip-kasus) ──
+                    saveToArsip(msg, parsed);
 
                     showAdvocateRecommendation();
                 }
@@ -838,18 +904,18 @@ Pesan user: ${msg}`;
 
         // ── AUTO-TRIGGER DARI KATEGORI BERANDA ──
         const CATEGORY_MAP = {
-            'pidana':     'Halo! Saya ingin konsultasi mengenai masalah hukum pidana. Tolong jelaskan secara umum apa saja yang termasuk tindak pidana di Indonesia, hak-hak tersangka/terdakwa, dan langkah hukum yang bisa diambil jika menjadi korban tindak pidana.',
-            'perdata':    'Halo! Saya ingin konsultasi mengenai masalah hukum perdata. Tolong jelaskan apa itu hukum perdata di Indonesia, contoh kasusnya, dan langkah hukum yang bisa diambil jika ada pihak yang melanggar hak perdata saya.',
-            'keluarga':   'Halo! Saya ingin konsultasi mengenai masalah hukum keluarga. Tolong jelaskan tentang hukum perkawinan, perceraian, hak asuh anak, dan waris di Indonesia.',
-            'ite':        'Halo! Saya ingin konsultasi mengenai hukum Cyber dan ITE. Tolong jelaskan UU ITE di Indonesia, perbuatan yang dijerat, sanksinya, dan apa yang harus dilakukan jika menjadi korban kejahatan siber.',
-            'kerja':      'Halo! Saya ingin konsultasi mengenai hukum ketenagakerjaan. Tolong jelaskan hak-hak pekerja di Indonesia, termasuk PHK, pesangon, upah, dan cara menyelesaikan sengketa kerja.',
-            'tanah':      'Halo! Saya ingin konsultasi mengenai hukum pertanahan. Tolong jelaskan hak kepemilikan tanah, sengketa tanah, proses sertifikasi, dan langkah hukum jika ada penyerobotan tanah.',
-            'bisnis':     'Halo! Saya ingin konsultasi mengenai hukum bisnis di Indonesia. Tolong jelaskan pendirian perusahaan, kontrak bisnis, sengketa korporasi, dan perlindungan hukum bagi pelaku usaha.',
-            'pajak':      'Halo! Saya ingin konsultasi mengenai hukum pajak di Indonesia. Tolong jelaskan kewajiban perpajakan, sanksi pelanggaran, cara keberatan, dan hak wajib pajak.',
-            'lingkungan': 'Halo! Saya ingin konsultasi mengenai hukum lingkungan hidup. Tolong jelaskan regulasi lingkungan, sanksi perusak lingkungan, dan cara melaporkan pelanggaran secara hukum.',
-            'imigrasi':   'Halo! Saya ingin konsultasi mengenai hukum imigrasi di Indonesia. Tolong jelaskan visa, izin tinggal, kewarganegaraan, deportasi, dan sanksi pelanggaran keimigrasian.',
-            'haki':       'Halo! Saya ingin konsultasi mengenai HAKI di Indonesia. Tolong jelaskan hak cipta, merek, paten, desain industri, dan langkah hukum jika terjadi pelanggaran.',
-            'konsumen':   'Halo! Saya ingin konsultasi mengenai hukum perlindungan konsumen. Tolong jelaskan hak konsumen, kewajiban pelaku usaha, lembaga perlindungan, dan cara menuntut ganti rugi.',
+            'pidana':     'Saya ingin konsultasi hukum pidana di Indonesia. Jelaskan tindak pidana, hak tersangka, dan langkah jika jadi korban.',
+            'perdata':    'Saya ingin konsultasi hukum perdata di Indonesia. Jelaskan pengertian, contoh kasus, dan langkah hukum jika hak perdata saya dilanggar.',
+            'keluarga':   'Saya ingin konsultasi hukum keluarga di Indonesia. Jelaskan hukum perkawinan, perceraian, hak asuh anak, dan waris.',
+            'ite':        'Saya ingin konsultasi hukum ITE di Indonesia. Jelaskan UU ITE, perbuatan yang dijerat, sanksi, dan langkah jika jadi korban kejahatan siber.',
+            'kerja':      'Saya ingin konsultasi hukum ketenagakerjaan. Jelaskan hak pekerja, PHK, pesangon, upah, dan cara selesaikan sengketa kerja di Indonesia.',
+            'tanah':      'Saya ingin konsultasi hukum pertanahan Indonesia. Jelaskan hak kepemilikan tanah, sengketa, sertifikasi, dan langkah hukum jika ada penyerobotan.',
+            'bisnis':     'Saya ingin konsultasi hukum bisnis Indonesia. Jelaskan pendirian perusahaan, kontrak bisnis, sengketa korporasi, dan perlindungan hukum pelaku usaha.',
+            'pajak':      'Saya ingin konsultasi hukum pajak Indonesia. Jelaskan kewajiban perpajakan, sanksi, cara keberatan, dan hak wajib pajak.',
+            'lingkungan': 'Saya ingin konsultasi hukum lingkungan hidup Indonesia. Jelaskan regulasi, sanksi perusak lingkungan, dan cara lapor pelanggaran.',
+            'imigrasi':   'Saya ingin konsultasi hukum imigrasi Indonesia. Jelaskan visa, izin tinggal, kewarganegaraan, deportasi, dan sanksi pelanggaran.',
+            'haki':       'Saya ingin konsultasi HAKI Indonesia. Jelaskan hak cipta, merek, paten, desain industri, dan langkah hukum jika ada pelanggaran.',
+            'konsumen':   'Saya ingin konsultasi hukum perlindungan konsumen Indonesia. Jelaskan hak konsumen, kewajiban pelaku usaha, dan cara tuntut ganti rugi.',
         };
 
         // ── PROFILE GUARD ──
