@@ -41,7 +41,7 @@ exports.handler = async function(event, context) {
                 'X-Title': 'Lawyers AI'
             },
             body: JSON.stringify({
-                model: model || 'google/gemini-2.5-flash-lite-preview-06-17',
+                model: model || 'google/gemma-3-27b-it:free',
                 messages,
                 temperature: temperature || 0.7,
                 max_tokens: max_tokens || 3000
