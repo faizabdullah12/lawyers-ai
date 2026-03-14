@@ -579,10 +579,17 @@ window.onload = async () => {
     isPremium = !!profile?.is_premium;
     currentProfile = profile;
 
-    // Sidebar UI
-    if (profile) {
-        const n = profile.full_name || 'Sultan';
-        const av = profile.avatar_url || avatarFallback(n);
+    // Ambil data mitra_ahli untuk user saat ini (jika dia advokat)
+    const { data: mitraSelf } = await window.supabase
+        .from('mitra_ahli')
+        .select('nama_lengkap, foto_profil_url')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+    // Sidebar UI — prioritaskan data mitra_ahli jika ada
+    {
+        const n = mitraSelf?.nama_lengkap || profile?.full_name || 'Sultan';
+        const av = mitraSelf?.foto_profil_url || profile?.avatar_url || avatarFallback(n);
         document.getElementById('side-name').textContent = n;
         document.getElementById('side-avatar').src = av;
         document.getElementById('side-avatar').onerror = function() { this.src = avatarFallback(n); };
@@ -825,9 +832,16 @@ async function renderMessages() {
     const advAv = advData?.foto_profil_url
         ? imgSrc(advData.foto_profil_url, advName || 'A')
         : avatarFallback(advName || 'A');
-    const myProfileName = currentProfile?.full_name || currentUser.email || 'U';
+
+    // Ambil data mitra_ahli untuk user saat ini (nama & foto di bubble "me")
+    const { data: myMitra } = await window.supabase
+        .from('mitra_ahli')
+        .select('nama_lengkap, foto_profil_url')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+    const myProfileName = myMitra?.nama_lengkap || currentProfile?.full_name || currentUser.email || 'U';
     const myInit = myProfileName[0].toUpperCase();
-    const myAvatar = currentProfile?.avatar_url || null;
+    const myAvatar = myMitra?.foto_profil_url || currentProfile?.avatar_url || null;
 
     let lastDate = '';
 
