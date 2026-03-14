@@ -19,7 +19,7 @@ window.CONFIG = {
     OPENROUTER_API_KEY: null,
     
     // Endpoint proxy Netlify (key aman di server)
-    AI_PROXY_ENDPOINT: '/.netlify/functions/ai-proxy',
+    AI_PROXY_ENDPOINT: '/api/ai-proxy',
     
     // Model default
     AI_MODEL: "google/gemini-2.5-flash-lite-preview-06-17"
