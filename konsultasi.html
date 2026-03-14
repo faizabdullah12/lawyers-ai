@@ -14,18 +14,28 @@
 
     <style>
         body { display: flex; min-height: 100vh; }
+        @media(max-width:1023px) {
+            body { display: block; }
+            .main-scroll { display: block; overflow-y: visible; }
+        }
         .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
 
         .konsultasi-wrap {
             display: flex;
             flex-direction: column;
-            height: 100vh;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 72px 20px 0;
+            padding: 72px 16px 24px;
+            gap: 16px;
         }
         @media(min-width:1024px) {
-            .konsultasi-wrap { padding-top: 36px; flex-direction: row; gap: 20px; }
+            .konsultasi-wrap {
+                padding-top: 36px;
+                flex-direction: row;
+                gap: 20px;
+                height: 100vh;
+                padding-bottom: 0;
+            }
         }
 
         /* ── CHAT COLUMN ── */
@@ -36,6 +46,15 @@
             min-height: 0;
             overflow: hidden;
             padding-bottom: 16px;
+        }
+
+        /* Mobile: chat col punya tinggi fixed */
+        @media(max-width:1023px) {
+            .chat-col {
+                height: 58vh;
+                min-height: 320px;
+                padding-bottom: 0;
+            }
         }
 
         .chat-window {
@@ -111,9 +130,15 @@
             flex-direction: column;
             gap: 14px;
             padding-bottom: 20px;
+            flex-shrink: 0;
         }
         @media(min-width:1024px) {
-            .right-col { width: 320px; flex-shrink: 0; overflow-y: auto; }
+            .right-col { width: 320px; flex-shrink: 0; overflow-y: auto; padding-bottom: 20px; }
+        }
+        /* Mobile: right col row layout (panel berdampingan) */
+        @media(max-width:640px) {
+            .right-col { flex-direction: row; flex-wrap: wrap; gap: 10px; }
+            .right-col > * { flex: 1; min-width: 0; }
         }
 
         .panel-box {
@@ -235,13 +260,11 @@
 
         // Model fallback chain — dicoba satu per satu jika 429/error
        const MODEL_CHAIN = [
-            'openrouter/free',                            // Auto-pilih model free terbaik yang tersedia
-            'deepseek/deepseek-r1:free',                  // DeepSeek R1 reasoning
-            'deepseek/deepseek-chat-v3-0324:free',        // DeepSeek Chat V3
-            'meta-llama/llama-3.3-70b-instruct:free',     // Llama 3.3 70B
-            'google/gemini-2.0-flash-exp:free',           // Gemini 2.0 Flash
-            'mistralai/mistral-small-3.1-24b-instruct:free', // Mistral Small 3.1
-            'qwen/qwen3-8b:free',                         // Qwen3 8B
+            'deepseek/deepseek-r1:free',
+            'deepseek/deepseek-chat-v3-0324:free',
+            'meta-llama/llama-3.3-70b-instruct:free',
+            'qwen/qwen-2.5-72b-instruct:free',
+            'mistralai/mistral-7b-instruct:free',
         ];
 
         let currentAnalysis = null;
@@ -437,43 +460,26 @@
             input.value = '';
 
             try {
-                const isLegal = msg.length > 30 || /hukum|kasus|pasal|pidana|perdata|gugat|lapor|tilang|cerai|kontrak|sengketa|warisan|tanah|kerja|PHK|utang|penipuan|penganiayaan|pencurian|narkoba|korupsi|advokat|pengacara|hakim|polisi|jaksa|pengadilan/i.test(msg);
-                const modeInstr = isLegal
-                    ? 'Use LEGAL MODE: {"mode":"legal","summary":"[analisis hukum lengkap minimal 150 kata dalam Bahasa Indonesia]","pasal":"[pasal relevan, contoh: Pasal 362 KUHP]","isi_pasal":"[bunyi pasal]","kategori":"[kategori hukum]","saran":"[saran langkah hukum]"}'
-                    : 'Use CHAT MODE: {"mode":"chat","reply":"[jawaban ramah dalam Bahasa Indonesia]"}';
-                const fullPrompt = `You are Lawyers AI, an Indonesian legal assistant. Respond ONLY with a valid JSON object, zero text outside it.
-${modeInstr}
-User: ${msg}
-OUTPUT ONLY JSON:`;
+                const fullPrompt = `Kamu adalah asisten hukum AI bernama "Lawyers AI" yang ramah dan fasih Bahasa Indonesia.
+
+ATURAN WAJIB: Selalu balas HANYA dalam format JSON valid. Jangan ada teks di luar JSON.
+
+Jika pesan adalah salam, basa-basi, atau pertanyaan non-hukum, gunakan MODE CHAT:
+{"mode":"chat","reply":"Jawaban santai dan ramah dalam Bahasa Indonesia"}
+
+Jika pesan mengandung kasus, masalah hukum, atau pertanyaan hukum, gunakan MODE LEGAL:
+{"mode":"legal","summary":"Analisis lengkap minimal 150 kata berdasarkan hukum Indonesia","pasal":"Pasal relevan misal Pasal 362 KUHP","isi_pasal":"Bunyi lengkap pasal","kategori":"Kategori hukum","saran":"Saran langkah hukum konkret"}
+
+PENTING: Respons HANYA JSON valid. Tidak ada markdown. Tidak ada teks tambahan.
+
+Pesan user: ${msg}`;
 
                 const data = await fetchWithFallback(fullPrompt);
                 let raw = data.choices[0].message.content;
-
-                // Bersihkan markdown code blocks
-                let jsonStr = raw.trim()
-                    .replace(/```json\s*/gi,'')
-                    .replace(/```\s*/g,'')
-                    .trim();
-
-                // Coba ekstrak JSON dari dalam teks
+                let jsonStr = raw.trim().replace(/```json\s*/g,'').replace(/```\s*/g,'');
                 const js = jsonStr.indexOf('{'), je = jsonStr.lastIndexOf('}') + 1;
-
-                let parsed;
-                if (js !== -1 && je > 0) {
-                    try {
-                        parsed = JSON.parse(jsonStr.substring(js, je));
-                    } catch(e) {
-                        // JSON tidak valid — fallback ke chat mode dengan raw text
-                        parsed = { mode: 'chat', reply: raw.trim() };
-                    }
-                } else {
-                    // Tidak ada JSON sama sekali — tampilkan raw response sebagai chat
-                    parsed = { mode: 'chat', reply: raw.trim() };
-                }
-
-                // Validasi struktur parsed
-                if (!parsed.mode) parsed.mode = 'chat';
-                if (parsed.mode === 'chat' && !parsed.reply) parsed.reply = raw.trim();
+                if (js === -1 || je === 0) throw new Error('Format respons AI tidak valid');
+                const parsed = JSON.parse(jsonStr.substring(js, je));
 
                 if (parsed.mode === 'chat') {
                     appendToChat(`
