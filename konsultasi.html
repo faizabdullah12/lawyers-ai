@@ -235,11 +235,13 @@
 
         // Model fallback chain — dicoba satu per satu jika 429/error
        const MODEL_CHAIN = [
-            'deepseek/deepseek-r1:free',
-            'deepseek/deepseek-chat-v3-0324:free',
-            'meta-llama/llama-3.3-70b-instruct:free',
-            'qwen/qwen-2.5-72b-instruct:free',
-            'mistralai/mistral-7b-instruct:free',
+            'openrouter/free',                            // Auto-pilih model free terbaik yang tersedia
+            'deepseek/deepseek-r1:free',                  // DeepSeek R1 reasoning
+            'deepseek/deepseek-chat-v3-0324:free',        // DeepSeek Chat V3
+            'meta-llama/llama-3.3-70b-instruct:free',     // Llama 3.3 70B
+            'google/gemini-2.0-flash-exp:free',           // Gemini 2.0 Flash
+            'mistralai/mistral-small-3.1-24b-instruct:free', // Mistral Small 3.1
+            'qwen/qwen3-8b:free',                         // Qwen3 8B
         ];
 
         let currentAnalysis = null;
