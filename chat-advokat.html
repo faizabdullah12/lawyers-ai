@@ -544,15 +544,26 @@ function imgSrc(url, name) {
 // ═══════════════════════════════ FETCH MITRA ═══════════════════════════════
 async function fetchMitraData(uid) {
     if (!uid) return null;
+    console.log('[Chat] fetchMitraData uid:', uid);
     try {
         // 1. By user_id
         let r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&user_id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         let d = await r.json();
+        console.log('[Chat] by user_id result:', d);
         if (Array.isArray(d) && d.length) return d[0];
         // 2. By id tabel
         r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         d = await r.json();
+        console.log('[Chat] by table id result:', d);
         if (Array.isArray(d) && d.length) return d[0];
+        // 3. By mitraId from allConvs
+        const knownConv = allConvs.find(c => c.pid === uid);
+        if (knownConv?.mitraId) {
+            r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(knownConv.mitraId)}&limit=1`, { headers: HDRS });
+            d = await r.json();
+            console.log('[Chat] by mitraId from allConvs:', d);
+            if (Array.isArray(d) && d.length) return d[0];
+        }
     } catch(e) { console.error('[Chat] fetchMitraData error:', e); }
     return null;
 }
@@ -779,13 +790,18 @@ async function loadChatMode() {
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // mitra_ahli tidak ditemukan — tetap pakai advName dari inbox list (JANGAN ambil dari profiles)
-        console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
-        const displayName = advName || 'Advokat';
+        // Fetch mitra_ahli gagal -- fallback ke data allConvs (sudah correct dari loadInbox)
+        console.warn('[Chat] mitra_ahli not found, fallback to allConvs. receiverId:', receiverId);
+        const knownConv = allConvs.find(c => c.pid === receiverId);
+        const displayName = (knownConv && knownConv.name) || advName || 'Advokat';
+        const displayFoto = (knownConv && knownConv.foto) || avatarFallback(displayName);
+        const displaySpec = (knownConv && knownConv.spec) || '';
+        advName = displayName;
         document.getElementById('adv-name').textContent = displayName;
-        const advImgEl = document.getElementById('adv-img');
-        advImgEl.src = avatarFallback(displayName);
-        advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(displayName); };
+        document.getElementById('adv-spec').textContent = displaySpec;
+        const advImgEl2 = document.getElementById('adv-img');
+        advImgEl2.src = displayFoto;
+        advImgEl2.onerror = function() { this.onerror=null; this.src=avatarFallback(displayName); };
     }
 
     // Cari atau buat conversation_id
