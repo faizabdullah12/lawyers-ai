@@ -240,16 +240,6 @@
         body.light .profile-row { background: #F8FAFC !important; }
         body.light #inbox-panel { background: #F0F4F8 !important; border-color: #E2E8F0 !important; }
         body.light #chat-panel { background: #F0F4F8 !important; }
-        /* Mobile fixes */
-        @media(max-width:600px) {
-            #chat-header { padding: 10px 12px; }
-            #adv-name { font-size:13px !important; max-width:130px !important; }
-            .adv-avatar-wrap img { width:34px !important; height:34px !important; }
-            .header-btn { width:30px !important; height:30px !important; font-size:11px !important; }
-            #chat-box { padding: 12px; }
-            .msg-bubble { max-width:82%; }
-            .bubble { font-size:13px !important; padding:9px 12px !important; }
-        }
     </style>
 </head>
 <body>
@@ -358,7 +348,7 @@
                     </div>
                     <div>
                         <div style="display:flex;align-items:center;gap:7px">
-                            <span id="adv-name" style="font-size:15px;font-weight:800;font-style:italic;letter-spacing:-0.2px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">Memuat...</span>
+                            <span id="adv-name" style="font-size:15px;font-weight:800;font-style:italic;letter-spacing:-0.2px">Memuat...</span>
                             <span id="premium-marker" style="display:none" class="pro-badge">💎 PRO</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;margin-top:1px">
@@ -379,16 +369,25 @@
             <div id="chat-box"></div>
 
             <!-- Upgrade wall -->
-            <div id="upgrade-wall">
-                <div style="display:flex;align-items:center;gap:14px">
-                    <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                        <i class="fas fa-lock" style="color:var(--gold)"></i>
+            <div id="upgrade-wall" style="margin:0;border-radius:0;background:var(--bg-2);border-top:1px solid var(--border);border-left:none;border-right:none;border-bottom:none;padding:0;">
+                <!-- Input palsu non-aktif -->
+                <div style="padding:10px 14px 6px;display:flex;align-items:center;gap:10px;opacity:0.45;pointer-events:none;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-paperclip" style="color:var(--text-3);font-size:13px;"></i>
                     </div>
-                    <div style="flex:1">
-                        <p style="font-weight:700;font-size:13px;color:var(--gold);margin:0 0 2px;">Fitur Khusus PRO Sultan</p>
-                        <p style="font-size:11px;color:var(--text-3);margin:0">Upgrade untuk membalas & chat langsung dengan advokat</p>
+                    <div style="flex:1;background:var(--bg-3);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--text-4);">Ketik pesan konsultasi hukum Anda...</div>
+                    <div style="width:30px;height:30px;border-radius:8px;background:var(--accent);opacity:0.3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-paper-plane" style="color:#fff;font-size:11px;"></i>
                     </div>
-                    <a href="upgrade.html" style="background:var(--gold);color:#fff;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;padding:9px 14px;border-radius:9px;text-decoration:none;flex-shrink:0">Upgrade</a>
+                </div>
+                <!-- Banner upgrade tipis -->
+                <div style="margin:0 10px 10px;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.04));border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+                    <i class="fas fa-crown" style="color:var(--gold);font-size:14px;flex-shrink:0;"></i>
+                    <div style="flex:1;min-width:0;">
+                        <p style="font-size:11px;font-weight:800;color:var(--gold);margin:0 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Upgrade PRO untuk membalas</p>
+                        <p style="font-size:10px;color:var(--text-3);margin:0;">Chat langsung dengan advokat — Rp 150rb seumur hidup</p>
+                    </div>
+                    <a href="upgrade.html" style="background:var(--gold);color:#fff;font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;padding:8px 12px;border-radius:8px;text-decoration:none;flex-shrink:0;white-space:nowrap;">Upgrade</a>
                 </div>
             </div>
 
@@ -796,17 +795,45 @@ async function loadChatMode() {
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // Fallback: pakai data dari allConvs (sudah benar dari loadInbox)
+        // Fallback: coba allConvs dulu, kalau kosong fetch langsung mitra_ahli
         const knownConvF = allConvs.find(c => c.pid === receiverId);
-        const displayName = (knownConvF && knownConvF.name) || advName || 'Advokat';
-        const displayFoto = (knownConvF && knownConvF.foto) || avatarFallback(displayName);
-        const displaySpec = (knownConvF && knownConvF.spec) || '';
-        advName = displayName;
-        document.getElementById('adv-name').textContent = displayName;
-        document.getElementById('adv-spec').textContent = displaySpec;
-        const advImgEl2 = document.getElementById('adv-img');
-        advImgEl2.src = displayFoto;
-        advImgEl2.onerror = function() { this.onerror=null; this.src=avatarFallback(displayName); };
+        if (knownConvF) {
+            advName = knownConvF.name || advName || 'Advokat';
+            document.getElementById('adv-name').textContent = advName;
+            document.getElementById('adv-spec').textContent = knownConvF.spec || '';
+            const advImgElF = document.getElementById('adv-img');
+            advImgElF.src = knownConvF.foto || avatarFallback(advName);
+            advImgElF.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
+        } else {
+            // allConvs kosong (user baru/belum chat) - fetch langsung by user_id atau id
+            try {
+                let rf = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&user_id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
+                let df = await rf.json();
+                if (!Array.isArray(df) || !df.length) {
+                    rf = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
+                    df = await rf.json();
+                }
+                if (Array.isArray(df) && df.length) {
+                    advData = df[0];
+                    advName = df[0].nama_lengkap || 'Advokat';
+                    lawyerTableId = df[0].id;
+                    if (df[0].user_id && df[0].user_id !== receiverId) receiverId = df[0].user_id;
+                    document.getElementById('adv-name').textContent = advName;
+                    document.getElementById('adv-spec').textContent = df[0].spesialisasi || '';
+                    const advImgElF2 = document.getElementById('adv-img');
+                    advImgElF2.src = df[0].foto_profil_url ? imgSrc(df[0].foto_profil_url, advName) : avatarFallback(advName);
+                    advImgElF2.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
+                    const profileBtn = document.getElementById('view-profile-btn');
+                    if (profileBtn) profileBtn.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
+                } else {
+                    document.getElementById('adv-name').textContent = advName || 'Advokat';
+                    document.getElementById('adv-img').src = avatarFallback(advName || 'Advokat');
+                }
+            } catch(e) {
+                document.getElementById('adv-name').textContent = advName || 'Advokat';
+                document.getElementById('adv-img').src = avatarFallback(advName || 'Advokat');
+            }
+        }
     }
 
     // Cari atau buat conversation_id
@@ -972,7 +999,7 @@ function appendSingleMsg(m) {
     const advAvCached = document.getElementById('adv-img')?.src || avatarFallback(advName || 'A');
     const avatarHtml = isMe
         ? (myAv2
-            ? `<img src="${myAv2}" class="msg-avatar" onerror="this.style.display='none'" style="background:var(--accent-2)">`
+            ? `<img src="${myAv2}" class="msg-avatar" onerror="this.style.display='none'">`
             : `<div class="msg-avatar-me">${myInit2}</div>`)
         : `<img src="${advAvCached}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
     const tr = document.getElementById('typing-row');
