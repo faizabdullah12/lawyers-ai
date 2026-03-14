@@ -534,3 +534,207 @@ body.light #sidebar .text-slate-400 { color: #64748B !important; }
     overflow-y: auto;
     min-width: 0;
 }
+/* ============================================
+   MOBILE FIXES v2.0 — Semua halaman
+   ============================================ */
+
+/* ── BODY MOBILE: jangan overflow ── */
+@media (max-width: 1024px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    /* Main content harus mulai setelah hamburger button */
+    .main-scroll {
+        padding-top: 0;
+    }
+
+    /* Semua page wrapper: padding top 72px buat ruang hamburger */
+    .page-wrap,
+    [class*="wrap"]:not(#sidebar):not(.sp-avatar-wrap):not(.input-bar) {
+        padding-top: 72px !important;
+    }
+}
+
+/* ── TOAST: lebih kecil di mobile ── */
+@media (max-width: 640px) {
+    #toastContainer {
+        top: auto;
+        bottom: 20px;
+        right: 12px;
+        left: 12px;
+        max-width: 100%;
+    }
+    .lal-toast {
+        max-width: 100%;
+    }
+}
+
+/* ── HAMBURGER: posisi lebih proper ── */
+#menuBtn {
+    top: 16px;
+    left: 16px;
+}
+
+/* ── KONSULTASI PAGE MOBILE ── */
+@media (max-width: 1023px) {
+    .konsultasi-wrap {
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: calc(100vh - 72px);
+        padding: 72px 16px 20px !important;
+        gap: 16px;
+        overflow-y: auto;
+    }
+
+    .chat-col {
+        height: 60vh;
+        min-height: 340px;
+        overflow: hidden;
+    }
+
+    .chat-window {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .right-col {
+        width: 100% !important;
+        flex-shrink: 0;
+        overflow: visible !important;
+    }
+
+    /* Input bar di mobile jangan overlap */
+    .input-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        margin: 8px 0 0;
+    }
+}
+
+/* ── INDEX PAGE MOBILE ── */
+@media (max-width: 768px) {
+    /* Stats grid 2 kolom */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+
+    /* Hero card */
+    .hero-card {
+        padding: 20px !important;
+    }
+
+    /* Kategori scroll */
+    .category-scroll {
+        gap: 8px !important;
+    }
+
+    /* Action grid 1 kolom */
+    .action-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ── MITRA PAGE MOBILE ── */
+@media (max-width: 768px) {
+    .mitra-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .mitra-card {
+        flex-direction: column !important;
+        text-align: center;
+    }
+
+    .mitra-photo-big {
+        width: 80px !important;
+        height: 80px !important;
+        margin: 0 auto 12px;
+    }
+}
+
+/* ── PROFILE PAGE MOBILE ── */
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .profile-header {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center;
+        gap: 12px;
+    }
+}
+
+/* ── CHAT ADVOKAT MOBILE ── */
+@media (max-width: 1023px) {
+    .chat-advokat-wrap {
+        height: calc(100vh - 72px) !important;
+        margin-top: 72px;
+    }
+}
+
+/* ── UPGRADE PAGE MOBILE ── */
+@media (max-width: 768px) {
+    .upgrade-grid,
+    .pricing-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ── ARSIP PAGE MOBILE ── */
+@media (max-width: 768px) {
+    .arsip-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ── GENERAL MOBILE HELPERS ── */
+@media (max-width: 640px) {
+    /* Teks heading lebih kecil di HP kecil */
+    h2 { font-size: clamp(18px, 5vw, 26px) !important; }
+
+    /* Card padding lebih compact */
+    .card { padding: 16px !important; }
+
+    /* Button full width di mobile */
+    .btn-mobile-full {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Section label */
+    .section-label { margin-bottom: 10px; }
+}
+
+/* ── FIX: header konten tidak tertimpa menuBtn ── */
+@media (max-width: 1023px) {
+    /* Semua page header harus punya left margin supaya tidak tertimpa hamburger */
+    .page-header,
+    .chat-header,
+    .konsultasi-header {
+        padding-left: 60px !important;
+    }
+}
+
+/* ── SCROLLABLE BODY DI MOBILE (bukan fixed) ── */
+@media (max-width: 1023px) {
+    body {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .app-layout {
+        min-height: 100vh;
+        height: auto;
+    }
+
+    .main-scroll {
+        overflow-y: visible;
+        height: auto;
+    }
+}
