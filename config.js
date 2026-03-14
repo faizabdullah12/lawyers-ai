@@ -1,6 +1,6 @@
 // ============================================
 // config.js - Konfigurasi Jantung Lawyers AI
-// Version: 3.1 - OpenRouter & Qwen AI Integrated
+// Version: 3.2 - OpenRouter & Gemini 2.5 Flash Lite
 // ============================================
 
 // ============================================
@@ -14,10 +14,10 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // ============================================
 window.CONFIG = {
     // API KEY OPENROUTER LU (SUDAH TERPASANG BANG!)
-    OPENROUTER_API_KEY: "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",
+    OPENROUTER_API_KEY: "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",
     
     // Model pilihan Sultan (Qwen 2.5 72B - Gratis & Paling Pinter Bahasa Indonesia)
-    AI_MODEL: "qwen/qwen-2.5-72b-instruct:free"
+    AI_MODEL: "google/gemini-2.5-flash-lite-preview-06-17"
 };
 
 // Validasi API Key
@@ -302,4 +302,4 @@ window.toggleSidebar = function() {
 // 10. FINAL INITIALIZATION MESSAGE
 // ============================================
 
-console.log('✅ Lawyers AI Config v3.1 (OpenRouter Sultan) Loaded!');
+console.log('✅ Lawyers AI Config v3.2 (Gemini 2.5 Flash Lite) Loaded!');
