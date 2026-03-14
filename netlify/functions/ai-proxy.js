@@ -1,38 +1,50 @@
 // ============================================
 // netlify/functions/ai-proxy.js
-// Proxy aman untuk OpenRouter API
-// API Key TIDAK pernah terekspos ke browser!
+// Lawyers AI — OpenRouter Proxy
+// API Key aman di Netlify Environment Variable
 // ============================================
 
 exports.handler = async function(event, context) {
-    // Hanya izinkan POST
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    // ── CORS preflight ──
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: corsHeaders(),
+            body: ''
+        };
     }
 
-    // CORS headers — izinkan dari domain Netlify kamu
-    const headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Content-Type': 'application/json'
-    };
+    if (event.httpMethod !== 'POST') {
+        return respond(405, { error: 'Method not allowed' });
+    }
 
+    // ── Ambil API key dari environment variable Netlify ──
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+        console.error('❌ OPENROUTER_API_KEY tidak ditemukan di environment variables!');
+        return respond(500, {
+            error: 'Konfigurasi server bermasalah. API key tidak ditemukan.',
+            detail: 'Tambahkan OPENROUTER_API_KEY di Netlify → Site Settings → Environment Variables'
+        });
+    }
+
+    // ── Parse body ──
+    let body;
     try {
-        const { messages, model, temperature, max_tokens } = JSON.parse(event.body);
+        body = JSON.parse(event.body || '{}');
+    } catch(e) {
+        return respond(400, { error: 'Body tidak valid (bukan JSON).' });
+    }
 
-        // Validasi input
-        if (!messages || !Array.isArray(messages)) {
-            return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid messages' }) };
-        }
+    const { model, messages, temperature = 0.7, max_tokens = 3000 } = body;
 
-        // API Key diambil dari Netlify Environment Variable (AMAN!)
-        const apiKey = process.env.OPENROUTER_API_KEY;
-        if (!apiKey) {
-            console.error('OPENROUTER_API_KEY environment variable not set!');
-            return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server configuration error' }) };
-        }
+    if (!model || !messages || !Array.isArray(messages)) {
+        return respond(400, { error: 'Parameter model dan messages wajib diisi.' });
+    }
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    // ── Forward ke OpenRouter ──
+    try {
+        const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -40,37 +52,57 @@ exports.handler = async function(event, context) {
                 'HTTP-Referer': 'https://lawyers-ai.netlify.app',
                 'X-Title': 'Lawyers AI'
             },
-            body: JSON.stringify({
-                model: model || 'deepseek/deepseek-r1:free',
-                messages,
-                temperature: temperature || 0.7,
-                max_tokens: max_tokens || 3000
-            })
+            body: JSON.stringify({ model, messages, temperature, max_tokens })
         });
 
-        const data = await response.json();
+        const responseText = await orRes.text();
 
-        if (!response.ok) {
-            console.error('OpenRouter error:', response.status, data);
+        // Teruskan status asli dari OpenRouter ke client
+        // Ini penting agar fallback MODEL_CHAIN di frontend bisa bekerja
+        if (!orRes.ok) {
+            console.warn(`⚠️ OpenRouter ${orRes.status} untuk model ${model}:`, responseText.substring(0, 200));
             return {
-                statusCode: response.status,
-                headers,
-                body: JSON.stringify(data)
+                statusCode: orRes.status,
+                headers: corsHeaders(),
+                body: responseText
             };
+        }
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch(e) {
+            return respond(502, { error: 'Respons dari OpenRouter tidak valid.' });
         }
 
         return {
             statusCode: 200,
-            headers,
+            headers: corsHeaders(),
             body: JSON.stringify(data)
         };
 
-    } catch (error) {
-        console.error('Proxy error:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Internal server error', message: error.message })
-        };
+    } catch(e) {
+        console.error('❌ Fetch ke OpenRouter gagal:', e.message);
+        return respond(503, {
+            error: 'Tidak bisa terhubung ke server AI.',
+            detail: e.message
+        });
     }
 };
+
+function corsHeaders() {
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json'
+    };
+}
+
+function respond(status, data) {
+    return {
+        statusCode: status,
+        headers: corsHeaders(),
+        body: JSON.stringify(data)
+    };
+}
