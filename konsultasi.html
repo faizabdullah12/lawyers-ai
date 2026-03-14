@@ -433,6 +433,36 @@
             throw new Error(`Semua model AI sedang overload. Coba lagi dalam beberapa menit.\n(${lastError?.message || 'Rate limit'})`);
         }
 
+        // ── SIMPAN ANALISIS KE SUPABASE ──
+        async function saveToArsip(userMsg, analysis) {
+            try {
+                const { data: { session } } = await window.supabase.auth.getSession();
+                if (!session) return; // tidak login, skip
+
+                const { error } = await window.supabase
+                    .from('riwayat_konsultasi')
+                    .insert({
+                        user_id:    session.user.id,
+                        query:      userMsg,
+                        response:   analysis.summary,
+                        pasal:      analysis.pasal,
+                        isi_pasal:  analysis.isi_pasal,
+                        category:   analysis.kategori || 'Hukum Umum',
+                        saran:      analysis.saran || null,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (error) {
+                    console.warn('⚠️ Gagal simpan ke arsip:', error.message);
+                } else {
+                    console.log('✅ Kasus tersimpan ke arsip');
+                    if (window.showLALToast) showLALToast('success', 'Tersimpan ke Arsip', 'Kasus ini bisa dilihat di halaman Arsip Kasus.');
+                }
+            } catch(e) {
+                console.warn('⚠️ saveToArsip error:', e.message);
+            }
+        }
+
         async function sendMessage() {
             // Cek profil lengkap sebelum bisa chat
             if (!_profileComplete) {
@@ -520,6 +550,9 @@ Pesan user: ${msg}`;
                     pdfBtn.disabled = false;
                     pdfBtn.style.cssText = 'width:100%;padding:14px;background:#2563EB;border:none;border-radius:16px;font-size:10px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;font-family:inherit;';
                     pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Download Somasi';
+
+                    // ── SIMPAN KE SUPABASE (arsip-kasus) ──
+                    saveToArsip(msg, parsed);
 
                     showAdvocateRecommendation();
                 }
