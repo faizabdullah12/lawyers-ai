@@ -544,26 +544,15 @@ function imgSrc(url, name) {
 // ═══════════════════════════════ FETCH MITRA ═══════════════════════════════
 async function fetchMitraData(uid) {
     if (!uid) return null;
-    console.log('[Chat] fetchMitraData uid:', uid);
     try {
         // 1. By user_id
         let r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&user_id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         let d = await r.json();
-        console.log('[Chat] by user_id result:', d);
         if (Array.isArray(d) && d.length) return d[0];
         // 2. By id tabel
         r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         d = await r.json();
-        console.log('[Chat] by table id result:', d);
         if (Array.isArray(d) && d.length) return d[0];
-        // 3. By mitraId from allConvs
-        const knownConv = allConvs.find(c => c.pid === uid);
-        if (knownConv?.mitraId) {
-            r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(knownConv.mitraId)}&limit=1`, { headers: HDRS });
-            d = await r.json();
-            console.log('[Chat] by mitraId from allConvs:', d);
-            if (Array.isArray(d) && d.length) return d[0];
-        }
     } catch(e) { console.error('[Chat] fetchMitraData error:', e); }
     return null;
 }
@@ -790,18 +779,22 @@ async function loadChatMode() {
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // Fetch mitra_ahli gagal -- fallback ke data allConvs (sudah correct dari loadInbox)
-        console.warn('[Chat] mitra_ahli not found, fallback to allConvs. receiverId:', receiverId);
-        const knownConv = allConvs.find(c => c.pid === receiverId);
-        const displayName = (knownConv && knownConv.name) || advName || 'Advokat';
-        const displayFoto = (knownConv && knownConv.foto) || avatarFallback(displayName);
-        const displaySpec = (knownConv && knownConv.spec) || '';
-        advName = displayName;
-        document.getElementById('adv-name').textContent = displayName;
-        document.getElementById('adv-spec').textContent = displaySpec;
-        const advImgEl2 = document.getElementById('adv-img');
-        advImgEl2.src = displayFoto;
-        advImgEl2.onerror = function() { this.onerror=null; this.src=avatarFallback(displayName); };
+        // Fallback ke profiles (hanya jika bukan diri sendiri)
+        console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
+        if (receiverId && receiverId !== currentUser.id) {
+            const { data: prof } = await window.supabase.from('profiles')
+                .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
+            if (prof) {
+                advName = prof.full_name || 'Advokat';
+                document.getElementById('adv-name').textContent = advName;
+                const advImgEl = document.getElementById('adv-img');
+                advImgEl.src = prof.avatar_url || avatarFallback(advName);
+                advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
+            }
+        } else {
+            document.getElementById('adv-name').textContent = 'Advokat';
+            document.getElementById('adv-img').src = avatarFallback('Advokat');
+        }
     }
 
     // Cari atau buat conversation_id
@@ -829,8 +822,11 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    const advAv = advData?.foto_profil_url
-        ? imgSrc(advData.foto_profil_url, advName || 'A')
+    // Ambil foto advokat: prioritas advData > allConvs > fallback inisial
+    const knownConvAdv = allConvs.find(c => c.pid === receiverId);
+    const advFotoUrl = advData?.foto_profil_url || (knownConvAdv?.foto && !knownConvAdv.foto.includes('ui-avatars') ? knownConvAdv.foto : null);
+    const advAv = advFotoUrl
+        ? imgSrc(advFotoUrl, advName || 'A')
         : avatarFallback(advName || 'A');
     const myProfileName = currentProfile?.full_name || currentUser.email || 'U';
     const myInit = myProfileName[0].toUpperCase();
@@ -877,7 +873,7 @@ async function renderMessages() {
     // Typing placeholder
     box.innerHTML += `
         <div id="typing-row" class="typing-row" style="display:none">
-            <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
+            <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'" style="border-radius:8px;">
             <div class="typing-bubble"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
         </div>`;
 
