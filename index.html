@@ -101,9 +101,74 @@
             border: 1px solid var(--border);
         }
         .feature-row:hover { background: var(--bg-hover); }
-    </style>
+            /* Loading Overlay */
+        #load-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: var(--bg, #060A12);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 20px;
+            transition: opacity 0.4s ease;
+        }
+        body.light #load-overlay { background: #F0F4F8; }
+        .lai-loader { position: relative; width: 56px; height: 56px; }
+        .lai-loader-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #3B82F6;
+            animation: laiSpin 1s linear infinite;
+        }
+        .lai-loader-ring:nth-child(2) {
+            inset: 8px; border-top-color: #60A5FA;
+            animation-duration: 0.7s; animation-direction: reverse;
+        }
+        .lai-loader-core {
+            position: absolute; inset: 16px;
+            background: rgba(59,130,246,0.15); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lai-loader-core i { color: #60A5FA; font-size: 11px; }
+        @keyframes laiSpin { to { transform: rotate(360deg); } }
+        .lai-loader-text {
+            font-size: 10px; font-weight: 800;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--text-3, #475569);
+            animation: laiPulse 1.5s ease-in-out infinite;
+        }
+        body.light .lai-loader-text { color: #94A3B8; }
+        @keyframes laiPulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+        .lai-loader-brand {
+            font-size: 20px; font-weight: 900; font-style: italic;
+            color: var(--text-1, #F1F5F9); letter-spacing: -0.5px;
+        }
+        .lai-loader-brand span { color: #3B82F6; }
+        body.light .lai-loader-brand { color: #0F172A; }
+</style>
+
+    <script>
+    (function(){
+        // Apply theme early
+        var t = localStorage.getItem("lawyers_ai_theme") || "dark";
+        if (t === "light") document.documentElement.classList.add("light-pending");
+        // Hide loader after page ready
+        window.addEventListener("load", function() {
+            var ov = document.getElementById("load-overlay");
+            if (ov) { ov.style.opacity = "0"; setTimeout(function(){ ov.style.display = "none"; }, 400); }
+        });
+    })();
+    </script>
 </head>
 <body>
+
+<div id="load-overlay">
+    <div class="lai-loader">
+        <div class="lai-loader-ring"></div>
+        <div class="lai-loader-ring"></div>
+        <div class="lai-loader-core"><i class="fas fa-scale-balanced"></i></div>
+    </div>
+    <p class="lai-loader-brand">Lawyers<span>AI</span></p>
+    <p class="lai-loader-text">Memuat Beranda...</p>
+</div>
+
 
     <!-- ── MAIN ── -->
     <div class="main-scroll">
