@@ -822,9 +822,15 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    // Ambil foto advokat: prioritas advData > allConvs > fallback inisial
-    const knownConvAdv = allConvs.find(c => c.pid === receiverId);
-    const advFotoUrl = advData?.foto_profil_url || (knownConvAdv?.foto && !knownConvAdv.foto.includes('ui-avatars') ? knownConvAdv.foto : null);
+    // Ambil foto advokat: advData > fetch langsung mitra_ahli > fallback inisial
+    let advFotoUrl = advData?.foto_profil_url || null;
+    if (!advFotoUrl) {
+        try {
+            const _r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=foto_profil_url&user_id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
+            const _d = await _r.json();
+            if (Array.isArray(_d) && _d[0]?.foto_profil_url) advFotoUrl = _d[0].foto_profil_url;
+        } catch(e) {}
+    }
     const advAv = advFotoUrl
         ? imgSrc(advFotoUrl, advName || 'A')
         : avatarFallback(advName || 'A');
@@ -945,6 +951,43 @@ function clearAttach() {
 }
 
 // ═══════════════════════════════ REALTIME ═══════════════════════════════
+// Append satu pesan langsung ke DOM (tanpa rebuild seluruh box)
+function appendSingleMsg(m) {
+    const box = document.getElementById('chat-box');
+    if (!box) return;
+    const isMe = m.sender_id === currentUser.id;
+    const dObj = new Date(m.created_at);
+    const time = dObj.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
+    const myAv2 = currentProfile?.avatar_url || null;
+    const myInit2 = (currentProfile?.full_name || currentUser.email || 'U')[0].toUpperCase();
+    const advAvCached = document.getElementById('adv-img')?.src || avatarFallback(advName || 'A');
+    const avatarHtml = isMe
+        ? (myAv2
+            ? `<img src="${myAv2}" class="msg-avatar" onerror="this.style.display='none'" style="background:var(--accent-2)">`
+            : `<div class="msg-avatar-me">${myInit2}</div>`)
+        : `<img src="${advAvCached}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
+    // Hapus typing row dulu sebelum append
+    const tr = document.getElementById('typing-row');
+    const trParent = tr?.parentNode;
+    if (tr) tr.remove();
+    box.innerHTML += `
+        <div class="msg-row ${isMe?'me':'them'}">
+            ${!isMe ? avatarHtml : ''}
+            <div class="msg-bubble">
+                <div class="bubble ${isMe?'bubble-out':'bubble-in'}"><p>${txt}</p></div>
+                <div class="meta ${isMe?'justify-end':'justify-start'}">
+                    <span>${time}</span>
+                    ${isMe ? '<i class="fas fa-check" style="font-size:9px;color:var(--text-3)"></i>' : ''}
+                </div>
+            </div>
+            ${isMe ? avatarHtml : ''}
+        </div>`;
+    // Kembalikan typing row
+    if (tr && trParent) trParent.appendChild(tr);
+    box.scrollTop = box.scrollHeight;
+}
+
 function subscribeRT() {
     if (!receiverId) return;
     rtChannel = window.supabase.channel('msgs-' + receiverId + '-' + Date.now())
@@ -952,7 +995,7 @@ function subscribeRT() {
             const m = p.new;
             const rel = (m.sender_id === currentUser.id && m.receiver_id === receiverId) ||
                         (m.sender_id === receiverId && m.receiver_id === currentUser.id);
-            if (rel) renderMessages();
+            if (rel) appendSingleMsg(m); // append langsung, jam akurat
         })
         .on('broadcast', { event: 'typing' }, p => {
             if (p.payload?.from === receiverId) showTyping();
