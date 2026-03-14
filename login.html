@@ -308,10 +308,14 @@
         }
 
         .form-input:focus {
-            background: white;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background: transparent;
+            outline: none;
+        }
+        .input-wrapper:focus-within {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
             transform: translateY(-2px);
+            background: white !important;
         }
 
         .form-input.input-error {
@@ -321,18 +325,16 @@
 
         .input-icon {
             position: absolute;
-            left: 16px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
-            color: #cbd5e1;
-            font-size: 13px;
+            color: #94a3b8;
+            font-size: 15px;
             pointer-events: none;
-            width: 14px;
-            text-align: center;
         }
 
         .input-with-icon {
-            padding-left: 42px;
+            padding-left: 50px;
         }
 
         .toggle-password {
@@ -551,12 +553,11 @@
             }
 
             .input-with-icon {
-                padding-left: 40px;
+                padding-left: 46px;
             }
 
             .input-icon {
-                left: 14px;
-                font-size: 12px;
+                left: 16px;
             }
 
             .toggle-password {
@@ -632,9 +633,9 @@
                     <label class="form-label">
                         <span>Email</span>
                     </label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="loginEmail" class="form-input input-with-icon" 
+                    <div class="input-wrapper" style="display:flex;align-items:center;background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;overflow:hidden;transition:all 0.3s;">
+                        <span style="padding:0 14px;color:#94a3b8;font-size:14px;flex-shrink:0;border-right:1.5px solid #e2e8f0;height:100%;display:flex;align-items:center;min-height:52px;"><i class="fas fa-envelope"></i></span>
+                        <input type="email" id="loginEmail" class="form-input" style="border:none!important;border-radius:0!important;background:transparent!important;padding:15px 16px!important;flex:1;box-shadow:none!important;width:100%;"
                                placeholder="nama@gmail.com" required>
                     </div>
                     <div class="error-message" id="emailError">Format email tidak valid</div>
@@ -646,11 +647,11 @@
                         <span>Password</span>
                         <a href="#" class="forgot-link" onclick="handleForgotPassword(event)">Lupa Password?</a>
                     </label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="loginPassword" class="form-input input-with-icon" 
+                    <div class="input-wrapper" style="display:flex;align-items:center;background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;overflow:hidden;transition:all 0.3s;">
+                        <span style="padding:0 14px;color:#94a3b8;font-size:14px;flex-shrink:0;border-right:1.5px solid #e2e8f0;height:100%;display:flex;align-items:center;min-height:52px;"><i class="fas fa-lock"></i></span>
+                        <input type="password" id="loginPassword" class="form-input" style="border:none!important;border-radius:0!important;background:transparent!important;padding:15px 16px!important;flex:1;box-shadow:none!important;width:100%;"
                                placeholder="Masukkan password" required>
-                        <span class="toggle-password" id="togglePassword">
+                        <span class="toggle-password" id="togglePassword" style="padding:0 14px;flex-shrink:0;">
                             <i class="far fa-eye" id="eyeIcon"></i>
                         </span>
                     </div>
