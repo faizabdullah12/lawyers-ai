@@ -50,9 +50,74 @@
         .danger-btn { background: var(--bg-input); border: 1px solid rgba(239,68,68,0.2); color: #F87171; font-size: 12px; font-weight: 700; padding: 12px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s, border-color 0.2s; }
         .danger-btn:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.4); }
         body.light .danger-btn { background: #FEF2F2; }
-    </style>
+            /* Loading Overlay */
+        #load-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: var(--bg, #060A12);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 20px;
+            transition: opacity 0.4s ease;
+        }
+        body.light #load-overlay { background: #F0F4F8; }
+        .lai-loader { position: relative; width: 56px; height: 56px; }
+        .lai-loader-ring {
+            position: absolute; inset: 0; border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #3B82F6;
+            animation: laiSpin 1s linear infinite;
+        }
+        .lai-loader-ring:nth-child(2) {
+            inset: 8px; border-top-color: #60A5FA;
+            animation-duration: 0.7s; animation-direction: reverse;
+        }
+        .lai-loader-core {
+            position: absolute; inset: 16px;
+            background: rgba(59,130,246,0.15); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lai-loader-core i { color: #60A5FA; font-size: 11px; }
+        @keyframes laiSpin { to { transform: rotate(360deg); } }
+        .lai-loader-text {
+            font-size: 10px; font-weight: 800;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--text-3, #475569);
+            animation: laiPulse 1.5s ease-in-out infinite;
+        }
+        body.light .lai-loader-text { color: #94A3B8; }
+        @keyframes laiPulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+        .lai-loader-brand {
+            font-size: 20px; font-weight: 900; font-style: italic;
+            color: var(--text-1, #F1F5F9); letter-spacing: -0.5px;
+        }
+        .lai-loader-brand span { color: #3B82F6; }
+        body.light .lai-loader-brand { color: #0F172A; }
+</style>
+
+    <script>
+    (function(){
+        // Apply theme early
+        var t = localStorage.getItem("lawyers_ai_theme") || "dark";
+        if (t === "light") document.documentElement.classList.add("light-pending");
+        // Hide loader after page ready
+        window.addEventListener("load", function() {
+            var ov = document.getElementById("load-overlay");
+            if (ov) { ov.style.opacity = "0"; setTimeout(function(){ ov.style.display = "none"; }, 400); }
+        });
+    })();
+    </script>
 </head>
 <body>
+
+<div id="load-overlay">
+    <div class="lai-loader">
+        <div class="lai-loader-ring"></div>
+        <div class="lai-loader-ring"></div>
+        <div class="lai-loader-core"><i class="fas fa-scale-balanced"></i></div>
+    </div>
+    <p class="lai-loader-brand">Lawyers<span>AI</span></p>
+    <p class="lai-loader-text">Memuat Profil...</p>
+</div>
+
     <div class="main-scroll">
         <div style="max-width:760px; margin:0 auto; padding:20px 20px 40px; padding-top:68px;" class="lp-fix">
         <style>@media(min-width:1024px){.lp-fix{padding-top:28px!important}}</style>
@@ -60,48 +125,37 @@
             <!-- Profile Card -->
             <div class="profile-card fade-up">
                 <div class="profile-banner"></div>
-                <style>
-                    .avatar-hover:hover{opacity:1!important} label:hover .avatar-hover{opacity:1;}
-                    .profile-header-wrap { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin-bottom:16px; padding-top:48px; }
-                    @media(max-width:600px) {
-                        .profile-header-wrap { flex-direction:column; align-items:center; text-align:center; padding-top:52px; gap:10px; }
-                        .profile-info-col { align-items:center!important; width:100%; }
-                        .profile-info-col h2 { font-size:20px!important; }
-                        .profile-info-col .badges-row { justify-content:center; }
-                        .profile-save-btn { width:100%!important; justify-content:center; margin-top:4px; }
-                        .profile-avatar-label { margin-top:-30px; }
-                    }
-                </style>
                 <div style="padding:0 24px 24px; margin-top:-40px;">
-                    <div class="profile-header-wrap">
+                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin-bottom:16px; padding-top:48px;">
                         <!-- Avatar -->
-                        <label class="profile-avatar-label" style="cursor:pointer; position:relative; flex-shrink:0;" title="Ganti foto profil">
-                            <div style="width:88px;height:88px;border-radius:20px;overflow:hidden;border:3px solid var(--bg-sidebar);box-shadow:0 8px 24px rgba(0,0,0,0.35);">
+                        <label style="cursor:pointer; position:relative; flex-shrink:0;" title="Ganti foto profil">
+                            <div style="width:80px;height:80px;border-radius:16px;overflow:hidden;border:3px solid var(--bg-sidebar);box-shadow:0 4px 20px rgba(0,0,0,0.3);">
                                 <img id="avatar-preview" src="" style="width:100%;height:100%;object-fit:cover;" alt="Avatar">
                             </div>
-                            <div style="position:absolute;inset:0;border-radius:20px;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;border:3px solid var(--bg-sidebar);" class="avatar-hover">
+                            <div style="position:absolute;inset:0;border-radius:16px;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;border:3px solid var(--bg-sidebar);" class="avatar-hover">
                                 <i class="fas fa-camera" style="color:white;font-size:14px;margin-bottom:2px;"></i>
                                 <span style="color:white;font-size:8px;font-weight:700;text-transform:uppercase;">Ganti</span>
                             </div>
                             <input type="file" id="file-input" style="display:none;" accept="image/jpeg,image/png,image/webp" onchange="previewImage(this)">
-                            <div style="position:absolute;bottom:-3px;right:-3px;width:20px;height:20px;background:#10B981;border-radius:50%;border:2px solid var(--bg-sidebar);display:flex;align-items:center;justify-content:center;"><i class="fas fa-check" style="color:#fff;font-size:8px;"></i></div>
+                            <div style="position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;background:#10B981;border-radius:50%;border:2px solid var(--bg-sidebar);"></div>
                         </label>
+                        <style>.avatar-hover:hover{opacity:1!important} label:hover .avatar-hover{opacity:1;}</style>
 
                         <!-- Info -->
-                        <div class="profile-info-col" style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" class="badges-row">
-                                <h2 id="profile-name-display" style="font-size:20px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;letter-spacing:-0.3px;">Memuat...</h2>
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                                <h2 id="profile-name-display" style="font-size:18px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;letter-spacing:-0.3px;">Memuat...</h2>
                                 <span id="premium-badge" style="display:none;font-size:8px;font-weight:800;background:linear-gradient(135deg,#F59E0B,#D97706);color:white;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;">💎 PRO</span>
                             </div>
-                            <p id="profile-email-display" style="font-size:11px;color:var(--text-3);margin:0;word-break:break-all;"></p>
-                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;" class="badges-row">
+                            <p id="profile-email-display" style="font-size:12px;color:var(--text-3);margin:0 0 6px;"></p>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
                                 <span id="plan-badge" style="font-size:9px;font-weight:700;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;">Standard</span>
                                 <span id="member-since" style="font-size:9px;color:var(--text-4);"></span>
                             </div>
                         </div>
 
                         <!-- Save btn -->
-                        <button onclick="saveProfile()" id="btnSave" class="btn-primary profile-save-btn" style="flex-shrink:0;">
+                        <button onclick="saveProfile()" id="btnSave" class="btn-primary" style="flex-shrink:0;">
                             <i class="fas fa-cloud-arrow-up"></i> Simpan
                         </button>
                     </div>
