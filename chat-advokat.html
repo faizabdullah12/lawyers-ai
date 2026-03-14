@@ -240,6 +240,16 @@
         body.light .profile-row { background: #F8FAFC !important; }
         body.light #inbox-panel { background: #F0F4F8 !important; border-color: #E2E8F0 !important; }
         body.light #chat-panel { background: #F0F4F8 !important; }
+        /* Mobile fixes */
+        @media(max-width:600px) {
+            #chat-header { padding: 10px 12px; }
+            #adv-name { font-size:13px !important; max-width:130px !important; }
+            .adv-avatar-wrap img { width:34px !important; height:34px !important; }
+            .header-btn { width:30px !important; height:30px !important; font-size:11px !important; }
+            #chat-box { padding: 12px; }
+            .msg-bubble { max-width:82%; }
+            .bubble { font-size:13px !important; padding:9px 12px !important; }
+        }
     </style>
 </head>
 <body>
@@ -348,7 +358,7 @@
                     </div>
                     <div>
                         <div style="display:flex;align-items:center;gap:7px">
-                            <span id="adv-name" style="font-size:15px;font-weight:800;font-style:italic;letter-spacing:-0.2px">Memuat...</span>
+                            <span id="adv-name" style="font-size:15px;font-weight:800;font-style:italic;letter-spacing:-0.2px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">Memuat...</span>
                             <span id="premium-marker" style="display:none" class="pro-badge">💎 PRO</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;margin-top:1px">
@@ -850,7 +860,7 @@ async function renderMessages() {
             box.innerHTML += `<div class="date-sep"><span>${dateStr}</span></div>`;
         }
 
-        const time = dObj.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const time = dObj.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' });
         const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
 
         const avatarHtml = isMe
@@ -955,7 +965,7 @@ function appendSingleMsg(m) {
     if (!box) return;
     const isMe = m.sender_id === currentUser.id;
     const dObj = new Date(m.created_at);
-    const time = dObj.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    const time = dObj.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' });
     const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
     const myAv2 = currentProfile?.avatar_url || null;
     const myInit2 = (currentProfile?.full_name || currentUser.email || 'U')[0].toUpperCase();
