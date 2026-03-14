@@ -553,6 +553,13 @@ async function fetchMitraData(uid) {
         r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         d = await r.json();
         if (Array.isArray(d) && d.length) return d[0];
+        // 3. By mitraId dari allConvs
+        const knownConvM = allConvs.find(c => c.pid === uid);
+        if (knownConvM && knownConvM.mitraId) {
+            r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(knownConvM.mitraId)}&limit=1`, { headers: HDRS });
+            d = await r.json();
+            if (Array.isArray(d) && d.length) return d[0];
+        }
     } catch(e) { console.error('[Chat] fetchMitraData error:', e); }
     return null;
 }
@@ -779,22 +786,17 @@ async function loadChatMode() {
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // Fallback ke profiles (hanya jika bukan diri sendiri)
-        console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
-        if (receiverId && receiverId !== currentUser.id) {
-            const { data: prof } = await window.supabase.from('profiles')
-                .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
-            if (prof) {
-                advName = prof.full_name || 'Advokat';
-                document.getElementById('adv-name').textContent = advName;
-                const advImgEl = document.getElementById('adv-img');
-                advImgEl.src = prof.avatar_url || avatarFallback(advName);
-                advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
-            }
-        } else {
-            document.getElementById('adv-name').textContent = 'Advokat';
-            document.getElementById('adv-img').src = avatarFallback('Advokat');
-        }
+        // Fallback: pakai data dari allConvs (sudah benar dari loadInbox)
+        const knownConvF = allConvs.find(c => c.pid === receiverId);
+        const displayName = (knownConvF && knownConvF.name) || advName || 'Advokat';
+        const displayFoto = (knownConvF && knownConvF.foto) || avatarFallback(displayName);
+        const displaySpec = (knownConvF && knownConvF.spec) || '';
+        advName = displayName;
+        document.getElementById('adv-name').textContent = displayName;
+        document.getElementById('adv-spec').textContent = displaySpec;
+        const advImgEl2 = document.getElementById('adv-img');
+        advImgEl2.src = displayFoto;
+        advImgEl2.onerror = function() { this.onerror=null; this.src=avatarFallback(displayName); };
     }
 
     // Cari atau buat conversation_id
@@ -822,18 +824,15 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    // Ambil foto advokat: advData > fetch langsung mitra_ahli > fallback inisial
     let advFotoUrl = advData?.foto_profil_url || null;
     if (!advFotoUrl) {
         try {
             const _r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=foto_profil_url&user_id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
             const _d = await _r.json();
-            if (Array.isArray(_d) && _d[0]?.foto_profil_url) advFotoUrl = _d[0].foto_profil_url;
+            if (Array.isArray(_d) && _d[0] && _d[0].foto_profil_url) advFotoUrl = _d[0].foto_profil_url;
         } catch(e) {}
     }
-    const advAv = advFotoUrl
-        ? imgSrc(advFotoUrl, advName || 'A')
-        : avatarFallback(advName || 'A');
+    const advAv = advFotoUrl ? imgSrc(advFotoUrl, advName || 'A') : avatarFallback(advName || 'A');
     const myProfileName = currentProfile?.full_name || currentUser.email || 'U';
     const myInit = myProfileName[0].toUpperCase();
     const myAvatar = currentProfile?.avatar_url || null;
@@ -879,7 +878,7 @@ async function renderMessages() {
     // Typing placeholder
     box.innerHTML += `
         <div id="typing-row" class="typing-row" style="display:none">
-            <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'" style="border-radius:8px;">
+            <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
             <div class="typing-bubble"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
         </div>`;
 
@@ -951,7 +950,6 @@ function clearAttach() {
 }
 
 // ═══════════════════════════════ REALTIME ═══════════════════════════════
-// Append satu pesan langsung ke DOM (tanpa rebuild seluruh box)
 function appendSingleMsg(m) {
     const box = document.getElementById('chat-box');
     if (!box) return;
@@ -967,9 +965,7 @@ function appendSingleMsg(m) {
             ? `<img src="${myAv2}" class="msg-avatar" onerror="this.style.display='none'" style="background:var(--accent-2)">`
             : `<div class="msg-avatar-me">${myInit2}</div>`)
         : `<img src="${advAvCached}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
-    // Hapus typing row dulu sebelum append
     const tr = document.getElementById('typing-row');
-    const trParent = tr?.parentNode;
     if (tr) tr.remove();
     box.innerHTML += `
         <div class="msg-row ${isMe?'me':'them'}">
@@ -983,9 +979,9 @@ function appendSingleMsg(m) {
             </div>
             ${isMe ? avatarHtml : ''}
         </div>`;
-    // Kembalikan typing row
-    if (tr && trParent) trParent.appendChild(tr);
     box.scrollTop = box.scrollHeight;
+    const cv = allConvs.find(c => c.pid === receiverId);
+    if (cv) { cv.preview = m.message_text || ''; cv.isMe = isMe; cv.time = time; renderConvList(allConvs); }
 }
 
 function subscribeRT() {
@@ -995,7 +991,7 @@ function subscribeRT() {
             const m = p.new;
             const rel = (m.sender_id === currentUser.id && m.receiver_id === receiverId) ||
                         (m.sender_id === receiverId && m.receiver_id === currentUser.id);
-            if (rel) appendSingleMsg(m); // append langsung, jam akurat
+            if (rel) appendSingleMsg(m);
         })
         .on('broadcast', { event: 'typing' }, p => {
             if (p.payload?.from === receiverId) showTyping();
