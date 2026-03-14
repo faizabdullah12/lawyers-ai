@@ -226,15 +226,16 @@
 
     <script>
         // Ambil API key dari config.js jika tersedia, fallback ke key lokal
-        function getApiKey() {
-            return (window.CONFIG && window.CONFIG.OPENROUTER_API_KEY)
-                ? window.CONFIG.OPENROUTER_API_KEY
-                : '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';
+        // Proxy endpoint — API key aman di server Netlify
+        function getProxyEndpoint() {
+            return (window.CONFIG && window.CONFIG.AI_PROXY_ENDPOINT)
+                ? window.CONFIG.AI_PROXY_ENDPOINT
+                : '/.netlify/functions/ai-proxy';
         }
 
         // Model fallback chain — dicoba satu per satu jika 429/error
         const MODEL_CHAIN = [
-            'openrouter/auto',
+            'google/gemini-2.5-flash-lite-preview-06-17',
             'google/gemma-3-27b-it:free',
             'meta-llama/llama-3.3-70b-instruct:free',
             'deepseek/deepseek-r1:free',
@@ -370,19 +371,14 @@
             saveHistory();
         }
         async function fetchWithFallback(prompt) {
-            const apiKey = getApiKey();
             let lastError = null;
             for (const model of MODEL_CHAIN) {
                 try {
                     console.log(`🤖 Mencoba model: ${model}`);
-                    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    const endpoint = getProxyEndpoint();
+                    const res = await fetch(endpoint, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${apiKey}`,
-                            'HTTP-Referer': window.location.href,
-                            'X-Title': 'Lawyers AI'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             model,
                             messages: [{ role: 'user', content: prompt }],

@@ -10,20 +10,22 @@ const supabaseUrl = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
 
 // ============================================
-// 2. KONFIGURASI OPENROUTER API KEY (SULTAN)
+// 2. KONFIGURASI AI PROXY
+// API Key TIDAK disimpan di sini (aman dari GitHub!)
+// Key disimpan di Netlify Environment Variables
 // ============================================
 window.CONFIG = {
-    // API KEY OPENROUTER LU (SUDAH TERPASANG BANG!)
-    OPENROUTER_API_KEY: "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",
+    // ⚠️ JANGAN isi API key di sini — sudah dipindah ke Netlify Function!
+    OPENROUTER_API_KEY: null,
     
-    // Model pilihan Sultan (Qwen 2.5 72B - Gratis & Paling Pinter Bahasa Indonesia)
+    // Endpoint proxy Netlify (key aman di server)
+    AI_PROXY_ENDPOINT: '/.netlify/functions/ai-proxy',
+    
+    // Model default
     AI_MODEL: "google/gemini-2.5-flash-lite-preview-06-17"
 };
 
-// Validasi API Key
-if (!window.CONFIG.OPENROUTER_API_KEY || window.CONFIG.OPENROUTER_API_KEY.length < 10) {
-    console.error("⚠️ API KEY OPENROUTER TIDAK VALID!");
-}
+console.log("✅ Config: AI Proxy mode aktif (API key aman di server)");
 
 // ============================================
 // 3. INISIALISASI SUPABASE
