@@ -60,37 +60,48 @@
             <!-- Profile Card -->
             <div class="profile-card fade-up">
                 <div class="profile-banner"></div>
+                <style>
+                    .avatar-hover:hover{opacity:1!important} label:hover .avatar-hover{opacity:1;}
+                    .profile-header-wrap { display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin-bottom:16px; padding-top:48px; }
+                    @media(max-width:600px) {
+                        .profile-header-wrap { flex-direction:column; align-items:center; text-align:center; padding-top:52px; gap:10px; }
+                        .profile-info-col { align-items:center!important; width:100%; }
+                        .profile-info-col h2 { font-size:20px!important; }
+                        .profile-info-col .badges-row { justify-content:center; }
+                        .profile-save-btn { width:100%!important; justify-content:center; margin-top:4px; }
+                        .profile-avatar-label { margin-top:-30px; }
+                    }
+                </style>
                 <div style="padding:0 24px 24px; margin-top:-40px;">
-                    <div style="display:flex; flex-wrap:wrap; align-items:center; gap:16px; margin-bottom:16px; padding-top:48px;">
+                    <div class="profile-header-wrap">
                         <!-- Avatar -->
-                        <label style="cursor:pointer; position:relative; flex-shrink:0;" title="Ganti foto profil">
-                            <div style="width:80px;height:80px;border-radius:16px;overflow:hidden;border:3px solid var(--bg-sidebar);box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                        <label class="profile-avatar-label" style="cursor:pointer; position:relative; flex-shrink:0;" title="Ganti foto profil">
+                            <div style="width:88px;height:88px;border-radius:20px;overflow:hidden;border:3px solid var(--bg-sidebar);box-shadow:0 8px 24px rgba(0,0,0,0.35);">
                                 <img id="avatar-preview" src="" style="width:100%;height:100%;object-fit:cover;" alt="Avatar">
                             </div>
-                            <div style="position:absolute;inset:0;border-radius:16px;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;border:3px solid var(--bg-sidebar);" class="avatar-hover">
+                            <div style="position:absolute;inset:0;border-radius:20px;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;border:3px solid var(--bg-sidebar);" class="avatar-hover">
                                 <i class="fas fa-camera" style="color:white;font-size:14px;margin-bottom:2px;"></i>
                                 <span style="color:white;font-size:8px;font-weight:700;text-transform:uppercase;">Ganti</span>
                             </div>
                             <input type="file" id="file-input" style="display:none;" accept="image/jpeg,image/png,image/webp" onchange="previewImage(this)">
-                            <div style="position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;background:#10B981;border-radius:50%;border:2px solid var(--bg-sidebar);"></div>
+                            <div style="position:absolute;bottom:-3px;right:-3px;width:20px;height:20px;background:#10B981;border-radius:50%;border:2px solid var(--bg-sidebar);display:flex;align-items:center;justify-content:center;"><i class="fas fa-check" style="color:#fff;font-size:8px;"></i></div>
                         </label>
-                        <style>.avatar-hover:hover{opacity:1!important} label:hover .avatar-hover{opacity:1;}</style>
 
                         <!-- Info -->
-                        <div style="flex:1; min-width:0;">
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-                                <h2 id="profile-name-display" style="font-size:18px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;letter-spacing:-0.3px;">Memuat...</h2>
+                        <div class="profile-info-col" style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" class="badges-row">
+                                <h2 id="profile-name-display" style="font-size:20px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;letter-spacing:-0.3px;">Memuat...</h2>
                                 <span id="premium-badge" style="display:none;font-size:8px;font-weight:800;background:linear-gradient(135deg,#F59E0B,#D97706);color:white;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;">💎 PRO</span>
                             </div>
-                            <p id="profile-email-display" style="font-size:12px;color:var(--text-3);margin:0 0 6px;"></p>
-                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                            <p id="profile-email-display" style="font-size:11px;color:var(--text-3);margin:0;word-break:break-all;"></p>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;" class="badges-row">
                                 <span id="plan-badge" style="font-size:9px;font-weight:700;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:0.08em;">Standard</span>
                                 <span id="member-since" style="font-size:9px;color:var(--text-4);"></span>
                             </div>
                         </div>
 
                         <!-- Save btn -->
-                        <button onclick="saveProfile()" id="btnSave" class="btn-primary" style="flex-shrink:0;">
+                        <button onclick="saveProfile()" id="btnSave" class="btn-primary profile-save-btn" style="flex-shrink:0;">
                             <i class="fas fa-cloud-arrow-up"></i> Simpan
                         </button>
                     </div>
