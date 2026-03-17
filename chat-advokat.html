@@ -41,16 +41,10 @@
         @media (max-width: 1024px) {
             #sidebar { position: fixed; z-index: 200; height: 100vh; transform: translateX(-100%); }
             #sidebar.open { transform: translateX(0); }
-            #app { height: 100vh; overflow: hidden; }
         }
         @media (max-width: 768px) {
             #inbox-panel { width: 100%; position: absolute; z-index: 10; height: 100%; }
             #inbox-panel.hidden-mobile { display: none; }
-            /* Chat area tidak tertimpa hamburger */
-            #chat-area { padding-top: 0; }
-            .chat-header { padding-left: 16px !important; }
-            /* Input area */
-            #input-area { padding: 10px 12px; }
         }
 
         /* ─── SIDEBAR ─── */
@@ -224,22 +218,10 @@
         /* ─── OVERLAYS ─── */
         #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 190; display: none; }
         #sidebar-overlay.show { display: block; }
-        #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; transition: opacity 0.4s; }
+        #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.3s; }
         body.light #load-overlay { background: #F0F4F8; }
-        /* Logo animasi */
-        .loader-logo { position: relative; width: 72px; height: 72px; margin-bottom: 24px; }
-        .loader-logo-ring { position: absolute; inset: 0; border-radius: 50%; border: 2.5px solid transparent; border-top-color: #3B82F6; border-right-color: rgba(59,130,246,0.3); animation: loaderSpin 1s cubic-bezier(0.4,0,0.2,1) infinite; }
-        .loader-logo-ring2 { position: absolute; inset: 8px; border-radius: 50%; border: 2px solid transparent; border-bottom-color: #60A5FA; border-left-color: rgba(96,165,250,0.3); animation: loaderSpin 1.4s cubic-bezier(0.4,0,0.2,1) infinite reverse; }
-        .loader-logo-L { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; font-style: italic; color: #fff; letter-spacing: -1px; animation: loaderPulse 1.5s ease-in-out infinite; user-select: none; }
-        .loader-logo-L span { color: #3B82F6; }
-        .loader-dots { display: flex; gap: 6px; margin-bottom: 14px; }
-        .loader-dot { width: 5px; height: 5px; border-radius: 50%; background: #3B82F6; animation: loaderDot 1.2s ease-in-out infinite; }
-        .loader-dot:nth-child(2) { animation-delay: 0.2s; background: #60A5FA; }
-        .loader-dot:nth-child(3) { animation-delay: 0.4s; background: #93C5FD; }
-        .loader-text { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3); }
-        @keyframes loaderSpin { to { transform: rotate(360deg); } }
-        @keyframes loaderPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(0.92)} }
-        @keyframes loaderDot { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+        .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border-2); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ─── SIDEBAR LIGHT MODE ─── */
         body.light #sidebar { background: #FFFFFF; border-color: #E2E8F0; }
@@ -252,23 +234,49 @@
         body.light .profile-row { background: #F8FAFC !important; }
         body.light #inbox-panel { background: #F0F4F8 !important; border-color: #E2E8F0 !important; }
         body.light #chat-panel { background: #F0F4F8 !important; }
+
+        /* ─── NOTIF SOUND INDICATOR ─── */
+        #sound-toggle { width: 34px; height: 34px; border-radius: 9px; background: var(--bg-3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); font-size: 13px; transition: all 0.15s; }
+        #sound-toggle:hover { background: var(--bg-4); color: var(--text-1); }
+        #sound-toggle.muted { color: var(--text-3); }
+        body.light #sound-toggle { background: #F8FAFC; border-color: #E2E8F0; }
+
+        /* ─── QUICK REPLY ─── */
+        #quick-reply-bar { display: none; padding: 8px 14px; border-top: 1px solid var(--border); background: var(--bg-2); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+        #quick-reply-bar::-webkit-scrollbar { display: none; }
+        #quick-reply-bar.show { display: flex; gap: 6px; align-items: center; }
+        body.light #quick-reply-bar { background: #FFFFFF; border-color: #E2E8F0; }
+        .qr-chip { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--bg-3); border: 1px solid var(--border); color: var(--text-2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .qr-chip:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); color: #60A5FA; }
+        body.light .qr-chip { background: #F8FAFC; border-color: #E2E8F0; color: #475569; }
+        body.light .qr-chip:hover { background: #EFF6FF; border-color: #93C5FD; color: #2563EB; }
+
+        /* ─── ONLINE STATUS ─── */
+        .online-badge.online { background: #10B981 !important; box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
+        .online-badge.away { background: #F59E0B !important; }
+        .online-badge.offline { background: var(--text-3) !important; }
+        #adv-status-text { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; }
+
+        /* ─── FILE MSG ─── */
+        .file-bubble { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; }
+        .file-bubble.out { background: linear-gradient(135deg,#2563EB,#1D4ED8); border-radius: 14px 14px 3px 14px; }
+        .file-bubble.in { background: var(--bg-3); border: 1px solid var(--border); border-radius: 14px 14px 14px 3px; }
+        body.light .file-bubble.in { background: #FFFFFF; border-color: #E2E8F0; }
+        .file-bubble-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+        .file-bubble.out .file-bubble-icon { background: rgba(255,255,255,0.15); color: #fff; }
+        .file-bubble.in .file-bubble-icon { background: rgba(59,130,246,0.1); color: #60A5FA; }
+
+        /* ─── NOTIFICATION PULSE ─── */
+        @keyframes notifPop { 0%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
+        .notif-pop { animation: notifPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
     </style>
 </head>
 <body>
 
 <div id="toast-container"></div>
 <div id="load-overlay">
-    <div class="loader-logo">
-        <div class="loader-logo-ring"></div>
-        <div class="loader-logo-ring2"></div>
-        <div class="loader-logo-L">L<span>AI</span></div>
-    </div>
-    <div class="loader-dots">
-        <div class="loader-dot"></div>
-        <div class="loader-dot"></div>
-        <div class="loader-dot"></div>
-    </div>
-    <span class="loader-text">Memuat Sesi...</span>
+    <div class="spin"></div>
+    <span style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3)">Memuat...</span>
 </div>
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -374,6 +382,7 @@
                         </div>
                         <div style="display:flex;align-items:center;gap:6px;margin-top:1px">
                             <span id="adv-spec" style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em"></span>
+                            <span id="adv-status-text" style="font-size:10px;font-weight:600;color:var(--text-3)">• offline</span>
                             <span id="adv-typing" style="display:none;font-size:10px;font-weight:600;color:var(--emerald)">• mengetik...</span>
                         </div>
                     </div>
@@ -382,6 +391,7 @@
                     <a id="view-profile-btn" href="#" class="header-btn" title="Lihat Profil"><i class="fas fa-id-card"></i></a>
                     <button class="header-btn" onclick="openRatingModal()" title="Beri Rating" id="rating-btn" style="color:#F59E0B"><i class="fas fa-star"></i></button>
                     <button class="header-btn" onclick="openContactModal()" title="Info Kontak"><i class="fas fa-address-card"></i></button>
+                    <button id="sound-toggle" class="header-btn" onclick="toggleSound()" title="Notifikasi Suara"><i class="fas fa-volume-high"></i></button>
                     <button class="header-btn" onclick="clearChatConfirm()" title="Hapus Riwayat" style="color:var(--text-3)"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
@@ -390,29 +400,31 @@
             <div id="chat-box"></div>
 
             <!-- Upgrade wall -->
-            <div id="upgrade-wall" style="margin:0;border-radius:0;background:var(--bg-2);border-top:1px solid var(--border);border-left:none;border-right:none;border-bottom:none;padding:0;">
-                <!-- Input palsu non-aktif -->
-                <div style="padding:10px 14px 6px;display:flex;align-items:center;gap:10px;opacity:0.45;pointer-events:none;">
-                    <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <i class="fas fa-paperclip" style="color:var(--text-3);font-size:13px;"></i>
+            <div id="upgrade-wall">
+                <div style="display:flex;align-items:center;gap:14px">
+                    <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        <i class="fas fa-lock" style="color:var(--gold)"></i>
                     </div>
-                    <div style="flex:1;background:var(--bg-3);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--text-4);">Ketik pesan konsultasi hukum Anda...</div>
-                    <div style="width:30px;height:30px;border-radius:8px;background:var(--accent);opacity:0.3;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <i class="fas fa-paper-plane" style="color:#fff;font-size:11px;"></i>
+                    <div style="flex:1">
+                        <p style="font-weight:700;font-size:13px;color:var(--gold);margin:0 0 2px;">Fitur Khusus PRO Sultan</p>
+                        <p style="font-size:11px;color:var(--text-3);margin:0">Upgrade untuk membalas & chat langsung dengan advokat</p>
                     </div>
-                </div>
-                <!-- Banner upgrade tipis -->
-                <div style="margin:0 10px 10px;background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.04));border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
-                    <i class="fas fa-crown" style="color:var(--gold);font-size:14px;flex-shrink:0;"></i>
-                    <div style="flex:1;min-width:0;">
-                        <p style="font-size:11px;font-weight:800;color:var(--gold);margin:0 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Upgrade PRO untuk membalas</p>
-                        <p style="font-size:10px;color:var(--text-3);margin:0;">Chat langsung dengan advokat — Rp 150rb seumur hidup</p>
-                    </div>
-                    <a href="upgrade.html" style="background:var(--gold);color:#fff;font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;padding:8px 12px;border-radius:8px;text-decoration:none;flex-shrink:0;white-space:nowrap;">Upgrade</a>
+                    <a href="upgrade.html" style="background:var(--gold);color:#fff;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;padding:9px 14px;border-radius:9px;text-decoration:none;flex-shrink:0">Upgrade</a>
                 </div>
             </div>
 
             <!-- Input -->
+            <!-- Quick Reply Bar -->
+            <div id="quick-reply-bar">
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);flex-shrink:0;">Cepat:</span>
+                <div class="qr-chip" onclick="useQuickReply(this)">Halo, saya ingin konsultasi</div>
+                <div class="qr-chip" onclick="useQuickReply(this)">Tolong jelaskan lebih detail</div>
+                <div class="qr-chip" onclick="useQuickReply(this)">Berapa biaya konsultasinya?</div>
+                <div class="qr-chip" onclick="useQuickReply(this)">Kapan bisa meeting?</div>
+                <div class="qr-chip" onclick="useQuickReply(this)">Terima kasih atas bantuannya</div>
+                <div class="qr-chip" onclick="useQuickReply(this)">Saya sudah paham</div>
+            </div>
+
             <div id="input-wrap">
                 <div class="input-row">
                     <label class="attach-btn" title="Lampirkan File">
@@ -583,13 +595,6 @@ async function fetchMitraData(uid) {
         r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         d = await r.json();
         if (Array.isArray(d) && d.length) return d[0];
-        // 3. By mitraId dari allConvs
-        const knownConvM = allConvs.find(c => c.pid === uid);
-        if (knownConvM && knownConvM.mitraId) {
-            r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(knownConvM.mitraId)}&limit=1`, { headers: HDRS });
-            d = await r.json();
-            if (Array.isArray(d) && d.length) return d[0];
-        }
     } catch(e) { console.error('[Chat] fetchMitraData error:', e); }
     return null;
 }
@@ -816,44 +821,21 @@ async function loadChatMode() {
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // Fallback: coba allConvs dulu, kalau kosong fetch langsung mitra_ahli
-        const knownConvF = allConvs.find(c => c.pid === receiverId);
-        if (knownConvF) {
-            advName = knownConvF.name || advName || 'Advokat';
-            document.getElementById('adv-name').textContent = advName;
-            document.getElementById('adv-spec').textContent = knownConvF.spec || '';
-            const advImgElF = document.getElementById('adv-img');
-            advImgElF.src = knownConvF.foto || avatarFallback(advName);
-            advImgElF.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
-        } else {
-            // allConvs kosong (user baru/belum chat) - fetch langsung by user_id atau id
-            try {
-                let rf = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&user_id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
-                let df = await rf.json();
-                if (!Array.isArray(df) || !df.length) {
-                    rf = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
-                    df = await rf.json();
-                }
-                if (Array.isArray(df) && df.length) {
-                    advData = df[0];
-                    advName = df[0].nama_lengkap || 'Advokat';
-                    lawyerTableId = df[0].id;
-                    if (df[0].user_id && df[0].user_id !== receiverId) receiverId = df[0].user_id;
-                    document.getElementById('adv-name').textContent = advName;
-                    document.getElementById('adv-spec').textContent = df[0].spesialisasi || '';
-                    const advImgElF2 = document.getElementById('adv-img');
-                    advImgElF2.src = df[0].foto_profil_url ? imgSrc(df[0].foto_profil_url, advName) : avatarFallback(advName);
-                    advImgElF2.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
-                    const profileBtn = document.getElementById('view-profile-btn');
-                    if (profileBtn) profileBtn.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
-                } else {
-                    document.getElementById('adv-name').textContent = advName || 'Advokat';
-                    document.getElementById('adv-img').src = avatarFallback(advName || 'Advokat');
-                }
-            } catch(e) {
-                document.getElementById('adv-name').textContent = advName || 'Advokat';
-                document.getElementById('adv-img').src = avatarFallback(advName || 'Advokat');
+        // Fallback ke profiles (hanya jika bukan diri sendiri)
+        console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
+        if (receiverId && receiverId !== currentUser.id) {
+            const { data: prof } = await window.supabase.from('profiles')
+                .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
+            if (prof) {
+                advName = prof.full_name || 'Advokat';
+                document.getElementById('adv-name').textContent = advName;
+                const advImgEl = document.getElementById('adv-img');
+                advImgEl.src = prof.avatar_url || avatarFallback(advName);
+                advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
             }
+        } else {
+            document.getElementById('adv-name').textContent = 'Advokat';
+            document.getElementById('adv-img').src = avatarFallback('Advokat');
         }
     }
 
@@ -882,15 +864,9 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    let advFotoUrl = advData?.foto_profil_url || null;
-    if (!advFotoUrl) {
-        try {
-            const _r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=foto_profil_url&user_id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
-            const _d = await _r.json();
-            if (Array.isArray(_d) && _d[0] && _d[0].foto_profil_url) advFotoUrl = _d[0].foto_profil_url;
-        } catch(e) {}
-    }
-    const advAv = advFotoUrl ? imgSrc(advFotoUrl, advName || 'A') : avatarFallback(advName || 'A');
+    const advAv = advData?.foto_profil_url
+        ? imgSrc(advData.foto_profil_url, advName || 'A')
+        : avatarFallback(advName || 'A');
     const myProfileName = currentProfile?.full_name || currentUser.email || 'U';
     const myInit = myProfileName[0].toUpperCase();
     const myAvatar = currentProfile?.avatar_url || null;
@@ -908,7 +884,7 @@ async function renderMessages() {
             box.innerHTML += `<div class="date-sep"><span>${dateStr}</span></div>`;
         }
 
-        const time = dObj.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' });
+        const time = dObj.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
         const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
 
         const avatarHtml = isMe
@@ -1008,40 +984,6 @@ function clearAttach() {
 }
 
 // ═══════════════════════════════ REALTIME ═══════════════════════════════
-function appendSingleMsg(m) {
-    const box = document.getElementById('chat-box');
-    if (!box) return;
-    const isMe = m.sender_id === currentUser.id;
-    const dObj = new Date(m.created_at);
-    const time = dObj.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Jakarta' });
-    const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
-    const myAv2 = currentProfile?.avatar_url || null;
-    const myInit2 = (currentProfile?.full_name || currentUser.email || 'U')[0].toUpperCase();
-    const advAvCached = document.getElementById('adv-img')?.src || avatarFallback(advName || 'A');
-    const avatarHtml = isMe
-        ? (myAv2
-            ? `<img src="${myAv2}" class="msg-avatar" onerror="this.style.display='none'">`
-            : `<div class="msg-avatar-me">${myInit2}</div>`)
-        : `<img src="${advAvCached}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
-    const tr = document.getElementById('typing-row');
-    if (tr) tr.remove();
-    box.innerHTML += `
-        <div class="msg-row ${isMe?'me':'them'}">
-            ${!isMe ? avatarHtml : ''}
-            <div class="msg-bubble">
-                <div class="bubble ${isMe?'bubble-out':'bubble-in'}"><p>${txt}</p></div>
-                <div class="meta ${isMe?'justify-end':'justify-start'}">
-                    <span>${time}</span>
-                    ${isMe ? '<i class="fas fa-check" style="font-size:9px;color:var(--text-3)"></i>' : ''}
-                </div>
-            </div>
-            ${isMe ? avatarHtml : ''}
-        </div>`;
-    box.scrollTop = box.scrollHeight;
-    const cv = allConvs.find(c => c.pid === receiverId);
-    if (cv) { cv.preview = m.message_text || ''; cv.isMe = isMe; cv.time = time; renderConvList(allConvs); }
-}
-
 function subscribeRT() {
     if (!receiverId) return;
     rtChannel = window.supabase.channel('msgs-' + receiverId + '-' + Date.now())
@@ -1049,7 +991,7 @@ function subscribeRT() {
             const m = p.new;
             const rel = (m.sender_id === currentUser.id && m.receiver_id === receiverId) ||
                         (m.sender_id === receiverId && m.receiver_id === currentUser.id);
-            if (rel) appendSingleMsg(m);
+            if (rel) renderMessages();
         })
         .on('broadcast', { event: 'typing' }, p => {
             if (p.payload?.from === receiverId) showTyping();
@@ -1210,6 +1152,173 @@ function toast(msg, type = 'info') {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeContactModal(); closeRatingModal(); } });
+// ═══════════════════════════════ SOUND NOTIF ═══════════════════════════════
+let soundEnabled = localStorage.getItem('chat_sound') !== 'off';
+let audioCtx = null;
+
+function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+
+function playNotifSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.16);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.4);
+    } catch(e) {}
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('chat_sound', soundEnabled ? 'on' : 'off');
+    const btn = document.getElementById('sound-toggle');
+    if (soundEnabled) {
+        btn.innerHTML = '<i class="fas fa-volume-high"></i>';
+        btn.style.color = '#60A5FA';
+        btn.classList.remove('muted');
+        toast('🔔 Notifikasi suara aktif', 'info');
+        playNotifSound();
+    } else {
+        btn.innerHTML = '<i class="fas fa-volume-xmark"></i>';
+        btn.style.color = 'var(--text-3)';
+        btn.classList.add('muted');
+        toast('🔕 Notifikasi suara dimatikan', 'info');
+    }
+}
+
+// Init sound button state
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('sound-toggle');
+    if (btn && !soundEnabled) {
+        btn.innerHTML = '<i class="fas fa-volume-xmark"></i>';
+        btn.style.color = 'var(--text-3)';
+        btn.classList.add('muted');
+    }
+});
+
+// ═══════════════════════════════ ONLINE STATUS ═══════════════════════════════
+let onlineCheckInterval = null;
+
+async function updateOnlineStatus() {
+    if (!receiverId) return;
+    try {
+        const { data } = await window.supabase
+            .from('profiles')
+            .select('last_seen')
+            .eq('id', receiverId)
+            .maybeSingle();
+
+        const dot = document.getElementById('online-dot');
+        const statusText = document.getElementById('adv-status-text');
+        if (!dot || !statusText) return;
+
+        if (!data || !data.last_seen) {
+            dot.className = 'online-badge offline';
+            statusText.textContent = '• offline';
+            statusText.style.color = 'var(--text-3)';
+            return;
+        }
+
+        const diff = Date.now() - new Date(data.last_seen).getTime();
+        if (diff < 3 * 60 * 1000) {
+            dot.className = 'online-badge online';
+            statusText.textContent = '• online';
+            statusText.style.color = '#10B981';
+        } else if (diff < 30 * 60 * 1000) {
+            dot.className = 'online-badge away';
+            const mins = Math.floor(diff / 60000);
+            statusText.textContent = `• ${mins}m lalu`;
+            statusText.style.color = '#F59E0B';
+        } else {
+            dot.className = 'online-badge offline';
+            const hrs = Math.floor(diff / 3600000);
+            statusText.textContent = hrs > 0 ? `• ${hrs}j lalu` : '• offline';
+            statusText.style.color = 'var(--text-3)';
+        }
+    } catch(e) {}
+}
+
+// Update last_seen user saat ini
+async function updateMyLastSeen() {
+    if (!currentUser) return;
+    try {
+        await window.supabase.from('profiles')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', currentUser.id);
+    } catch(e) {}
+}
+
+// ═══════════════════════════════ QUICK REPLY ═══════════════════════════════
+function useQuickReply(el) {
+    if (!isPremium) { toast('🔒 Upgrade PRO untuk mengirim pesan', 'warn'); return; }
+    const inp = document.getElementById('msg-input');
+    inp.value = el.textContent;
+    inp.focus();
+    autoResize(inp);
+    // Hide bar after selection
+    document.getElementById('quick-reply-bar').classList.remove('show');
+}
+
+function toggleQuickReply() {
+    const bar = document.getElementById('quick-reply-bar');
+    bar.classList.toggle('show');
+}
+
+// Show quick reply saat input fokus dan kosong
+document.addEventListener('DOMContentLoaded', () => {
+    const inp = document.getElementById('msg-input');
+    if (inp) {
+        inp.addEventListener('focus', () => {
+            if (!inp.value.trim()) {
+                document.getElementById('quick-reply-bar').classList.add('show');
+            }
+        });
+        inp.addEventListener('input', () => {
+            const bar = document.getElementById('quick-reply-bar');
+            if (inp.value.trim()) bar.classList.remove('show');
+            else bar.classList.add('show');
+        });
+    }
+});
+
+// ═══════════════════════════════ PATCH appendSingleMsg UNTUK SOUND ═══════════════════════════════
+const _origAppendSingleMsg = appendSingleMsg;
+window.appendSingleMsg = function(m) {
+    const isIncoming = m.sender_id !== currentUser?.id;
+    _origAppendSingleMsg(m);
+    if (isIncoming) {
+        playNotifSound();
+        // Animasi badge
+        const badge = document.querySelector('.unread-count');
+        if (badge) badge.classList.add('notif-pop');
+        setTimeout(() => badge?.classList.remove('notif-pop'), 400);
+    }
+};
+
+// ═══════════════════════════════ PATCH loadChatMode UNTUK STATUS ═══════════════════════════════
+const _origLoadChatMode = loadChatMode;
+window.loadChatMode = async function() {
+    await _origLoadChatMode();
+    // Start online status check
+    clearInterval(onlineCheckInterval);
+    await updateOnlineStatus();
+    onlineCheckInterval = setInterval(updateOnlineStatus, 30000);
+    // Update last seen kita
+    await updateMyLastSeen();
+    setInterval(updateMyLastSeen, 60000);
+};
+
 
 // ═══════════════════════════════ RATING SYSTEM ═══════════════════════════════
 let selectedRating = 0;
