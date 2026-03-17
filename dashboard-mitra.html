@@ -841,7 +841,7 @@
                                 <span id="active-client-name" style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);letter-spacing:-0.2px;">Klien</span>
                             </div>
                             <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
-                                <span style="font-size:10px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:0.08em;">● Online & Aktif</span>
+                                <span id="client-online-status" style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">● Offline</span>
                                 <span id="typing-label" style="display:none;font-size:10px;font-weight:600;color:var(--accent);">• mengetik...</span>
                             </div>
                         </div>
@@ -1224,6 +1224,45 @@ function updateUnreadBadges() {
 // ══════════════════════════════════════════════
 // OPEN CONVERSATION
 // ══════════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+// CEK STATUS ONLINE KLIEN
+// ══════════════════════════════════════════════
+let clientStatusInterval = null;
+
+async function checkClientOnlineStatus(clientId) {
+    if (!clientId) return;
+    try {
+        const { data } = await window.supabase
+            .from('profiles')
+            .select('last_seen')
+            .eq('id', clientId)
+            .maybeSingle();
+
+        const el = document.getElementById('client-online-status');
+        if (!el) return;
+
+        if (!data?.last_seen) {
+            el.textContent = '● Offline';
+            el.style.color = 'var(--text-3)';
+            return;
+        }
+
+        const diff = Date.now() - new Date(data.last_seen).getTime();
+        if (diff < 3 * 60 * 1000) {
+            el.textContent = '● Online & Aktif';
+            el.style.color = '#10B981';
+        } else if (diff < 30 * 60 * 1000) {
+            const mins = Math.floor(diff / 60000);
+            el.textContent = `● Aktif ${mins}m lalu`;
+            el.style.color = '#F59E0B';
+        } else {
+            el.textContent = '● Offline';
+            el.style.color = 'var(--text-3)';
+        }
+    } catch(e) {}
+}
+
 async function openConv(convId, clientId, clientName, clientAv) {
     selectedConvId = convId;
     selectedClientId = clientId;
@@ -1251,6 +1290,10 @@ async function openConv(convId, clientId, clientName, clientAv) {
 
     renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
     await loadMessages();
+    // Cek status online klien
+    clearInterval(clientStatusInterval);
+    await checkClientOnlineStatus(clientId);
+    clientStatusInterval = setInterval(() => checkClientOnlineStatus(clientId), 30000);
 
     // Mark as read
     await window.supabase.from('messages')
