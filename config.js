@@ -1,6 +1,6 @@
 // ============================================
 // config.js - Konfigurasi Jantung Lawyers AI
-// Version: 3.2 - OpenRouter & Gemini 2.5 Flash Lite
+// Version: 3.3 - Integrated Realtime Engine
 // ============================================
 
 // ============================================
@@ -60,6 +60,35 @@ window.APP_CONFIG = {
         ENDPOINT: 'https://openrouter.ai/api/v1/chat/completions',
         TIMEOUT: 30000
     }
+};
+
+// ============================================
+// 4.1 REALTIME CHAT ENGINE (TAMBAHAN)
+// ============================================
+window.subscribeRT = function(targetId, userId, callback) {
+    if (!targetId || !userId) return null;
+    
+    // Bersihkan channel lama agar tidak terjadi duplikasi listener
+    window.supabase.removeAllChannels();
+
+    return window.supabase
+        .channel('public:messages')
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'messages' 
+        }, (payload) => {
+            const newMsg = payload.new;
+            
+            // Filter: Hanya proses jika pesan relevan dengan percakapan aktif
+            const isRelevant = (newMsg.sender_id === targetId && newMsg.receiver_id === userId) ||
+                               (newMsg.sender_id === userId && newMsg.receiver_id === targetId);
+            
+            if (isRelevant && typeof callback === 'function') {
+                callback(newMsg);
+            }
+        })
+        .subscribe();
 };
 
 // ============================================
@@ -304,4 +333,4 @@ window.toggleSidebar = function() {
 // 10. FINAL INITIALIZATION MESSAGE
 // ============================================
 
-console.log('✅ Lawyers AI Config v3.2 (Gemini 2.5 Flash Lite) Loaded!');
+console.log('✅ Lawyers AI Config v3.3 (Realtime Engine Added) Loaded!');
