@@ -1094,15 +1094,36 @@ async function loadConvList() {
     const icon = document.getElementById('refresh-icon');
     icon.style.animation = 'spin 0.8s linear infinite';
 
-    const { data: messages, error } = await window.supabase
+    // ── PATCH: query lebih luas — ambil semua pesan yang melibatkan mitra ini
+    // baik lewat lawyer_id (pesan klien) maupun sender_id/receiver_id (pesan advokat)
+    const { data: byLawyer } = await window.supabase
         .from('messages').select('*')
         .eq('lawyer_id', currentMitra.id)
         .order('created_at', { ascending: false });
 
+    const { data: bySender } = await window.supabase
+        .from('messages').select('*')
+        .eq('sender_id', currentMitra.user_id)
+        .order('created_at', { ascending: false });
+
+    const { data: byReceiver } = await window.supabase
+        .from('messages').select('*')
+        .eq('receiver_id', currentMitra.user_id)
+        .order('created_at', { ascending: false });
+
     icon.style.animation = '';
 
-    if (error || !messages?.length) {
-        renderEmptyConvList(error ? 'Gagal memuat. Coba lagi.' : null);
+    // Gabungkan & deduplicate by id
+    const allRaw = [...(byLawyer || []), ...(bySender || []), ...(byReceiver || [])];
+    const seenIds = new Set();
+    const messages = allRaw.filter(m => {
+        if (seenIds.has(m.id)) return false;
+        seenIds.add(m.id);
+        return true;
+    }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (!messages.length) {
+        renderEmptyConvList();
         document.getElementById('conv-count').textContent = '0 percakapan';
         return;
     }
@@ -1114,10 +1135,17 @@ async function loadConvList() {
     }
     const uniqueConvs = [...convMap.values()];
 
-    // Collect unique client IDs
+    // Collect unique client IDs (semua pihak selain advokat sendiri)
     const clientIds = [...new Set(uniqueConvs.map(m => {
-        return m.sender_id === currentMitra.user_id ? m.receiver_id : m.sender_id;
+        const otherId = m.sender_id === currentMitra.user_id ? m.receiver_id : m.sender_id;
+        return otherId;
     }).filter(id => id && id !== currentMitra.user_id))];
+
+    if (!clientIds.length) {
+        renderEmptyConvList();
+        document.getElementById('conv-count').textContent = '0 percakapan';
+        return;
+    }
 
     // Batch-fetch profiles
     const { data: profiles } = await window.supabase
@@ -1125,10 +1153,9 @@ async function loadConvList() {
     const profMap = {};
     (profiles || []).forEach(p => { profMap[p.id] = p; });
 
-    // Unread counts per conv
+    // Unread counts per conv — pesan yang dikirim ke mitra dan belum dibaca
     const { data: unreadRows } = await window.supabase
         .from('messages').select('conversation_id')
-        .eq('lawyer_id', currentMitra.id)
         .eq('receiver_id', currentMitra.user_id)
         .eq('is_read', false);
     const unreadMap = {};
@@ -1290,6 +1317,7 @@ async function openConv(convId, clientId, clientName, clientAv) {
 
     renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
     await loadMessages();
+
     // Cek status online klien
     clearInterval(clientStatusInterval);
     await checkClientOnlineStatus(clientId);
@@ -1317,14 +1345,30 @@ function backToConvList() {
 }
 
 // ══════════════════════════════════════════════
-// LOAD MESSAGES
+// LOAD MESSAGES — PATCHED
 // ══════════════════════════════════════════════
 async function loadMessages() {
     if (!selectedConvId) return;
-    const { data: msgs } = await window.supabase
+
+    // Query utama: by conversation_id
+    let { data: msgs } = await window.supabase
         .from('messages').select('*')
         .eq('conversation_id', selectedConvId)
         .order('created_at', { ascending: true });
+
+    // ── PATCH: Fallback query by sender+receiver jika conversation_id tidak match ──
+    // Ini menangani kasus di mana pesan lama tidak punya conversation_id yang sama
+    if ((!msgs || msgs.length === 0) && selectedClientId) {
+        console.warn('[loadMessages] Fallback query by sender/receiver untuk convId:', selectedConvId);
+        const { data: fallback } = await window.supabase
+            .from('messages').select('*')
+            .or(
+                `and(sender_id.eq.${currentMitra.user_id},receiver_id.eq.${selectedClientId}),` +
+                `and(sender_id.eq.${selectedClientId},receiver_id.eq.${currentMitra.user_id})`
+            )
+            .order('created_at', { ascending: true });
+        msgs = fallback;
+    }
 
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
@@ -1431,7 +1475,7 @@ async function sendMessage() {
         const { error } = await window.supabase.from('messages').insert([{
             sender_id:       currentMitra.user_id,
             receiver_id:     selectedClientId,
-            lawyer_id:       currentMitra.id,
+            lawyer_id:       currentMitra.id,          // ← selalu set lawyer_id
             conversation_id: selectedConvId,
             message_text:    text,
             is_read:         false
@@ -1484,35 +1528,29 @@ async function clearChatConfirm() {
 }
 
 // ══════════════════════════════════════════════
-// REALTIME
+// REALTIME — PATCHED
 // ══════════════════════════════════════════════
 function subscribeRealtime() {
     if (rtChannel) window.supabase.removeChannel(rtChannel);
 
     rtChannel = window.supabase
         .channel('adv-rt-' + currentMitra.id)
+        // ── Listener 1: pesan masuk via lawyer_id (klien kirim pesan)
         .on('postgres_changes', {
             event: 'INSERT', schema: 'public', table: 'messages',
             filter: `lawyer_id=eq.${currentMitra.id}`
         }, async (payload) => {
+            await handleIncomingMessage(payload.new);
+        })
+        // ── Listener 2: pesan masuk via receiver_id (fallback jika lawyer_id null)
+        .on('postgres_changes', {
+            event: 'INSERT', schema: 'public', table: 'messages',
+            filter: `receiver_id=eq.${currentMitra.user_id}`
+        }, async (payload) => {
             const m = payload.new;
-
-            // Jika chat ini sedang terbuka
-            if (m.conversation_id === selectedConvId) {
-                await loadMessages();
-                await window.supabase.from('messages')
-                    .update({ is_read: true })
-                    .eq('conversation_id', selectedConvId)
-                    .eq('receiver_id', currentMitra.user_id);
-            } else {
-                // Pesan di konversasi lain — bell shake + toast
-                ringBell();
-                const conv = allConvs.find(c => c.convId === m.conversation_id);
-                const senderName = conv?.clientName || 'Klien baru';
-                showLALToast?.('info', `💬 ${senderName}`, m.message_text?.slice(0, 60) || 'Pesan baru', 5000);
-            }
-
-            await loadConvList();
+            // Hindari duplikat: skip jika lawyer_id sudah ter-set (sudah ditangani listener 1)
+            if (m.lawyer_id && m.lawyer_id === currentMitra.id) return;
+            await handleIncomingMessage(m);
         })
         .on('broadcast', { event: 'typing' }, (p) => {
             if (p.payload?.from === selectedClientId) showTyping();
@@ -1527,6 +1565,28 @@ function subscribeRealtime() {
                 el.style.color = 'var(--text-3)';
             }
         });
+}
+
+// ── PATCH: handler terpusat untuk pesan masuk ──
+async function handleIncomingMessage(m) {
+    // Reload conv list DULU agar data fresh sebelum dicek
+    await loadConvList();
+
+    if (m.conversation_id === selectedConvId) {
+        // Pesan untuk percakapan yang sedang dibuka — tampilkan langsung
+        await loadMessages();
+        // Mark as read
+        await window.supabase.from('messages')
+            .update({ is_read: true })
+            .eq('conversation_id', selectedConvId)
+            .eq('receiver_id', currentMitra.user_id);
+    } else {
+        // Pesan untuk percakapan lain — bell + toast
+        ringBell();
+        const conv = allConvs.find(c => c.convId === m.conversation_id);
+        const senderName = conv?.clientName || 'Klien baru';
+        showLALToast?.('info', `💬 ${senderName}`, m.message_text?.slice(0, 60) || 'Pesan baru', 5000);
+    }
 }
 
 function ringBell() {
