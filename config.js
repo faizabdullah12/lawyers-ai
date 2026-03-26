@@ -1,6 +1,6 @@
 // ============================================
 // config.js - Konfigurasi Jantung Lawyers AI
-// Version: 3.4 - Integrated Identity & Realtime Engine
+// Version: 3.6 - Full Restoration & Identity Sync
 // ============================================
 
 // ============================================
@@ -189,7 +189,15 @@ window.syncGlobalUI = async function(user) {
                 else el.textContent = value;
             }
         });
-        console.log("✅ UI synced for Sultan:", name);
+
+        // --- Logika Pengganti "Akun Coba" Secara Realtime di UI ---
+        document.querySelectorAll('h2, span, p, div').forEach(el => {
+            if (el.childNodes.length === 1 && el.textContent.trim() === "Akun Coba") {
+                el.textContent = name;
+            }
+        });
+
+        console.log("✅ UI synced for user:", name);
     } catch (error) { console.error("UI Sync error:", error); }
 };
 
@@ -354,4 +362,4 @@ window.toggleSidebar = function() {
 // 10. FINAL INITIALIZATION MESSAGE
 // ============================================
 
-console.log('✅ Lawyers AI Config v3.4 (Identity Logic Added) Loaded!');
+console.log('✅ Lawyers AI Config v3.6 (Full Restoration) Loaded!');
