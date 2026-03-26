@@ -1,6 +1,6 @@
 // ============================================
 // config.js - Konfigurasi Jantung Lawyers AI
-// Version: 3.3 - Integrated Realtime Engine
+// Version: 3.4 - Integrated Identity & Realtime Engine
 // ============================================
 
 // ============================================
@@ -100,6 +100,31 @@ window.escapeHtml = function(unsafe) {
     return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 };
 
+// --- TAMBAHAN BARU: CHAT IDENTITY UTILITIES ---
+window.getChatPartnerId = function(message, currentUserId) {
+    if (!message || !currentUserId) return null;
+    return message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
+};
+
+window.getPartnerProfile = async function(partnerId) {
+    try {
+        const { data, error } = await window.supabase
+            .from('profiles')
+            .select('full_name, avatar_url, specialization')
+            .eq('id', partnerId)
+            .single();
+        if (error) throw error;
+        return {
+            name: data?.full_name || 'Pengguna Lawyers AI',
+            avatar: data?.avatar_url || window.getAvatarUrl(data?.full_name || 'User'),
+            tag: data?.specialization || 'Klien'
+        };
+    } catch (err) {
+        return { name: 'Akun Coba', avatar: window.getAvatarUrl('AC'), tag: 'Umum' };
+    }
+};
+// ----------------------------------------------
+
 window.showToast = function(message, type = 'info') {
     const existingToast = document.getElementById('app-toast');
     if (existingToast) existingToast.remove();
@@ -187,7 +212,6 @@ window.toggleSidebar = function() {
 (function() {
     const THEME_KEY = 'lawyers_ai_theme';
 
-    // Inject global light mode CSS sekali
     const styleId = 'lawyers-ai-theme-css';
     if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
@@ -292,7 +316,6 @@ window.toggleSidebar = function() {
         } else {
             document.body?.classList.remove('light');
         }
-        // Update semua toggle button yang ada di halaman
         document.querySelectorAll('.theme-toggle').forEach(btn => {
             const knob = btn.querySelector('.knob');
             if (theme === 'light') {
@@ -305,7 +328,6 @@ window.toggleSidebar = function() {
         });
     }
 
-    // Apply segera — cegah flash
     const saved = localStorage.getItem(THEME_KEY) || 'dark';
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => applyTheme(saved));
@@ -313,7 +335,6 @@ window.toggleSidebar = function() {
         applyTheme(saved);
     }
 
-    // Global functions
     window.toggleTheme = function() {
         const isLight = document.body.classList.contains('light');
         const next = isLight ? 'dark' : 'light';
@@ -333,4 +354,4 @@ window.toggleSidebar = function() {
 // 10. FINAL INITIALIZATION MESSAGE
 // ============================================
 
-console.log('✅ Lawyers AI Config v3.3 (Realtime Engine Added) Loaded!');
+console.log('✅ Lawyers AI Config v3.4 (Identity Logic Added) Loaded!');
