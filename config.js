@@ -18,7 +18,7 @@ window.CONFIG = {
     // ⚠️ JANGAN isi API key di sini — sudah dipindah ke Netlify Function!
     OPENROUTER_API_KEY: null,
     
-    // Endpoint proxy Netlify (key aman di server)
+    // Endpoint proxy Netlify (key aman di server) 
     AI_PROXY_ENDPOINT: '/api/ai-proxy',
     
     // Model default
@@ -102,8 +102,15 @@ window.escapeHtml = function(unsafe) {
 
 // --- TAMBAHAN BARU: CHAT IDENTITY UTILITIES ---
 window.getChatPartnerId = function(message, currentUserId) {
-    if (!message || !currentUserId) return null;
-    return message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
+    // 🔥 PRIORITAS LAWYER
+    if (message.lawyer_id) {
+        return message.lawyer_id;
+    }
+
+    // fallback lama
+    return message.sender_id === currentUserId
+        ? message.receiver_id
+        : message.sender_id;
 };
 
 window.getPartnerProfile = async function(partnerId) {
