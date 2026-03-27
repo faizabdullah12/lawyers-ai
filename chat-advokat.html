@@ -413,7 +413,6 @@
                 </div>
             </div>
 
-            <!-- Input -->
             <!-- Quick Reply Bar -->
             <div id="quick-reply-bar">
                 <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);flex-shrink:0;">Cepat:</span>
@@ -425,6 +424,7 @@
                 <div class="qr-chip" onclick="useQuickReply(this)">Saya sudah paham</div>
             </div>
 
+            <!-- Input -->
             <div id="input-wrap">
                 <div class="input-row">
                     <label class="attach-btn" title="Lampirkan File">
@@ -560,6 +560,10 @@ let typingHideTimer = null;
 let typingDebounce = null;
 let autoMsgSent = false;
 
+// ═══════════════ CACHE AVATAR ADVOKAT (FIX BARU) ═══════════════
+// Menyimpan avatar advokat agar konsisten di semua bubble
+let _advAvatarCache = null;
+
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
 const HDRS = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY };
@@ -599,18 +603,14 @@ async function fetchMitraData(uid) {
 }
 
 // ═══════════════════════════════ FETCH NAMA ADVOKAT (FALLBACK AMAN) ═══════════════════════════════
-// FIX: fungsi khusus untuk ambil nama dari mitra_ahli atau profiles, 
-// TIDAK pernah return "Akun Coba"
 async function fetchPartnerName(uid) {
     if (!uid) return 'Advokat';
     try {
-        // Coba dari mitra_ahli dulu (nama asli advokat)
         const r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=nama_lengkap&user_id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         const d = await r.json();
         if (Array.isArray(d) && d.length && d[0].nama_lengkap) return d[0].nama_lengkap;
     } catch(e) {}
     try {
-        // Fallback ke profiles
         const { data } = await window.supabase.from('profiles').select('full_name').eq('id', uid).maybeSingle();
         if (data?.full_name) return data.full_name;
     } catch(e) {}
@@ -619,7 +619,6 @@ async function fetchPartnerName(uid) {
 
 // ═══════════════════════════════ INIT ═══════════════════════════════
 window.onload = async () => {
-    // Apply theme early
     const theme = localStorage.getItem('lawyers_ai_theme') || 'dark';
     if (theme === 'light') document.body.classList.add('light');
 
@@ -627,7 +626,6 @@ window.onload = async () => {
     if (!session) { location.href = 'login.html'; return; }
     currentUser = session.user;
 
-    // Redirect advokat terverifikasi ke dashboard mereka
     const { data: mitraCheck } = await window.supabase
         .from('mitra_ahli').select('id')
         .eq('user_id', currentUser.id)
@@ -639,7 +637,6 @@ window.onload = async () => {
     isPremium = !!profile?.is_premium;
     currentProfile = profile;
 
-    // Sidebar UI — gunakan nama dari profile, BUKAN hardcode
     if (profile) {
         const n = profile.full_name || currentUser.email?.split('@')[0] || 'Pengguna';
         const av = profile.avatar_url || avatarFallback(n);
@@ -657,14 +654,12 @@ window.onload = async () => {
         document.getElementById('premium-marker').style.display = '';
     }
 
-    // Mobile tweaks
     if (window.innerWidth <= 1024) document.getElementById('menu-toggle').style.display = 'flex';
     if (window.innerWidth <= 768) document.getElementById('back-btn').style.display = 'flex';
 
     await loadInbox();
     document.getElementById('load-overlay').style.display = 'none';
 
-    // Auto-open if ?id in URL
     if (receiverId) {
         showChatView();
         await loadChatMode();
@@ -682,31 +677,22 @@ async function loadInbox() {
 
     if (!msgs?.length) { renderEmptyInbox(); return; }
 
-    // Deduplicate by partner
     const seen = new Map();
     for (const m of msgs) {
-        // FIX: gunakan lawyer_id jika ada sebagai partner ID (bukan sender/receiver random)
         let pid;
         if (m.sender_id === currentUser.id) {
-            // Kita yang kirim — partner adalah receiver_id
             pid = m.receiver_id;
         } else {
-            // Kita yang terima — partner adalah sender_id
-            // Tapi kalau ada lawyer_id, itu mungkin lebih akurat sebagai identitas advokat
-            pid = m.lawyer_id ? m.receiver_id : m.sender_id;
-            // Tetap gunakan sender_id sebagai partner utama
             pid = m.sender_id;
         }
         if (pid && pid !== currentUser.id && !seen.has(pid)) seen.set(pid, m);
     }
 
-    // Unread counts
     const { data: unread } = await window.supabase.from('messages')
         .select('sender_id').eq('receiver_id', currentUser.id).eq('is_read', false);
     const unreadMap = {};
     (unread || []).forEach(m => { unreadMap[m.sender_id] = (unreadMap[m.sender_id]||0)+1; });
 
-    // Fetch semua partner data (mitra_ahli + profiles)
     const pids = [...seen.keys()];
     if (!pids.length) { renderEmptyInbox(); return; }
 
@@ -721,7 +707,6 @@ async function loadInbox() {
     const { data: profs } = await window.supabase.from('profiles')
         .select('id,full_name,avatar_url').in('id', pids);
 
-    // Map by user_id
     const mMap = {};
     mitras.forEach(m => { mMap[m.user_id] = m; });
     const pMap = {};
@@ -730,7 +715,6 @@ async function loadInbox() {
     allConvs = [...seen.entries()].map(([pid, last]) => {
         const m = mMap[pid];
         const p = pMap[pid];
-        // FIX: nama fallback yang aman, TIDAK pernah "Akun Coba"
         const name = m?.nama_lengkap || p?.full_name || 'Advokat';
         const spec = m?.spesialisasi || '';
         const foto = imgSrc(m?.foto_profil_url || p?.avatar_url, name);
@@ -821,11 +805,11 @@ function showChatView() {
 async function loadChatMode() {
     if (rtChannel) { window.supabase.removeChannel(rtChannel); rtChannel = null; }
 
-    // Reset state
+    // Reset state + cache avatar
     advData = null;
     autoMsgSent = false;
+    _advAvatarCache = null;
 
-    // Set nama sementara agar header tidak kosong
     document.getElementById('adv-name').textContent = 'Memuat...';
     document.getElementById('adv-spec').textContent = '';
 
@@ -834,50 +818,60 @@ async function loadChatMode() {
 
     if (adv) {
         advData = adv;
-        // Gunakan user_id dari mitra sebagai receiverId yang benar
         if (adv.user_id && adv.user_id !== receiverId) {
             receiverId = adv.user_id;
         }
-        // FIX: nama dari mitra_ahli langsung, bukan via getPartnerProfile yang bisa return "Akun Coba"
         advName = adv.nama_lengkap || 'Advokat';
         lawyerTableId = adv.id;
 
-        // Update UI header
         document.getElementById('adv-name').textContent = advName;
         document.getElementById('adv-spec').textContent = adv.spesialisasi || '';
 
+        // ── FIX: Build avatar URL dan cache ──
+        if (adv.foto_profil_url) {
+            _advAvatarCache = imgSrc(adv.foto_profil_url, advName);
+        } else {
+            // Coba dari profiles sebagai fallback
+            try {
+                const { data: rp } = await window.supabase
+                    .from('profiles').select('avatar_url').eq('id', receiverId).maybeSingle();
+                _advAvatarCache = rp?.avatar_url || avatarFallback(advName);
+            } catch(e) {
+                _advAvatarCache = avatarFallback(advName);
+            }
+        }
+
         const advImgEl = document.getElementById('adv-img');
-        advImgEl.src = imgSrc(adv.foto_profil_url, advName);
+        advImgEl.src = _advAvatarCache;
         advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
 
-        // View profile button
         const profileBtn = document.getElementById('view-profile-btn');
         if (profileBtn) profileBtn.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // FIX: fallback aman — TIDAK menggunakan getPartnerProfile yang return "Akun Coba"
         console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
         if (receiverId && receiverId !== currentUser.id) {
-            // Gunakan fetchPartnerName yang aman
             const fallbackName = await fetchPartnerName(receiverId);
             advName = fallbackName;
             document.getElementById('adv-name').textContent = advName;
 
-            // Coba ambil avatar dari profiles
             try {
                 const { data: prof } = await window.supabase.from('profiles')
                     .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
-                const advImgEl = document.getElementById('adv-img');
-                advImgEl.src = prof?.avatar_url || avatarFallback(advName);
-                advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
+                _advAvatarCache = prof?.avatar_url || avatarFallback(advName);
             } catch(e) {
-                document.getElementById('adv-img').src = avatarFallback(advName);
+                _advAvatarCache = avatarFallback(advName);
             }
+
+            const advImgEl = document.getElementById('adv-img');
+            advImgEl.src = _advAvatarCache;
+            advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
         } else {
             advName = 'Advokat';
+            _advAvatarCache = avatarFallback('Advokat');
             document.getElementById('adv-name').textContent = advName;
-            document.getElementById('adv-img').src = avatarFallback('Advokat');
+            document.getElementById('adv-img').src = _advAvatarCache;
         }
     }
 
@@ -893,7 +887,6 @@ async function loadChatMode() {
     subscribeRT();
     checkAutoMsg();
 
-    // Online status
     clearInterval(window._onlineCheckInterval);
     await updateOnlineStatus();
     window._onlineCheckInterval = setInterval(updateOnlineStatus, 30000);
@@ -915,10 +908,10 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    const advAv = advData?.foto_profil_url
-        ? imgSrc(advData.foto_profil_url, advName || 'A')
-        : avatarFallback(advName || 'A');
-    // FIX: nama kita dari currentProfile, BUKAN dari advData
+    // ── FIX: Gunakan cache avatar advokat — tidak pernah null/undefined ──
+    const advAv = _advAvatarCache || avatarFallback(advName || 'A');
+
+    // Avatar & inisial user sendiri
     const myProfileName = currentProfile?.full_name || currentUser.email?.split('@')[0] || 'U';
     const myInit = myProfileName[0].toUpperCase();
     const myAvatar = currentProfile?.avatar_url || null;
@@ -939,6 +932,8 @@ async function renderMessages() {
         const time = dObj.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
         const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
 
+        // Avatar kiri = advokat (pakai advAv dari cache)
+        // Avatar kanan = user sendiri
         const avatarHtml = isMe
             ? (myAvatar
                 ? `<img src="${myAvatar}" class="msg-avatar" onerror="this.style.display='none'" style="background:var(--accent-2)">`
@@ -961,7 +956,7 @@ async function renderMessages() {
             </div>`;
     });
 
-    // Typing placeholder
+    // Typing placeholder — pakai advAv dari cache
     box.innerHTML += `
         <div id="typing-row" class="typing-row" style="display:none">
             <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
@@ -977,7 +972,6 @@ async function renderMessages() {
         .eq('receiver_id', currentUser.id)
         .eq('is_read', false);
 
-    // Reset unread in conv list
     const conv = allConvs.find(c => c.pid === receiverId);
     if (conv) { conv.unread = 0; renderConvList(allConvs); }
 }
@@ -1007,7 +1001,6 @@ async function sendMsg() {
             is_read: false
         }]);
         clearAttach();
-        // Update conv preview
         const cv = allConvs.find(c => c.pid === receiverId);
         if (cv) { cv.preview = msgText; cv.isMe = true; cv.time = 'Baru'; renderConvList(allConvs); }
     } catch(e) {
@@ -1045,7 +1038,6 @@ function subscribeRT() {
                         (m.sender_id === receiverId && m.receiver_id === currentUser.id);
             if (rel) {
                 renderMessages();
-                // Sound notif untuk pesan masuk
                 if (m.sender_id !== currentUser.id) {
                     playNotifSound();
                     const badge = document.querySelector('.unread-count');
@@ -1081,21 +1073,29 @@ function notifyTyping() {
 }
 
 // ═══════════════════════════════ AUTO MSG ═══════════════════════════════
+// FIX: Guard ketat — nama harus valid sebelum kirim auto-msg
 async function checkAutoMsg() {
     if (autoMsgSent) return;
-    // FIX: pastikan nama advokat sudah terisi dengan benar sebelum kirim auto msg
-    const safeName = advData?.nama_lengkap || advName || 'Advokat';
-    // Jangan pernah kirim dengan nama "Akun Coba" atau kosong
-    if (!safeName || safeName === 'Akun Coba' || safeName === 'Memuat...') return;
+
+    // Pastikan nama advokat sudah siap dan valid
+    const safeName = advData?.nama_lengkap || advName;
+
+    // Blacklist nama yang salah / belum siap
+    const INVALID_NAMES = ['Akun Coba', 'AKUN COBA', 'Memuat...', 'Advokat', ''];
+    if (!safeName || INVALID_NAMES.includes(safeName.trim())) {
+        console.warn('[AutoMsg] Nama tidak valid, skip:', safeName);
+        return;
+    }
 
     const { count } = await window.supabase.from('messages')
         .select('*', { count: 'exact', head: true })
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`);
+
     if (count === 0) {
         autoMsgSent = true;
         setTimeout(async () => {
             await window.supabase.from('messages').insert([{
-                sender_id: receiverId,        // dikirim "dari" advokat
+                sender_id: receiverId,
                 receiver_id: currentUser.id,
                 lawyer_id: lawyerTableId,
                 conversation_id: activeConvId,
@@ -1130,7 +1130,7 @@ async function clearChatConfirm() {
 function openContactModal() {
     if (!advData && !advName) { toast('Data advokat tidak tersedia', 'warn'); return; }
 
-    const av = advData?.foto_profil_url ? imgSrc(advData.foto_profil_url, advName) : avatarFallback(advName || 'A');
+    const av = _advAvatarCache || avatarFallback(advName || 'A');
     document.getElementById('m-img').src = av;
     document.getElementById('m-img').onerror = function() { this.src = avatarFallback(advName||'A'); };
     document.getElementById('m-name').textContent = advData?.nama_lengkap || advName || 'Advokat';
@@ -1151,7 +1151,6 @@ function openContactModal() {
         pendEl.style.display = 'none';
     }
 
-    // WA button
     const waBtn = document.getElementById('m-wa-btn');
     const copyWaBtn = document.getElementById('copy-wa-btn');
     let waNum = (advData?.wa_number || '').replace(/\D/g, '');
@@ -1166,7 +1165,6 @@ function openContactModal() {
         copyWaBtn.style.display = 'none';
     }
 
-    // Email button
     const emailBtn = document.getElementById('m-email-btn');
     if (advData?.email_kontak) {
         emailBtn.href = `mailto:${advData.email_kontak}`;
@@ -1175,7 +1173,6 @@ function openContactModal() {
         emailBtn.href = '#'; emailBtn.style.opacity = '0.4'; emailBtn.style.pointerEvents = 'none';
     }
 
-    // Profile link
     const profileLink = document.getElementById('m-profile-link');
     if (profileLink) profileLink.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
 
@@ -1262,7 +1259,6 @@ function toggleSound() {
     }
 }
 
-// Init sound button state
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('sound-toggle');
     if (btn && !soundEnabled) {
@@ -1331,7 +1327,6 @@ function useQuickReply(el) {
     document.getElementById('quick-reply-bar').classList.remove('show');
 }
 
-// Show quick reply saat input fokus dan kosong
 document.addEventListener('DOMContentLoaded', () => {
     const inp = document.getElementById('msg-input');
     if (inp) {
