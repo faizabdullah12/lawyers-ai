@@ -100,20 +100,21 @@ window.escapeHtml = function(unsafe) {
     return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 };
 
-// --- TAMBAHAN BARU: CHAT IDENTITY UTILITIES ---
+// --- CHAT IDENTITY UTILITIES ---
 window.getChatPartnerId = function(message, currentUserId) {
-    // 🔥 PRIORITAS LAWYER
+    if (!message || !currentUserId) return null;
+    // 🔥 PRIORITAS: gunakan lawyer_id jika ada (identitas advokat yang benar)
     if (message.lawyer_id) {
         return message.lawyer_id;
     }
-
-    // fallback lama
+    // Fallback: cari partner berdasarkan sender/receiver
     return message.sender_id === currentUserId
         ? message.receiver_id
         : message.sender_id;
 };
 
 window.getPartnerProfile = async function(partnerId) {
+    if (!partnerId) return { name: 'Pengguna', avatar: window.getAvatarUrl('P'), tag: 'Umum' };
     try {
         const { data, error } = await window.supabase
             .from('profiles')
@@ -127,10 +128,22 @@ window.getPartnerProfile = async function(partnerId) {
             tag: data?.specialization || 'Klien'
         };
     } catch (err) {
-        return { name: 'Akun Coba', avatar: window.getAvatarUrl('AC'), tag: 'Umum' };
+        // FIX: TIDAK PERNAH return "Akun Coba" — fallback aman ke auth user
+        try {
+            const { data: { user } } = await window.supabase.auth.getUser();
+            if (user?.email) {
+                const fallbackName = user.email.split('@')[0];
+                return {
+                    name: fallbackName,
+                    avatar: window.getAvatarUrl(fallbackName),
+                    tag: 'Umum'
+                };
+            }
+        } catch(e2) {}
+        // Last resort — generic, bukan "Akun Coba"
+        return { name: 'Pengguna', avatar: window.getAvatarUrl('P'), tag: 'Umum' };
     }
 };
-// ----------------------------------------------
 
 window.showToast = function(message, type = 'info') {
     const existingToast = document.getElementById('app-toast');
@@ -185,7 +198,8 @@ window.syncGlobalUI = async function(user) {
     if (!user) return;
     try {
         const { data: profile } = await window.supabase.from('profiles').select('*').eq('id', user.id).single();
-        const name = profile?.full_name || user.email?.split('@')[0] || 'User';
+        // FIX: nama dari profile atau email, TIDAK pernah "Akun Coba"
+        const name = profile?.full_name || user.email?.split('@')[0] || 'Pengguna';
         const avatarUrl = profile?.avatar_url || window.getAvatarUrl(name);
         
         const elements = { 'side-name': name, 'side-avatar': avatarUrl, 'header-avatar': avatarUrl, 'menu-name': name, 'menu-email': user.email };
@@ -197,9 +211,11 @@ window.syncGlobalUI = async function(user) {
             }
         });
 
-        // --- Logika Pengganti "Akun Coba" Secara Realtime di UI ---
-        document.querySelectorAll('h2, span, p, div').forEach(el => {
-            if (el.childNodes.length === 1 && el.textContent.trim() === "Akun Coba") {
+        // FIX: Ganti teks "Akun Coba" di seluruh UI dengan nama asli
+        // Hanya target elemen yang HANYA berisi teks "Akun Coba" (exact match)
+        document.querySelectorAll('h2, h3, span, p, div').forEach(el => {
+            // Pastikan tidak ada child element agar tidak merusak struktur
+            if (el.children.length === 0 && el.textContent.trim() === 'Akun Coba') {
                 el.textContent = name;
             }
         });
