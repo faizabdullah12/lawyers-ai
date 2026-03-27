@@ -578,7 +578,6 @@ function fmtTime(iso) {
 }
 function imgSrc(url, name) {
     if (!url) return avatarFallback(name);
-    // Tambah cache-bust hanya jika storage Supabase
     if (url.includes('supabase')) return url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
     return url;
 }
@@ -597,6 +596,25 @@ async function fetchMitraData(uid) {
         if (Array.isArray(d) && d.length) return d[0];
     } catch(e) { console.error('[Chat] fetchMitraData error:', e); }
     return null;
+}
+
+// ═══════════════════════════════ FETCH NAMA ADVOKAT (FALLBACK AMAN) ═══════════════════════════════
+// FIX: fungsi khusus untuk ambil nama dari mitra_ahli atau profiles, 
+// TIDAK pernah return "Akun Coba"
+async function fetchPartnerName(uid) {
+    if (!uid) return 'Advokat';
+    try {
+        // Coba dari mitra_ahli dulu (nama asli advokat)
+        const r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=nama_lengkap&user_id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
+        const d = await r.json();
+        if (Array.isArray(d) && d.length && d[0].nama_lengkap) return d[0].nama_lengkap;
+    } catch(e) {}
+    try {
+        // Fallback ke profiles
+        const { data } = await window.supabase.from('profiles').select('full_name').eq('id', uid).maybeSingle();
+        if (data?.full_name) return data.full_name;
+    } catch(e) {}
+    return 'Advokat';
 }
 
 // ═══════════════════════════════ INIT ═══════════════════════════════
@@ -621,9 +639,9 @@ window.onload = async () => {
     isPremium = !!profile?.is_premium;
     currentProfile = profile;
 
-    // Sidebar UI
+    // Sidebar UI — gunakan nama dari profile, BUKAN hardcode
     if (profile) {
-        const n = profile.full_name || 'Sultan';
+        const n = profile.full_name || currentUser.email?.split('@')[0] || 'Pengguna';
         const av = profile.avatar_url || avatarFallback(n);
         document.getElementById('side-name').textContent = n;
         document.getElementById('side-avatar').src = av;
@@ -667,8 +685,19 @@ async function loadInbox() {
     // Deduplicate by partner
     const seen = new Map();
     for (const m of msgs) {
-        const pid = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
-        if (pid && !seen.has(pid)) seen.set(pid, m);
+        // FIX: gunakan lawyer_id jika ada sebagai partner ID (bukan sender/receiver random)
+        let pid;
+        if (m.sender_id === currentUser.id) {
+            // Kita yang kirim — partner adalah receiver_id
+            pid = m.receiver_id;
+        } else {
+            // Kita yang terima — partner adalah sender_id
+            // Tapi kalau ada lawyer_id, itu mungkin lebih akurat sebagai identitas advokat
+            pid = m.lawyer_id ? m.receiver_id : m.sender_id;
+            // Tetap gunakan sender_id sebagai partner utama
+            pid = m.sender_id;
+        }
+        if (pid && pid !== currentUser.id && !seen.has(pid)) seen.set(pid, m);
     }
 
     // Unread counts
@@ -679,6 +708,7 @@ async function loadInbox() {
 
     // Fetch semua partner data (mitra_ahli + profiles)
     const pids = [...seen.keys()];
+    if (!pids.length) { renderEmptyInbox(); return; }
 
     let mitras = [];
     try {
@@ -700,12 +730,13 @@ async function loadInbox() {
     allConvs = [...seen.entries()].map(([pid, last]) => {
         const m = mMap[pid];
         const p = pMap[pid];
-        const name = m?.nama_lengkap || (p?.full_name) || 'Advokat';
+        // FIX: nama fallback yang aman, TIDAK pernah "Akun Coba"
+        const name = m?.nama_lengkap || p?.full_name || 'Advokat';
         const spec = m?.spesialisasi || '';
         const foto = imgSrc(m?.foto_profil_url || p?.avatar_url, name);
         return {
             pid,
-            mitraId: m?.id || null,        // id di tabel mitra_ahli
+            mitraId: m?.id || null,
             name, spec, foto,
             unread: unreadMap[pid]||0,
             isMe: last.sender_id===currentUser.id,
@@ -794,17 +825,21 @@ async function loadChatMode() {
     advData = null;
     autoMsgSent = false;
 
+    // Set nama sementara agar header tidak kosong
+    document.getElementById('adv-name').textContent = 'Memuat...';
+    document.getElementById('adv-spec').textContent = '';
+
     // Fetch mitra data
     const adv = await fetchMitraData(receiverId);
 
     if (adv) {
         advData = adv;
-        // Gunakan user_id dari mitra (ini adalah receiverId yang benar untuk kirim pesan)
+        // Gunakan user_id dari mitra sebagai receiverId yang benar
         if (adv.user_id && adv.user_id !== receiverId) {
-            // receiverId mungkin adalah id tabel, update ke user_id
             receiverId = adv.user_id;
         }
-        advName = adv.nama_lengkap;
+        // FIX: nama dari mitra_ahli langsung, bukan via getPartnerProfile yang bisa return "Akun Coba"
+        advName = adv.nama_lengkap || 'Advokat';
         lawyerTableId = adv.id;
 
         // Update UI header
@@ -821,20 +856,27 @@ async function loadChatMode() {
 
         console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
     } else {
-        // Fallback ke profiles (hanya jika bukan diri sendiri)
+        // FIX: fallback aman — TIDAK menggunakan getPartnerProfile yang return "Akun Coba"
         console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
         if (receiverId && receiverId !== currentUser.id) {
-            const { data: prof } = await window.supabase.from('profiles')
-                .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
-            if (prof) {
-                advName = prof.full_name || 'Advokat';
-                document.getElementById('adv-name').textContent = advName;
+            // Gunakan fetchPartnerName yang aman
+            const fallbackName = await fetchPartnerName(receiverId);
+            advName = fallbackName;
+            document.getElementById('adv-name').textContent = advName;
+
+            // Coba ambil avatar dari profiles
+            try {
+                const { data: prof } = await window.supabase.from('profiles')
+                    .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
                 const advImgEl = document.getElementById('adv-img');
-                advImgEl.src = prof.avatar_url || avatarFallback(advName);
+                advImgEl.src = prof?.avatar_url || avatarFallback(advName);
                 advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
+            } catch(e) {
+                document.getElementById('adv-img').src = avatarFallback(advName);
             }
         } else {
-            document.getElementById('adv-name').textContent = 'Advokat';
+            advName = 'Advokat';
+            document.getElementById('adv-name').textContent = advName;
             document.getElementById('adv-img').src = avatarFallback('Advokat');
         }
     }
@@ -850,6 +892,15 @@ async function loadChatMode() {
     await renderMessages();
     subscribeRT();
     checkAutoMsg();
+
+    // Online status
+    clearInterval(window._onlineCheckInterval);
+    await updateOnlineStatus();
+    window._onlineCheckInterval = setInterval(updateOnlineStatus, 30000);
+    await updateMyLastSeen();
+    if (!window._lastSeenInterval) {
+        window._lastSeenInterval = setInterval(updateMyLastSeen, 60000);
+    }
 }
 
 // ═══════════════════════════════ RENDER MESSAGES ═══════════════════════════════
@@ -867,7 +918,8 @@ async function renderMessages() {
     const advAv = advData?.foto_profil_url
         ? imgSrc(advData.foto_profil_url, advName || 'A')
         : avatarFallback(advName || 'A');
-    const myProfileName = currentProfile?.full_name || currentUser.email || 'U';
+    // FIX: nama kita dari currentProfile, BUKAN dari advData
+    const myProfileName = currentProfile?.full_name || currentUser.email?.split('@')[0] || 'U';
     const myInit = myProfileName[0].toUpperCase();
     const myAvatar = currentProfile?.avatar_url || null;
 
@@ -991,7 +1043,15 @@ function subscribeRT() {
             const m = p.new;
             const rel = (m.sender_id === currentUser.id && m.receiver_id === receiverId) ||
                         (m.sender_id === receiverId && m.receiver_id === currentUser.id);
-            if (rel) renderMessages();
+            if (rel) {
+                renderMessages();
+                // Sound notif untuk pesan masuk
+                if (m.sender_id !== currentUser.id) {
+                    playNotifSound();
+                    const badge = document.querySelector('.unread-count');
+                    if (badge) { badge.classList.add('notif-pop'); setTimeout(() => badge.classList.remove('notif-pop'), 400); }
+                }
+            }
         })
         .on('broadcast', { event: 'typing' }, p => {
             if (p.payload?.from === receiverId) showTyping();
@@ -1023,7 +1083,11 @@ function notifyTyping() {
 // ═══════════════════════════════ AUTO MSG ═══════════════════════════════
 async function checkAutoMsg() {
     if (autoMsgSent) return;
+    // FIX: pastikan nama advokat sudah terisi dengan benar sebelum kirim auto msg
     const safeName = advData?.nama_lengkap || advName || 'Advokat';
+    // Jangan pernah kirim dengan nama "Akun Coba" atau kosong
+    if (!safeName || safeName === 'Akun Coba' || safeName === 'Memuat...') return;
+
     const { count } = await window.supabase.from('messages')
         .select('*', { count: 'exact', head: true })
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`);
@@ -1031,7 +1095,7 @@ async function checkAutoMsg() {
         autoMsgSent = true;
         setTimeout(async () => {
             await window.supabase.from('messages').insert([{
-                sender_id: receiverId,
+                sender_id: receiverId,        // dikirim "dari" advokat
                 receiver_id: currentUser.id,
                 lawyer_id: lawyerTableId,
                 conversation_id: activeConvId,
@@ -1152,6 +1216,7 @@ function toast(msg, type = 'info') {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeContactModal(); closeRatingModal(); } });
+
 // ═══════════════════════════════ SOUND NOTIF ═══════════════════════════════
 let soundEnabled = localStorage.getItem('chat_sound') !== 'off';
 let audioCtx = null;
@@ -1208,8 +1273,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════ ONLINE STATUS ═══════════════════════════════
-let onlineCheckInterval = null;
-
 async function updateOnlineStatus() {
     if (!receiverId) return;
     try {
@@ -1249,7 +1312,6 @@ async function updateOnlineStatus() {
     } catch(e) {}
 }
 
-// Update last_seen user saat ini
 async function updateMyLastSeen() {
     if (!currentUser) return;
     try {
@@ -1266,13 +1328,7 @@ function useQuickReply(el) {
     inp.value = el.textContent;
     inp.focus();
     autoResize(inp);
-    // Hide bar after selection
     document.getElementById('quick-reply-bar').classList.remove('show');
-}
-
-function toggleQuickReply() {
-    const bar = document.getElementById('quick-reply-bar');
-    bar.classList.toggle('show');
 }
 
 // Show quick reply saat input fokus dan kosong
@@ -1291,34 +1347,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-// ═══════════════════════════════ PATCH appendSingleMsg UNTUK SOUND ═══════════════════════════════
-const _origAppendSingleMsg = appendSingleMsg;
-window.appendSingleMsg = function(m) {
-    const isIncoming = m.sender_id !== currentUser?.id;
-    _origAppendSingleMsg(m);
-    if (isIncoming) {
-        playNotifSound();
-        // Animasi badge
-        const badge = document.querySelector('.unread-count');
-        if (badge) badge.classList.add('notif-pop');
-        setTimeout(() => badge?.classList.remove('notif-pop'), 400);
-    }
-};
-
-// ═══════════════════════════════ PATCH loadChatMode UNTUK STATUS ═══════════════════════════════
-const _origLoadChatMode = loadChatMode;
-window.loadChatMode = async function() {
-    await _origLoadChatMode();
-    // Start online status check
-    clearInterval(onlineCheckInterval);
-    await updateOnlineStatus();
-    onlineCheckInterval = setInterval(updateOnlineStatus, 30000);
-    // Update last seen kita
-    await updateMyLastSeen();
-    setInterval(updateMyLastSeen, 60000);
-};
-
 
 // ═══════════════════════════════ RATING SYSTEM ═══════════════════════════════
 let selectedRating = 0;
@@ -1347,7 +1375,6 @@ async function openRatingModal() {
     submitBtn.style.opacity = '0.4';
     submitBtn.style.pointerEvents = 'none';
 
-    // Cek apakah sudah pernah rating
     try {
         const { data: existing } = await window.supabase
             .from('ratings')
@@ -1377,7 +1404,6 @@ async function submitRating() {
 
     try {
         const comment = document.getElementById('rating-comment').value.trim();
-        // Upsert — update jika sudah ada, insert jika baru
         const { error } = await window.supabase.from('ratings').upsert({
             reviewer_id:  currentUser.id,
             advokat_id:   receiverId,
@@ -1392,7 +1418,6 @@ async function submitRating() {
         closeRatingModal();
         toast('⭐ Rating berhasil dikirim!', 'success');
     } catch(e) {
-        // Jika tabel belum ada, tampilkan pesan khusus
         if (e.message?.includes('does not exist') || e.message?.includes('relation')) {
             toast('⚠️ Tabel ratings belum dibuat di Supabase', 'warn');
         } else {
