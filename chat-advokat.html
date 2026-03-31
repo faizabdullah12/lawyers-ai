@@ -532,13 +532,36 @@ function fmtTime(iso) {
     return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
 }
 
-// ── FIX UTAMA: imgSrc tidak reload gambar tiap millisecond ──
-// Hapus query lama, tambah timestamp per-menit agar stabil
+// FIX: Stable image URL — per-minute timestamp to avoid constant reload
 function imgSrc(url, name) {
     if (!url) return avatarFallback(name);
     const base = url.split('?')[0];
     if (base.includes('supabase')) return base + '?t=' + Math.floor(Date.now() / 60000);
     return url;
+}
+
+// FIX: Build avatar cache and guarantee it's ready before renderMessages
+async function buildAdvAvatarCache() {
+    if (!receiverId) { _advAvatarCache = avatarFallback('A'); return; }
+
+    // Priority 1: foto_profil_url from mitra_ahli
+    if (advData?.foto_profil_url) {
+        _advAvatarCache = imgSrc(advData.foto_profil_url, advName);
+        return;
+    }
+
+    // Priority 2: avatar_url from profiles table
+    try {
+        const { data: rp } = await window.supabase
+            .from('profiles').select('avatar_url').eq('id', receiverId).maybeSingle();
+        if (rp?.avatar_url) {
+            _advAvatarCache = imgSrc(rp.avatar_url, advName);
+            return;
+        }
+    } catch(e) { console.warn('[Avatar] profiles lookup failed:', e); }
+
+    // Fallback: generated avatar
+    _advAvatarCache = avatarFallback(advName || 'A');
 }
 
 // ═══════════════════════════════ FETCH MITRA ═══════════════════════════════
@@ -760,21 +783,6 @@ async function loadChatMode() {
         document.getElementById('adv-name').textContent = advName;
         document.getElementById('adv-spec').textContent = adv.spesialisasi || '';
 
-        // Cache avatar pakai imgSrc yang sudah difix
-        if (adv.foto_profil_url) {
-            _advAvatarCache = imgSrc(adv.foto_profil_url, advName);
-        } else {
-            try {
-                const { data: rp } = await window.supabase
-                    .from('profiles').select('avatar_url').eq('id', receiverId).maybeSingle();
-                _advAvatarCache = rp?.avatar_url ? imgSrc(rp.avatar_url, advName) : avatarFallback(advName);
-            } catch(e) { _advAvatarCache = avatarFallback(advName); }
-        }
-
-        const advImgEl = document.getElementById('adv-img');
-        advImgEl.src = _advAvatarCache;
-        advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
-
         const profileBtn = document.getElementById('view-profile-btn');
         if (profileBtn) profileBtn.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
         console.log('[Chat] ✅', advName, '| foto:', adv.foto_profil_url ? 'ada' : 'kosong');
@@ -783,21 +791,19 @@ async function loadChatMode() {
         if (receiverId && receiverId !== currentUser.id) {
             advName = await fetchPartnerName(receiverId);
             document.getElementById('adv-name').textContent = advName;
-            try {
-                const { data: prof } = await window.supabase.from('profiles')
-                    .select('full_name,avatar_url').eq('id', receiverId).maybeSingle();
-                _advAvatarCache = prof?.avatar_url ? imgSrc(prof.avatar_url, advName) : avatarFallback(advName);
-            } catch(e) { _advAvatarCache = avatarFallback(advName); }
-            const advImgEl = document.getElementById('adv-img');
-            advImgEl.src = _advAvatarCache;
-            advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
         } else {
             advName = 'Advokat';
-            _advAvatarCache = avatarFallback('Advokat');
             document.getElementById('adv-name').textContent = advName;
-            document.getElementById('adv-img').src = _advAvatarCache;
         }
     }
+
+    // FIX: Build avatar cache BEFORE rendering messages or header
+    await buildAdvAvatarCache();
+
+    // Update header avatar after cache is ready
+    const advImgEl = document.getElementById('adv-img');
+    advImgEl.src = _advAvatarCache;
+    advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
 
     const { data: ex } = await window.supabase.from('messages')
         .select('conversation_id')
@@ -805,9 +811,13 @@ async function loadChatMode() {
         .not('conversation_id', 'is', null).limit(1);
     activeConvId = ex?.[0]?.conversation_id || crypto.randomUUID();
 
+    // FIX: renderMessages now called AFTER _advAvatarCache is populated
     await renderMessages();
     subscribeRT();
-    checkAutoMsg();
+
+    // FIX: checkAutoMsg now checks only messages FROM the advokat TO the user
+    // so it won't skip if the user sent first
+    await checkAutoMsg();
 
     clearInterval(window._onlineCheckInterval);
     await updateOnlineStatus();
@@ -828,6 +838,7 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
+    // FIX: Always use cached avatar — never fall back to empty string
     const advAv = _advAvatarCache || avatarFallback(advName || 'A');
     const myProfileName = currentProfile?.full_name || currentUser.email?.split('@')[0] || 'U';
     const myInit = myProfileName[0].toUpperCase();
@@ -958,25 +969,37 @@ function notifyTyping() {
     }, 350);
 }
 
-// ═══════════════════════════════ AUTO MSG ═══════════════════════════════
+// ═══════════════════════════════ AUTO MSG — FIX ═══════════════════════════════
 async function checkAutoMsg() {
     if (autoMsgSent) return;
+
     const safeName = advData?.nama_lengkap || advName;
     const INVALID = ['Akun Coba', 'AKUN COBA', 'Memuat...', 'Advokat', ''];
     if (!safeName || INVALID.includes(safeName.trim())) return;
+
+    // FIX: Only count messages sent FROM the advokat (not total messages).
+    // This way, even if the user sent first, advokat greeting still appears.
     const { count } = await window.supabase.from('messages')
         .select('*', { count: 'exact', head: true })
-        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`);
+        .eq('sender_id', receiverId)
+        .eq('receiver_id', currentUser.id);
+
     if (count === 0) {
         autoMsgSent = true;
         setTimeout(async () => {
-            await window.supabase.from('messages').insert([{
-                sender_id: receiverId, receiver_id: currentUser.id,
-                lawyer_id: lawyerTableId, conversation_id: activeConvId,
-                message_text: `Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,
-                is_read: false
-            }]);
+            try {
+                await window.supabase.from('messages').insert([{
+                    sender_id: receiverId,
+                    receiver_id: currentUser.id,
+                    lawyer_id: lawyerTableId,
+                    conversation_id: activeConvId,
+                    message_text: `Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,
+                    is_read: false
+                }]);
+            } catch(e) { console.error('[AutoMsg] Insert failed:', e); }
         }, 1500);
+    } else {
+        autoMsgSent = true; // Already has messages from advokat, skip
     }
 }
 
@@ -994,7 +1017,10 @@ async function clearChatConfirm() {
     }
     await window.supabase.from('messages').delete()
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`);
+    // FIX: Reset autoMsgSent after clear so greeting can appear again
+    autoMsgSent = false;
     await renderMessages();
+    await checkAutoMsg();
     toast('Riwayat chat dihapus', 'info');
 }
 
