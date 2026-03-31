@@ -32,7 +32,6 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
 
-        /* ─── LAYOUT ─── */
         #app { display: flex; height: 100vh; overflow: hidden; }
         #sidebar { width: 220px; flex-shrink: 0; background: var(--bg-2); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); overflow-y: auto; }
         #inbox-panel { width: 300px; flex-shrink: 0; background: var(--bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
@@ -47,7 +46,6 @@
             #inbox-panel.hidden-mobile { display: none; }
         }
 
-        /* ─── SIDEBAR ─── */
         .logo { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
         .logo-text { font-size: 20px; font-weight: 800; font-style: italic; color: var(--text-1); letter-spacing: -0.5px; }
         .logo-text span { color: var(--accent); }
@@ -74,7 +72,6 @@
         body.light .profile-row { background: rgba(0,0,0,0.03); }
         body.light .profile-row:hover { background: rgba(0,0,0,0.06); }
 
-        /* ─── INBOX ─── */
         .inbox-header { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg-2); }
         body.light .inbox-header { background: #FFFFFF; border-color: #E2E8F0; }
         .search-box { position: relative; margin-top: 12px; }
@@ -96,7 +93,6 @@
         .conv-avatar { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1.5px solid var(--border); }
         .unread-count { min-width: 18px; height: 18px; background: var(--accent); color: #fff; border-radius: 9px; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; flex-shrink: 0; }
 
-        /* ─── CHAT HEADER ─── */
         #chat-header { background: var(--bg-2); border-bottom: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         body.light #chat-header { background: #FFFFFF; border-color: #E2E8F0; }
         .adv-avatar-wrap { position: relative; }
@@ -110,7 +106,6 @@
         body.light .header-btn { background: #F8FAFC; border-color: #E2E8F0; color: #334155; }
         body.light .header-btn:hover { background: #F1F5F9; color: #0F172A; }
 
-        /* ─── MESSAGES ─── */
         #chat-box { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 4px; }
         body.light #chat-box { background: #F0F4F8; }
         .date-sep { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
@@ -137,7 +132,6 @@
         .bubble-out { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); border-radius: 14px 14px 3px 14px; color: #fff; }
         body.light .bubble-in { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
 
-        /* typing indicator */
         .typing-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 4px; }
         .typing-bubble { background: var(--bg-3); border: 1px solid var(--border); border-radius: 14px 14px 14px 3px; padding: 10px 14px; display: flex; gap: 4px; align-items: center; }
         body.light .typing-bubble { background: #FFFFFF; border-color: #E2E8F0; }
@@ -145,7 +139,6 @@
         .t-dot:nth-child(2) { animation-delay: 0.15s; } .t-dot:nth-child(3) { animation-delay: 0.3s; }
         @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-4px);opacity:1} }
 
-        /* ─── INPUT AREA ─── */
         #input-wrap { background: var(--bg-2); border-top: 1px solid var(--border); padding: 14px 18px; flex-shrink: 0; }
         body.light #input-wrap { background: #FFFFFF; border-color: #E2E8F0; }
         .input-row { display: flex; align-items: flex-end; gap: 10px; }
@@ -168,14 +161,10 @@
         #file-preview .fp-inner { display: flex; align-items: center; gap: 8px; background: var(--bg-3); border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; }
         body.light #file-preview .fp-inner { background: #F8FAFC; border-color: #E2E8F0; }
 
-        /* ─── UPGRADE WALL ─── */
         #upgrade-wall { margin: 12px 16px; padding: 14px 16px; border-radius: 14px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.18); display: none; flex-shrink: 0; }
-
-        /* ─── EMPTY STATE ─── */
         #chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0.4; }
         body.light #chat-empty { color: #64748B; }
 
-        /* ─── CONTACT MODAL ─── */
         #contact-modal { position: fixed; inset: 0; z-index: 400; display: none; align-items: flex-end; justify-content: center; padding: 16px; }
         #contact-modal.open { display: flex; }
         @media (min-width: 640px) { #contact-modal { align-items: center; } }
@@ -192,13 +181,11 @@
         body.light .modal-body { color: #0F172A; }
         .contact-action-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px; border-radius: 11px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: all 0.15s; text-decoration: none; border: none; }
 
-        /* ─── THEME TOGGLE ─── */
         .theme-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-3); border: 1px solid var(--border); cursor: pointer; position: relative; transition: background 0.3s; flex-shrink: 0; }
         body.light .theme-toggle { background: #BFDBFE !important; border-color: #93C5FD !important; }
         .theme-toggle .knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #64748B; transition: all 0.35s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; justify-content: center; font-size: 9px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
         body.light .theme-toggle .knob { transform: translateX(20px) !important; background: #F59E0B !important; }
 
-        /* ─── TOAST ─── */
         #toast-container { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
         .toast { background: var(--bg-2); border: 1px solid var(--border-2); border-radius: 10px; padding: 9px 14px; font-size: 12px; font-weight: 500; color: var(--text-1); white-space: nowrap; box-shadow: 0 6px 24px rgba(0,0,0,0.4); animation: toastIn 0.28s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; }
         body.light .toast { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
@@ -206,16 +193,13 @@
         .toast.hide { animation: toastOut 0.25s ease forwards; }
         @keyframes toastOut { to{opacity:0;transform:translateY(-6px)} }
 
-        /* ─── RATING STARS ─── */
         .star-btn { background:none; border:none; cursor:pointer; font-size:32px; color:var(--border-2); transition:color 0.15s, transform 0.15s; padding:0 2px; line-height:1; }
         .star-btn:hover, .star-btn.active { color:#F59E0B; transform:scale(1.15); }
         .star-btn.active { color:#F59E0B; }
         @media(min-width:640px){ #rating-modal { align-items:center; } }
 
-        /* ─── PRO BADGE ─── */
         .pro-badge { background: linear-gradient(135deg, var(--gold), #D97706); border-radius: 5px; padding: 2px 6px; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; }
 
-        /* ─── OVERLAYS ─── */
         #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 190; display: none; }
         #sidebar-overlay.show { display: block; }
         #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.3s; }
@@ -223,7 +207,6 @@
         .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border-2); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ─── SIDEBAR LIGHT MODE ─── */
         body.light #sidebar { background: #FFFFFF; border-color: #E2E8F0; }
         body.light #sidebar .logo-text { color: #0F172A; }
         body.light .nav-item { color: #64748B; }
@@ -235,13 +218,11 @@
         body.light #inbox-panel { background: #F0F4F8 !important; border-color: #E2E8F0 !important; }
         body.light #chat-panel { background: #F0F4F8 !important; }
 
-        /* ─── NOTIF SOUND INDICATOR ─── */
         #sound-toggle { width: 34px; height: 34px; border-radius: 9px; background: var(--bg-3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); font-size: 13px; transition: all 0.15s; }
         #sound-toggle:hover { background: var(--bg-4); color: var(--text-1); }
         #sound-toggle.muted { color: var(--text-3); }
         body.light #sound-toggle { background: #F8FAFC; border-color: #E2E8F0; }
 
-        /* ─── QUICK REPLY ─── */
         #quick-reply-bar { display: none; padding: 8px 14px; border-top: 1px solid var(--border); background: var(--bg-2); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
         #quick-reply-bar::-webkit-scrollbar { display: none; }
         #quick-reply-bar.show { display: flex; gap: 6px; align-items: center; }
@@ -251,13 +232,11 @@
         body.light .qr-chip { background: #F8FAFC; border-color: #E2E8F0; color: #475569; }
         body.light .qr-chip:hover { background: #EFF6FF; border-color: #93C5FD; color: #2563EB; }
 
-        /* ─── ONLINE STATUS ─── */
         .online-badge.online { background: #10B981 !important; box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
         .online-badge.away { background: #F59E0B !important; }
         .online-badge.offline { background: var(--text-3) !important; }
         #adv-status-text { font-size: 10px; font-weight: 600; letter-spacing: 0.05em; }
 
-        /* ─── FILE MSG ─── */
         .file-bubble { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; }
         .file-bubble.out { background: linear-gradient(135deg,#2563EB,#1D4ED8); border-radius: 14px 14px 3px 14px; }
         .file-bubble.in { background: var(--bg-3); border: 1px solid var(--border); border-radius: 14px 14px 14px 3px; }
@@ -266,7 +245,6 @@
         .file-bubble.out .file-bubble-icon { background: rgba(255,255,255,0.15); color: #fff; }
         .file-bubble.in .file-bubble-icon { background: rgba(59,130,246,0.1); color: #60A5FA; }
 
-        /* ─── NOTIFICATION PULSE ─── */
         @keyframes notifPop { 0%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
         .notif-pop { animation: notifPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
     </style>
@@ -282,7 +260,7 @@
 
 <div id="app">
 
-    <!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════ -->
+    <!-- SIDEBAR -->
     <aside id="sidebar">
         <div class="logo">
             <div class="logo-text">Lawyers<span>AI</span></div>
@@ -291,7 +269,6 @@
                 <span id="session-tag" style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3)">Protected</span>
             </div>
         </div>
-
         <div class="nav-section">
             <div class="nav-label">Menu</div>
             <a href="index.html" class="nav-item"><div class="nav-icon"><i class="fas fa-home"></i></div>Beranda</a>
@@ -302,7 +279,6 @@
             <div class="nav-label" style="margin-top:20px">Akun</div>
             <a href="profile.html" class="nav-item"><div class="nav-icon"><i class="fas fa-user-circle"></i></div>Profil Saya</a>
         </div>
-
         <div class="premium-card" onclick="location.href='upgrade.html'">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
                 <i class="fas fa-crown" style="color:var(--gold);font-size:14px"></i>
@@ -311,7 +287,6 @@
             <p id="side-plan-title" style="font-size:13px;font-weight:700;color:var(--text-1);margin:0 0 4px;">Upgrade PRO Sultan</p>
             <p id="side-plan-sub" style="font-size:10px;margin-top:3px;color:rgba(245,158,11,0.6);font-weight:600">Rp 150.000 • Seumur Hidup →</p>
         </div>
-
         <a href="profile.html" class="profile-row">
             <img id="side-avatar" src="" style="width:36px;height:36px;border-radius:10px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;" alt="Avatar">
             <div style="overflow:hidden;flex:1">
@@ -322,7 +297,7 @@
         </a>
     </aside>
 
-    <!-- ═══════════════════════════════ INBOX PANEL ═══════════════════════════════ -->
+    <!-- INBOX PANEL -->
     <div id="inbox-panel">
         <div class="inbox-header">
             <div style="display:flex;align-items:center;justify-content:space-between">
@@ -344,7 +319,6 @@
                 <input id="search-input" type="text" placeholder="Cari advokat atau pesan..." oninput="filterConvs(this.value)">
             </div>
         </div>
-
         <div class="conv-list" id="conv-list">
             <div style="display:flex;align-items:center;justify-content:center;padding:40px;opacity:0.5">
                 <div class="spin"></div>
@@ -352,20 +326,15 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════ CHAT PANEL ═══════════════════════════════ -->
+    <!-- CHAT PANEL -->
     <div id="chat-panel">
-
-        <!-- Empty state -->
         <div id="chat-empty">
             <div style="width:52px;height:52px;border-radius:14px;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-3)"><i class="fas fa-comments"></i></div>
             <p style="font-size:14px;font-weight:700;font-style:italic;margin:0">Pilih percakapan</p>
             <a href="mitra.html" style="font-size:11px;font-weight:600;color:var(--accent);text-decoration:none;letter-spacing:0.05em">Temukan Advokat →</a>
         </div>
 
-        <!-- Chat view (hidden until selected) -->
         <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
-
-            <!-- Header -->
             <div id="chat-header">
                 <div style="display:flex;align-items:center;gap:12px">
                     <button id="back-btn" onclick="backToInbox()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center">
@@ -396,10 +365,8 @@
                 </div>
             </div>
 
-            <!-- Messages -->
             <div id="chat-box"></div>
 
-            <!-- Upgrade wall -->
             <div id="upgrade-wall">
                 <div style="display:flex;align-items:center;gap:14px">
                     <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -413,7 +380,6 @@
                 </div>
             </div>
 
-            <!-- Quick Reply Bar -->
             <div id="quick-reply-bar">
                 <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);flex-shrink:0;">Cepat:</span>
                 <div class="qr-chip" onclick="useQuickReply(this)">Halo, saya ingin konsultasi</div>
@@ -424,7 +390,6 @@
                 <div class="qr-chip" onclick="useQuickReply(this)">Saya sudah paham</div>
             </div>
 
-            <!-- Input -->
             <div id="input-wrap">
                 <div class="input-row">
                     <label class="attach-btn" title="Lampirkan File">
@@ -448,7 +413,7 @@
     </div>
 </div>
 
-<!-- ═══════════════════════════════ RATING MODAL ═══════════════════════════════ -->
+<!-- RATING MODAL -->
 <div id="rating-modal" style="position:fixed;inset:0;z-index:400;display:none;align-items:flex-end;justify-content:center;padding:16px;">
     <div class="modal-overlay" onclick="closeRatingModal()"></div>
     <div style="position:relative;z-index:1;width:100%;max-width:380px;border-radius:24px;overflow:hidden;animation:modalUp 0.38s cubic-bezier(0.34,1.56,0.64,1);background:var(--bg-2);border:1px solid var(--border-2);">
@@ -461,8 +426,6 @@
                 </div>
                 <button onclick="closeRatingModal()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
             </div>
-
-            <!-- Stars -->
             <div style="display:flex;justify-content:center;gap:10px;margin:20px 0 8px;" id="star-row">
                 <button class="star-btn" data-val="1" onclick="setRating(1)"><i class="fas fa-star"></i></button>
                 <button class="star-btn" data-val="2" onclick="setRating(2)"><i class="fas fa-star"></i></button>
@@ -471,17 +434,12 @@
                 <button class="star-btn" data-val="5" onclick="setRating(5)"><i class="fas fa-star"></i></button>
             </div>
             <p id="rating-label" style="text-align:center;font-size:12px;font-weight:700;color:var(--text-3);margin:0 0 16px;min-height:18px;"></p>
-
-            <!-- Komentar -->
             <textarea id="rating-comment" placeholder="Tulis ulasan singkat (opsional)..." maxlength="200"
                 style="width:100%;padding:11px 14px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text-1);outline:none;resize:none;min-height:72px;line-height:1.5;box-sizing:border-box;transition:border-color 0.2s;"
                 onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-
-            <!-- Already rated info -->
             <div id="already-rated-info" style="display:none;text-align:center;padding:8px 12px;border-radius:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);margin-bottom:12px;">
                 <p style="font-size:11px;font-weight:600;color:#34D399;margin:0;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Anda sudah memberi rating. Rating baru akan mengganti yang lama.</p>
             </div>
-
             <div style="display:flex;gap:8px;margin-top:14px;">
                 <button onclick="closeRatingModal()" style="flex:1;padding:11px;border-radius:11px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;">Batal</button>
                 <button id="submit-rating-btn" onclick="submitRating()" style="flex:2;padding:11px;border-radius:11px;background:#F59E0B;color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;border:none;opacity:0.4;pointer-events:none;transition:opacity 0.2s;">
@@ -492,8 +450,7 @@
     </div>
 </div>
 
-
-<!-- ═══════════════════════════════ CONTACT MODAL ═══════════════════════════════ -->
+<!-- CONTACT MODAL -->
 <div id="contact-modal">
     <div class="modal-overlay" onclick="closeContactModal()"></div>
     <div class="modal-card">
@@ -512,18 +469,15 @@
                     <span style="font-size:12px;font-weight:700;color:var(--gold)">5.0</span>
                 </div>
             </div>
-
             <div style="display:flex;gap:8px;margin:12px 0;flex-wrap:wrap">
                 <span id="m-nia" style="font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(16,185,129,0.1);color:#34D399"></span>
                 <span id="m-exp" style="font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(59,130,246,0.1);color:#60A5FA"></span>
                 <span id="m-kota" style="font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--bg-3);color:var(--text-2);display:none"></span>
             </div>
-
             <div id="m-pendidikan-row" style="display:none;padding:10px 12px;border-radius:10px;background:var(--bg-3);margin-bottom:14px;border:1px solid var(--border)">
                 <p style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);margin-bottom:3px">Pendidikan</p>
                 <p id="m-pendidikan" style="font-size:12px;font-weight:500;color:var(--text-1);margin:0"></p>
             </div>
-
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
                 <a id="m-wa-btn" href="#" target="_blank" rel="noopener" class="contact-action-btn" style="background:#16A34A;color:#fff">
                     <i class="fab fa-whatsapp" style="font-size:14px"></i>WhatsApp
@@ -559,9 +513,6 @@ let rtChannel = null;
 let typingHideTimer = null;
 let typingDebounce = null;
 let autoMsgSent = false;
-
-// ═══════════════ CACHE AVATAR ADVOKAT (FIX BARU) ═══════════════
-// Menyimpan avatar advokat agar konsisten di semua bubble
 let _advAvatarCache = null;
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
@@ -580,9 +531,13 @@ function fmtTime(iso) {
     if (df<604800000) return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
     return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
 }
+
+// ── FIX UTAMA: imgSrc tidak reload gambar tiap millisecond ──
+// Hapus query lama, tambah timestamp per-menit agar stabil
 function imgSrc(url, name) {
     if (!url) return avatarFallback(name);
-    if (url.includes('supabase')) return url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+    const base = url.split('?')[0];
+    if (base.includes('supabase')) return base + '?t=' + Math.floor(Date.now() / 60000);
     return url;
 }
 
@@ -590,11 +545,9 @@ function imgSrc(url, name) {
 async function fetchMitraData(uid) {
     if (!uid) return null;
     try {
-        // 1. By user_id
         let r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&user_id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         let d = await r.json();
         if (Array.isArray(d) && d.length) return d[0];
-        // 2. By id tabel
         r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=${ADV_FIELDS}&id=eq.${encodeURIComponent(uid)}&limit=1`, { headers: HDRS });
         d = await r.json();
         if (Array.isArray(d) && d.length) return d[0];
@@ -602,7 +555,6 @@ async function fetchMitraData(uid) {
     return null;
 }
 
-// ═══════════════════════════════ FETCH NAMA ADVOKAT (FALLBACK AMAN) ═══════════════════════════════
 async function fetchPartnerName(uid) {
     if (!uid) return 'Advokat';
     try {
@@ -670,8 +622,7 @@ window.onload = async () => {
 // ═══════════════════════════════ INBOX ═══════════════════════════════
 async function loadInbox() {
     const { data: msgs } = await window.supabase
-        .from('messages')
-        .select('*')
+        .from('messages').select('*')
         .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
         .order('created_at', { ascending: false });
 
@@ -679,12 +630,7 @@ async function loadInbox() {
 
     const seen = new Map();
     for (const m of msgs) {
-        let pid;
-        if (m.sender_id === currentUser.id) {
-            pid = m.receiver_id;
-        } else {
-            pid = m.sender_id;
-        }
+        let pid = m.sender_id === currentUser.id ? m.receiver_id : m.sender_id;
         if (pid && pid !== currentUser.id && !seen.has(pid)) seen.set(pid, m);
     }
 
@@ -719,8 +665,7 @@ async function loadInbox() {
         const spec = m?.spesialisasi || '';
         const foto = imgSrc(m?.foto_profil_url || p?.avatar_url, name);
         return {
-            pid,
-            mitraId: m?.id || null,
+            pid, mitraId: m?.id || null,
             name, spec, foto,
             unread: unreadMap[pid]||0,
             isMe: last.sender_id===currentUser.id,
@@ -747,9 +692,7 @@ function renderConvList(convs) {
     document.getElementById('conv-list').innerHTML = convs.map(cv => `
         <div class="conv-item ${cv.pid===receiverId?'active':''}" onclick="openConv('${cv.pid}','${esc(cv.name)}')">
             <div style="position:relative;flex-shrink:0">
-                <img src="${esc(cv.foto)}" class="conv-avatar"
-                     onerror="this.src='${avatarFallback(cv.name)}'"
-                     alt="${esc(cv.name)}">
+                <img src="${esc(cv.foto)}" class="conv-avatar" onerror="this.src='${avatarFallback(cv.name)}'" alt="${esc(cv.name)}">
                 ${cv.unread ? `<div style="position:absolute;top:-3px;right:-3px;width:9px;height:9px;background:var(--accent);border-radius:50%;border:2px solid var(--bg)"></div>` : ''}
             </div>
             <div style="flex:1;min-width:0">
@@ -776,8 +719,7 @@ function filterConvs(q) {
 }
 
 async function openConv(pid, name) {
-    receiverId = pid;
-    advName = name;
+    receiverId = pid; advName = name;
     history.replaceState(null, '', `chat-advokat.html?id=${pid}`);
     renderConvList(allConvs);
     showChatView();
@@ -804,41 +746,29 @@ function showChatView() {
 // ═══════════════════════════════ LOAD CHAT ═══════════════════════════════
 async function loadChatMode() {
     if (rtChannel) { window.supabase.removeChannel(rtChannel); rtChannel = null; }
-
-    // Reset state + cache avatar
-    advData = null;
-    autoMsgSent = false;
-    _advAvatarCache = null;
-
+    advData = null; autoMsgSent = false; _advAvatarCache = null;
     document.getElementById('adv-name').textContent = 'Memuat...';
     document.getElementById('adv-spec').textContent = '';
 
-    // Fetch mitra data
     const adv = await fetchMitraData(receiverId);
 
     if (adv) {
         advData = adv;
-        if (adv.user_id && adv.user_id !== receiverId) {
-            receiverId = adv.user_id;
-        }
+        if (adv.user_id && adv.user_id !== receiverId) receiverId = adv.user_id;
         advName = adv.nama_lengkap || 'Advokat';
         lawyerTableId = adv.id;
-
         document.getElementById('adv-name').textContent = advName;
         document.getElementById('adv-spec').textContent = adv.spesialisasi || '';
 
-        // ── FIX: Build avatar URL dan cache ──
+        // Cache avatar pakai imgSrc yang sudah difix
         if (adv.foto_profil_url) {
             _advAvatarCache = imgSrc(adv.foto_profil_url, advName);
         } else {
-            // Coba dari profiles sebagai fallback
             try {
                 const { data: rp } = await window.supabase
                     .from('profiles').select('avatar_url').eq('id', receiverId).maybeSingle();
-                _advAvatarCache = rp?.avatar_url || avatarFallback(advName);
-            } catch(e) {
-                _advAvatarCache = avatarFallback(advName);
-            }
+                _advAvatarCache = rp?.avatar_url ? imgSrc(rp.avatar_url, advName) : avatarFallback(advName);
+            } catch(e) { _advAvatarCache = avatarFallback(advName); }
         }
 
         const advImgEl = document.getElementById('adv-img');
@@ -847,23 +777,17 @@ async function loadChatMode() {
 
         const profileBtn = document.getElementById('view-profile-btn');
         if (profileBtn) profileBtn.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
-
-        console.log('[Chat] ✅ Advokat:', advName, '| user_id:', adv.user_id, '| table id:', adv.id);
+        console.log('[Chat] ✅', advName, '| foto:', adv.foto_profil_url ? 'ada' : 'kosong');
     } else {
-        console.warn('[Chat] Advokat tidak ditemukan di mitra_ahli, receiverId:', receiverId);
+        console.warn('[Chat] Tidak ditemukan di mitra_ahli:', receiverId);
         if (receiverId && receiverId !== currentUser.id) {
-            const fallbackName = await fetchPartnerName(receiverId);
-            advName = fallbackName;
+            advName = await fetchPartnerName(receiverId);
             document.getElementById('adv-name').textContent = advName;
-
             try {
                 const { data: prof } = await window.supabase.from('profiles')
-                    .select('full_name, avatar_url').eq('id', receiverId).maybeSingle();
-                _advAvatarCache = prof?.avatar_url || avatarFallback(advName);
-            } catch(e) {
-                _advAvatarCache = avatarFallback(advName);
-            }
-
+                    .select('full_name,avatar_url').eq('id', receiverId).maybeSingle();
+                _advAvatarCache = prof?.avatar_url ? imgSrc(prof.avatar_url, advName) : avatarFallback(advName);
+            } catch(e) { _advAvatarCache = avatarFallback(advName); }
             const advImgEl = document.getElementById('adv-img');
             advImgEl.src = _advAvatarCache;
             advImgEl.onerror = function() { this.onerror=null; this.src=avatarFallback(advName); };
@@ -875,12 +799,10 @@ async function loadChatMode() {
         }
     }
 
-    // Cari atau buat conversation_id
     const { data: ex } = await window.supabase.from('messages')
         .select('conversation_id')
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`)
-        .not('conversation_id', 'is', null)
-        .limit(1);
+        .not('conversation_id', 'is', null).limit(1);
     activeConvId = ex?.[0]?.conversation_id || crypto.randomUUID();
 
     await renderMessages();
@@ -899,47 +821,33 @@ async function loadChatMode() {
 // ═══════════════════════════════ RENDER MESSAGES ═══════════════════════════════
 async function renderMessages() {
     if (!receiverId) return;
-
-    const { data: msgs } = await window.supabase.from('messages')
-        .select('*')
+    const { data: msgs } = await window.supabase.from('messages').select('*')
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`)
         .order('created_at', { ascending: true });
 
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    // ── FIX: Gunakan cache avatar advokat — tidak pernah null/undefined ──
     const advAv = _advAvatarCache || avatarFallback(advName || 'A');
-
-    // Avatar & inisial user sendiri
     const myProfileName = currentProfile?.full_name || currentUser.email?.split('@')[0] || 'U';
     const myInit = myProfileName[0].toUpperCase();
     const myAvatar = currentProfile?.avatar_url || null;
-
     let lastDate = '';
 
     (msgs || []).forEach(m => {
         const isMe = m.sender_id === currentUser.id;
         if (m.conversation_id) activeConvId = m.conversation_id;
-
         const dObj = new Date(m.created_at);
         const dateStr = dObj.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
         if (dateStr !== lastDate) {
             lastDate = dateStr;
             box.innerHTML += `<div class="date-sep"><span>${dateStr}</span></div>`;
         }
-
         const time = dObj.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
         const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
-
-        // Avatar kiri = advokat (pakai advAv dari cache)
-        // Avatar kanan = user sendiri
         const avatarHtml = isMe
-            ? (myAvatar
-                ? `<img src="${myAvatar}" class="msg-avatar" onerror="this.style.display='none'" style="background:var(--accent-2)">`
-                : `<div class="msg-avatar-me">${myInit}</div>`)
+            ? (myAvatar ? `<img src="${myAvatar}" class="msg-avatar" onerror="this.style.display='none'">` : `<div class="msg-avatar-me">${myInit}</div>`)
             : `<img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
-
         box.innerHTML += `
             <div class="msg-row ${isMe?'me':'them'}">
                 ${!isMe ? avatarHtml : ''}
@@ -947,16 +855,13 @@ async function renderMessages() {
                     <div class="bubble ${isMe?'bubble-out':'bubble-in'}"><p>${txt}</p></div>
                     <div class="meta ${isMe?'justify-end':'justify-start'}">
                         <span>${time}</span>
-                        ${isMe ? (m.is_read
-                            ? '<i class="fas fa-check-double" style="font-size:9px;color:#60A5FA"></i>'
-                            : '<i class="fas fa-check" style="font-size:9px;color:var(--text-3)"></i>') : ''}
+                        ${isMe ? (m.is_read ? '<i class="fas fa-check-double" style="font-size:9px;color:#60A5FA"></i>' : '<i class="fas fa-check" style="font-size:9px;color:var(--text-3)"></i>') : ''}
                     </div>
                 </div>
                 ${isMe ? avatarHtml : ''}
             </div>`;
     });
 
-    // Typing placeholder — pakai advAv dari cache
     box.innerHTML += `
         <div id="typing-row" class="typing-row" style="display:none">
             <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
@@ -964,14 +869,8 @@ async function renderMessages() {
         </div>`;
 
     box.scrollTop = box.scrollHeight;
-
-    // Mark as read
-    await window.supabase.from('messages')
-        .update({ is_read: true })
-        .eq('sender_id', receiverId)
-        .eq('receiver_id', currentUser.id)
-        .eq('is_read', false);
-
+    await window.supabase.from('messages').update({ is_read: true })
+        .eq('sender_id', receiverId).eq('receiver_id', currentUser.id).eq('is_read', false);
     const conv = allConvs.find(c => c.pid === receiverId);
     if (conv) { conv.unread = 0; renderConvList(allConvs); }
 }
@@ -980,44 +879,31 @@ async function renderMessages() {
 async function sendMsg() {
     if (!isPremium) { toast('🔒 Upgrade PRO untuk membalas pesan', 'warn'); return; }
     if (!receiverId) { toast('Pilih percakapan terlebih dahulu', 'warn'); return; }
-
     const inp = document.getElementById('msg-input');
     const text = inp.value.trim();
     if (!text && !attachedFile) return;
-
     const btn = document.getElementById('send-btn');
-    btn.disabled = true;
-    inp.value = '';
-    autoResize(inp);
-
+    btn.disabled = true; inp.value = ''; autoResize(inp);
     try {
         const msgText = text || `📎 ${attachedFile?.name}`;
         await window.supabase.from('messages').insert([{
-            sender_id: currentUser.id,
-            receiver_id: receiverId,
-            lawyer_id: lawyerTableId,
-            conversation_id: activeConvId,
-            message_text: msgText,
-            is_read: false
+            sender_id: currentUser.id, receiver_id: receiverId,
+            lawyer_id: lawyerTableId, conversation_id: activeConvId,
+            message_text: msgText, is_read: false
         }]);
         clearAttach();
         const cv = allConvs.find(c => c.pid === receiverId);
         if (cv) { cv.preview = msgText; cv.isMe = true; cv.time = 'Baru'; renderConvList(allConvs); }
-    } catch(e) {
-        toast('Gagal kirim: ' + e.message, 'error');
-    } finally {
-        btn.disabled = false;
-        inp.focus();
-    }
+    } catch(e) { toast('Gagal kirim: ' + e.message, 'error'); }
+    finally { btn.disabled = false; inp.focus(); }
 }
 
 function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
 function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
 
-// ═══════════════════════════════ FILE ═══════════════════════════════
 function handleFileAttach(inp) {
     const f = inp.files[0]; if (!f) return;
-    if (f.size > 10 * 1024 * 1024) { toast('File maksimal 10MB', 'error'); return; }
+    if (f.size > 10*1024*1024) { toast('File maksimal 10MB', 'error'); return; }
     attachedFile = f;
     document.getElementById('fp-name').textContent = f.name;
     document.getElementById('file-preview').style.display = 'block';
@@ -1034,8 +920,8 @@ function subscribeRT() {
     rtChannel = window.supabase.channel('msgs-' + receiverId + '-' + Date.now())
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => {
             const m = p.new;
-            const rel = (m.sender_id === currentUser.id && m.receiver_id === receiverId) ||
-                        (m.sender_id === receiverId && m.receiver_id === currentUser.id);
+            const rel = (m.sender_id===currentUser.id && m.receiver_id===receiverId) ||
+                        (m.sender_id===receiverId && m.receiver_id===currentUser.id);
             if (rel) {
                 renderMessages();
                 if (m.sender_id !== currentUser.id) {
@@ -1073,32 +959,20 @@ function notifyTyping() {
 }
 
 // ═══════════════════════════════ AUTO MSG ═══════════════════════════════
-// FIX: Guard ketat — nama harus valid sebelum kirim auto-msg
 async function checkAutoMsg() {
     if (autoMsgSent) return;
-
-    // Pastikan nama advokat sudah siap dan valid
     const safeName = advData?.nama_lengkap || advName;
-
-    // Blacklist nama yang salah / belum siap
-    const INVALID_NAMES = ['Akun Coba', 'AKUN COBA', 'Memuat...', 'Advokat', ''];
-    if (!safeName || INVALID_NAMES.includes(safeName.trim())) {
-        console.warn('[AutoMsg] Nama tidak valid, skip:', safeName);
-        return;
-    }
-
+    const INVALID = ['Akun Coba', 'AKUN COBA', 'Memuat...', 'Advokat', ''];
+    if (!safeName || INVALID.includes(safeName.trim())) return;
     const { count } = await window.supabase.from('messages')
         .select('*', { count: 'exact', head: true })
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`);
-
     if (count === 0) {
         autoMsgSent = true;
         setTimeout(async () => {
             await window.supabase.from('messages').insert([{
-                sender_id: receiverId,
-                receiver_id: currentUser.id,
-                lawyer_id: lawyerTableId,
-                conversation_id: activeConvId,
+                sender_id: receiverId, receiver_id: currentUser.id,
+                lawyer_id: lawyerTableId, conversation_id: activeConvId,
                 message_text: `Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,
                 is_read: false
             }]);
@@ -1112,11 +986,9 @@ async function clearChatConfirm() {
         if (!confirm(`Hapus semua riwayat chat dengan ${advName}?`)) return;
     } else {
         const ok = await laiConfirm({
-            type: 'danger',
-            title: 'Hapus Riwayat Chat',
+            type: 'danger', title: 'Hapus Riwayat Chat',
             message: `Semua percakapan dengan <strong>${esc(advName)}</strong> akan dihapus permanen.`,
-            confirmText: 'Ya, Hapus Semua',
-            cancelText: 'Batal'
+            confirmText: 'Ya, Hapus Semua', cancelText: 'Batal'
         });
         if (!ok) return;
     }
@@ -1129,7 +1001,6 @@ async function clearChatConfirm() {
 // ═══════════════════════════════ CONTACT MODAL ═══════════════════════════════
 function openContactModal() {
     if (!advData && !advName) { toast('Data advokat tidak tersedia', 'warn'); return; }
-
     const av = _advAvatarCache || avatarFallback(advName || 'A');
     document.getElementById('m-img').src = av;
     document.getElementById('m-img').onerror = function() { this.src = avatarFallback(advName||'A'); };
@@ -1137,20 +1008,14 @@ function openContactModal() {
     document.getElementById('m-spec').textContent = advData?.spesialisasi || '';
     document.getElementById('m-nia').textContent = advData?.nomor_nia ? `✓ NIA ${advData.nomor_nia}` : '✓ NIA Terverifikasi';
     document.getElementById('m-exp').textContent = advData?.pengalaman ? `${advData.pengalaman} Tahun Pengalaman` : 'Berpengalaman';
-
     const kotaText = [advData?.kabupaten, advData?.provinsi].filter(Boolean).join(', ');
     const kotaEl = document.getElementById('m-kota');
-    if (kotaText) { kotaEl.textContent = '📍 ' + kotaText; kotaEl.style.display = ''; }
-    else { kotaEl.style.display = 'none'; }
-
+    if (kotaText) { kotaEl.textContent = '📍 ' + kotaText; kotaEl.style.display = ''; } else { kotaEl.style.display = 'none'; }
     const pendEl = document.getElementById('m-pendidikan-row');
     if (advData?.lulusan || advData?.jurusan) {
         document.getElementById('m-pendidikan').textContent = [advData.jurusan, advData.lulusan].filter(Boolean).join(' — ');
         pendEl.style.display = 'block';
-    } else {
-        pendEl.style.display = 'none';
-    }
-
+    } else { pendEl.style.display = 'none'; }
     const waBtn = document.getElementById('m-wa-btn');
     const copyWaBtn = document.getElementById('copy-wa-btn');
     let waNum = (advData?.wa_number || '').replace(/\D/g, '');
@@ -1159,31 +1024,21 @@ function openContactModal() {
         waBtn.href = `https://wa.me/${waNum}`;
         waBtn.style.opacity = '1'; waBtn.style.pointerEvents = '';
         copyWaBtn.style.display = '';
-        document.getElementById('copy-wa-label').textContent = 'Salin: ' + (advData.wa_number);
+        document.getElementById('copy-wa-label').textContent = 'Salin: ' + advData.wa_number;
     } else {
         waBtn.href = '#'; waBtn.style.opacity = '0.4'; waBtn.style.pointerEvents = 'none';
         copyWaBtn.style.display = 'none';
     }
-
     const emailBtn = document.getElementById('m-email-btn');
-    if (advData?.email_kontak) {
-        emailBtn.href = `mailto:${advData.email_kontak}`;
-        emailBtn.style.opacity = '1'; emailBtn.style.pointerEvents = '';
-    } else {
-        emailBtn.href = '#'; emailBtn.style.opacity = '0.4'; emailBtn.style.pointerEvents = 'none';
-    }
-
+    if (advData?.email_kontak) { emailBtn.href = `mailto:${advData.email_kontak}`; emailBtn.style.opacity = '1'; emailBtn.style.pointerEvents = ''; }
+    else { emailBtn.href = '#'; emailBtn.style.opacity = '0.4'; emailBtn.style.pointerEvents = 'none'; }
     const profileLink = document.getElementById('m-profile-link');
     if (profileLink) profileLink.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
-
     document.getElementById('contact-modal').classList.add('open');
 }
-
 function closeContactModal() { document.getElementById('contact-modal').classList.remove('open'); }
-
 function copyWA() {
-    const wa = advData?.wa_number;
-    if (!wa) return;
+    const wa = advData?.wa_number; if (!wa) return;
     navigator.clipboard.writeText(wa).then(() => {
         const l = document.getElementById('copy-wa-label');
         l.textContent = '✓ Tersalin!';
@@ -1191,15 +1046,8 @@ function copyWA() {
     }).catch(() => toast('Gagal menyalin nomor', 'error'));
 }
 
-// ═══════════════════════════════ SIDEBAR MOBILE ═══════════════════════════════
-function openSidebar() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('sidebar-overlay').classList.add('show');
-}
-function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-overlay').classList.remove('show');
-}
+function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('show'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('show'); }
 
 // ═══════════════════════════════ TOAST ═══════════════════════════════
 function toast(msg, type = 'info') {
@@ -1214,150 +1062,79 @@ function toast(msg, type = 'info') {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeContactModal(); closeRatingModal(); } });
 
-// ═══════════════════════════════ SOUND NOTIF ═══════════════════════════════
+// ═══════════════════════════════ SOUND ═══════════════════════════════
 let soundEnabled = localStorage.getItem('chat_sound') !== 'off';
 let audioCtx = null;
-
-function getAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    return audioCtx;
-}
-
+function getAudioCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
 function playNotifSound() {
     if (!soundEnabled) return;
     try {
-        const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+        const ctx = getAudioCtx(), osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
         osc.frequency.setValueAtTime(880, ctx.currentTime);
         osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.08);
         osc.frequency.setValueAtTime(880, ctx.currentTime + 0.16);
         gain.gain.setValueAtTime(0.3, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
     } catch(e) {}
 }
-
 function toggleSound() {
     soundEnabled = !soundEnabled;
     localStorage.setItem('chat_sound', soundEnabled ? 'on' : 'off');
     const btn = document.getElementById('sound-toggle');
-    if (soundEnabled) {
-        btn.innerHTML = '<i class="fas fa-volume-high"></i>';
-        btn.style.color = '#60A5FA';
-        btn.classList.remove('muted');
-        toast('🔔 Notifikasi suara aktif', 'info');
-        playNotifSound();
-    } else {
-        btn.innerHTML = '<i class="fas fa-volume-xmark"></i>';
-        btn.style.color = 'var(--text-3)';
-        btn.classList.add('muted');
-        toast('🔕 Notifikasi suara dimatikan', 'info');
-    }
+    if (soundEnabled) { btn.innerHTML = '<i class="fas fa-volume-high"></i>'; btn.style.color = '#60A5FA'; btn.classList.remove('muted'); toast('🔔 Notifikasi suara aktif', 'info'); playNotifSound(); }
+    else { btn.innerHTML = '<i class="fas fa-volume-xmark"></i>'; btn.style.color = 'var(--text-3)'; btn.classList.add('muted'); toast('🔕 Notifikasi suara dimatikan', 'info'); }
 }
-
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('sound-toggle');
-    if (btn && !soundEnabled) {
-        btn.innerHTML = '<i class="fas fa-volume-xmark"></i>';
-        btn.style.color = 'var(--text-3)';
-        btn.classList.add('muted');
-    }
+    if (btn && !soundEnabled) { btn.innerHTML = '<i class="fas fa-volume-xmark"></i>'; btn.style.color = 'var(--text-3)'; btn.classList.add('muted'); }
 });
 
 // ═══════════════════════════════ ONLINE STATUS ═══════════════════════════════
 async function updateOnlineStatus() {
     if (!receiverId) return;
     try {
-        const { data } = await window.supabase
-            .from('profiles')
-            .select('last_seen')
-            .eq('id', receiverId)
-            .maybeSingle();
-
+        const { data } = await window.supabase.from('profiles').select('last_seen').eq('id', receiverId).maybeSingle();
         const dot = document.getElementById('online-dot');
         const statusText = document.getElementById('adv-status-text');
         if (!dot || !statusText) return;
-
-        if (!data || !data.last_seen) {
-            dot.className = 'online-badge offline';
-            statusText.textContent = '• offline';
-            statusText.style.color = 'var(--text-3)';
-            return;
-        }
-
+        if (!data?.last_seen) { dot.className = 'online-badge offline'; statusText.textContent = '• offline'; statusText.style.color = 'var(--text-3)'; return; }
         const diff = Date.now() - new Date(data.last_seen).getTime();
-        if (diff < 3 * 60 * 1000) {
-            dot.className = 'online-badge online';
-            statusText.textContent = '• online';
-            statusText.style.color = '#10B981';
-        } else if (diff < 30 * 60 * 1000) {
-            dot.className = 'online-badge away';
-            const mins = Math.floor(diff / 60000);
-            statusText.textContent = `• ${mins}m lalu`;
-            statusText.style.color = '#F59E0B';
-        } else {
-            dot.className = 'online-badge offline';
-            const hrs = Math.floor(diff / 3600000);
-            statusText.textContent = hrs > 0 ? `• ${hrs}j lalu` : '• offline';
-            statusText.style.color = 'var(--text-3)';
-        }
+        if (diff < 3*60*1000) { dot.className = 'online-badge online'; statusText.textContent = '• online'; statusText.style.color = '#10B981'; }
+        else if (diff < 30*60*1000) { dot.className = 'online-badge away'; statusText.textContent = `• ${Math.floor(diff/60000)}m lalu`; statusText.style.color = '#F59E0B'; }
+        else { dot.className = 'online-badge offline'; const hrs = Math.floor(diff/3600000); statusText.textContent = hrs > 0 ? `• ${hrs}j lalu` : '• offline'; statusText.style.color = 'var(--text-3)'; }
     } catch(e) {}
 }
-
 async function updateMyLastSeen() {
     if (!currentUser) return;
-    try {
-        await window.supabase.from('profiles')
-            .update({ last_seen: new Date().toISOString() })
-            .eq('id', currentUser.id);
-    } catch(e) {}
+    try { await window.supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUser.id); } catch(e) {}
 }
 
 // ═══════════════════════════════ QUICK REPLY ═══════════════════════════════
 function useQuickReply(el) {
     if (!isPremium) { toast('🔒 Upgrade PRO untuk mengirim pesan', 'warn'); return; }
     const inp = document.getElementById('msg-input');
-    inp.value = el.textContent;
-    inp.focus();
-    autoResize(inp);
+    inp.value = el.textContent; inp.focus(); autoResize(inp);
     document.getElementById('quick-reply-bar').classList.remove('show');
 }
-
 document.addEventListener('DOMContentLoaded', () => {
     const inp = document.getElementById('msg-input');
     if (inp) {
-        inp.addEventListener('focus', () => {
-            if (!inp.value.trim()) {
-                document.getElementById('quick-reply-bar').classList.add('show');
-            }
-        });
-        inp.addEventListener('input', () => {
-            const bar = document.getElementById('quick-reply-bar');
-            if (inp.value.trim()) bar.classList.remove('show');
-            else bar.classList.add('show');
-        });
+        inp.addEventListener('focus', () => { if (!inp.value.trim()) document.getElementById('quick-reply-bar').classList.add('show'); });
+        inp.addEventListener('input', () => { const bar = document.getElementById('quick-reply-bar'); if (inp.value.trim()) bar.classList.remove('show'); else bar.classList.add('show'); });
     }
 });
 
-// ═══════════════════════════════ RATING SYSTEM ═══════════════════════════════
+// ═══════════════════════════════ RATING ═══════════════════════════════
 let selectedRating = 0;
 const RATING_LABELS = ['', 'Kurang Memuaskan', 'Cukup', 'Baik', 'Sangat Baik', 'Luar Biasa! ⭐'];
-
 function setRating(val) {
     selectedRating = val;
-    document.querySelectorAll('.star-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.val) <= val);
-    });
+    document.querySelectorAll('.star-btn').forEach(btn => btn.classList.toggle('active', parseInt(btn.dataset.val) <= val));
     document.getElementById('rating-label').textContent = RATING_LABELS[val] || '';
-    const submitBtn = document.getElementById('submit-rating-btn');
-    submitBtn.style.opacity = '1';
-    submitBtn.style.pointerEvents = '';
+    const sb = document.getElementById('submit-rating-btn'); sb.style.opacity = '1'; sb.style.pointerEvents = '';
 }
-
 async function openRatingModal() {
     if (!receiverId) return;
     selectedRating = 0;
@@ -1366,65 +1143,35 @@ async function openRatingModal() {
     document.getElementById('rating-comment').value = '';
     document.getElementById('already-rated-info').style.display = 'none';
     document.querySelectorAll('.star-btn').forEach(btn => btn.classList.remove('active'));
-    const submitBtn = document.getElementById('submit-rating-btn');
-    submitBtn.style.opacity = '0.4';
-    submitBtn.style.pointerEvents = 'none';
-
+    const sb = document.getElementById('submit-rating-btn'); sb.style.opacity = '0.4'; sb.style.pointerEvents = 'none';
     try {
-        const { data: existing } = await window.supabase
-            .from('ratings')
-            .select('score, comment')
-            .eq('reviewer_id', currentUser.id)
-            .eq('advokat_id', receiverId)
-            .maybeSingle();
-        if (existing) {
-            setRating(existing.score);
-            document.getElementById('rating-comment').value = existing.comment || '';
-            document.getElementById('already-rated-info').style.display = 'block';
-        }
-    } catch(e) { /* tabel mungkin belum ada, skip */ }
-
+        const { data: ex } = await window.supabase.from('ratings').select('score,comment')
+            .eq('reviewer_id', currentUser.id).eq('advokat_id', receiverId).maybeSingle();
+        if (ex) { setRating(ex.score); document.getElementById('rating-comment').value = ex.comment || ''; document.getElementById('already-rated-info').style.display = 'block'; }
+    } catch(e) {}
     document.getElementById('rating-modal').style.display = 'flex';
 }
-
-function closeRatingModal() {
-    document.getElementById('rating-modal').style.display = 'none';
-}
-
+function closeRatingModal() { document.getElementById('rating-modal').style.display = 'none'; }
 async function submitRating() {
     if (!selectedRating || !receiverId) return;
     const btn = document.getElementById('submit-rating-btn');
-    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
-    btn.style.pointerEvents = 'none';
-
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...'; btn.style.pointerEvents = 'none';
     try {
         const comment = document.getElementById('rating-comment').value.trim();
         const { error } = await window.supabase.from('ratings').upsert({
-            reviewer_id:  currentUser.id,
-            advokat_id:   receiverId,
-            lawyer_id:    lawyerTableId,
-            score:        selectedRating,
-            comment:      comment || null,
-            updated_at:   new Date().toISOString()
+            reviewer_id: currentUser.id, advokat_id: receiverId, lawyer_id: lawyerTableId,
+            score: selectedRating, comment: comment || null, updated_at: new Date().toISOString()
         }, { onConflict: 'reviewer_id,advokat_id' });
-
         if (error) throw error;
-
-        closeRatingModal();
-        toast('⭐ Rating berhasil dikirim!', 'success');
+        closeRatingModal(); toast('⭐ Rating berhasil dikirim!', 'success');
     } catch(e) {
-        if (e.message?.includes('does not exist') || e.message?.includes('relation')) {
-            toast('⚠️ Tabel ratings belum dibuat di Supabase', 'warn');
-        } else {
-            toast('Gagal kirim rating: ' + e.message, 'error');
-        }
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Rating';
-        btn.style.pointerEvents = '';
+        if (e.message?.includes('does not exist') || e.message?.includes('relation')) toast('⚠️ Tabel ratings belum dibuat di Supabase', 'warn');
+        else toast('Gagal kirim rating: ' + e.message, 'error');
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Rating'; btn.style.pointerEvents = '';
     }
 }
 </script>
 
-<!-- shared-modal.js for laiConfirm -->
 <script src="shared-modal.js"></script>
 </body>
 </html>
