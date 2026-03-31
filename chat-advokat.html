@@ -540,20 +540,25 @@ function imgSrc(url, name) {
     return url;
 }
 
-// FIX: Header chat avatar = profiles.avatar_url (foto lengkap profil)
-// Sidebar/bubble avatar = mitra_ahli.foto_profil_url (foto daftar advokat)
+// Header chat avatar = foto_profil_url dari mitra_ahli (sama dengan sidebar)
 async function buildAdvAvatarCache() {
     if (!receiverId) { _advAvatarCache = avatarFallback('A'); return; }
 
-    // Header chat: gunakan avatar_url dari tabel profiles
+    // Priority 1: foto_profil_url dari mitra_ahli (sama dengan yang tampil di sidebar)
+    if (advData?.foto_profil_url) {
+        _advAvatarCache = imgSrc(advData.foto_profil_url, advName);
+        return;
+    }
+
+    // Priority 2: coba ambil foto_profil_url via query langsung ke mitra_ahli by user_id
     try {
-        const { data: rp } = await window.supabase
-            .from('profiles').select('avatar_url').eq('id', receiverId).maybeSingle();
-        if (rp?.avatar_url) {
-            _advAvatarCache = imgSrc(rp.avatar_url, advName);
+        const r = await fetch(`${SUPA_URL}/rest/v1/mitra_ahli?select=foto_profil_url&user_id=eq.${encodeURIComponent(receiverId)}&limit=1`, { headers: HDRS });
+        const d = await r.json();
+        if (Array.isArray(d) && d.length && d[0].foto_profil_url) {
+            _advAvatarCache = imgSrc(d[0].foto_profil_url, advName);
             return;
         }
-    } catch(e) { console.warn('[Avatar] profiles lookup failed:', e); }
+    } catch(e) { console.warn('[Avatar] mitra_ahli re-fetch failed:', e); }
 
     // Fallback: generated avatar
     _advAvatarCache = avatarFallback(advName || 'A');
@@ -834,11 +839,8 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    // Bubble chat advokat: pakai foto_profil_url dari mitra_ahli (foto daftar advokat)
-    // Header chat: pakai _advAvatarCache = profiles.avatar_url (diset di buildAdvAvatarCache)
-    const bubbleAdvAv = advData?.foto_profil_url
-        ? imgSrc(advData.foto_profil_url, advName)
-        : (_advAvatarCache || avatarFallback(advName || 'A'));
+    // Bubble chat & header keduanya pakai foto_profil_url dari mitra_ahli via _advAvatarCache
+    const bubbleAdvAv = _advAvatarCache || avatarFallback(advName || 'A');
     const myProfileName = currentProfile?.full_name || currentUser.email?.split('@')[0] || 'U';
     const myInit = myProfileName[0].toUpperCase();
     const myAvatar = currentProfile?.avatar_url || null;
