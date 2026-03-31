@@ -357,7 +357,6 @@
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px">
-                    <a id="view-profile-btn" href="#" class="header-btn" title="Lihat Profil"><i class="fas fa-id-card"></i></a>
                     <button class="header-btn" onclick="openRatingModal()" title="Beri Rating" id="rating-btn" style="color:#F59E0B"><i class="fas fa-star"></i></button>
                     <button class="header-btn" onclick="openContactModal()" title="Info Kontak"><i class="fas fa-address-card"></i></button>
                     <button id="sound-toggle" class="header-btn" onclick="toggleSound()" title="Notifikasi Suara"><i class="fas fa-volume-high"></i></button>
@@ -784,8 +783,6 @@ async function loadChatMode() {
         document.getElementById('adv-name').textContent = advName;
         document.getElementById('adv-spec').textContent = adv.spesialisasi || '';
 
-        const profileBtn = document.getElementById('view-profile-btn');
-        if (profileBtn) profileBtn.href = `profil-advokat.html?id=${encodeURIComponent(receiverId)}`;
         console.log('[Chat] ✅', advName, '| foto:', adv.foto_profil_url ? 'ada' : 'kosong');
     } else {
         console.warn('[Chat] Tidak ditemukan di mitra_ahli:', receiverId);
@@ -977,30 +974,35 @@ async function checkAutoMsg() {
     const safeName = advData?.nama_lengkap || advName;
     const INVALID = ['Akun Coba', 'AKUN COBA', 'Memuat...', 'Advokat', ''];
     if (!safeName || INVALID.includes(safeName.trim())) return;
+    if (!receiverId || !currentUser?.id) return;
 
-    // FIX: Only count messages sent FROM the advokat (not total messages).
-    // This way, even if the user sent first, advokat greeting still appears.
-    const { count } = await window.supabase.from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('sender_id', receiverId)
-        .eq('receiver_id', currentUser.id);
+    try {
+        // Cek apakah advokat sudah pernah kirim pesan ke user ini
+        const { count } = await window.supabase.from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', receiverId)
+            .eq('receiver_id', currentUser.id);
 
-    if (count === 0) {
-        autoMsgSent = true;
-        setTimeout(async () => {
-            try {
-                await window.supabase.from('messages').insert([{
-                    sender_id: receiverId,
-                    receiver_id: currentUser.id,
-                    lawyer_id: lawyerTableId,
-                    conversation_id: activeConvId,
-                    message_text: `Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,
-                    is_read: false
-                }]);
-            } catch(e) { console.error('[AutoMsg] Insert failed:', e); }
-        }, 1500);
-    } else {
-        autoMsgSent = true; // Already has messages from advokat, skip
+        if (count === 0) {
+            autoMsgSent = true;
+            setTimeout(async () => {
+                try {
+                    const { error } = await window.supabase.from('messages').insert([{
+                        sender_id: receiverId,
+                        receiver_id: currentUser.id,
+                        lawyer_id: lawyerTableId || null,
+                        conversation_id: activeConvId,
+                        message_text: `Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,
+                        is_read: false
+                    }]);
+                    if (error) console.error('[AutoMsg] Error:', error);
+                } catch(e) { console.error('[AutoMsg] Insert failed:', e); }
+            }, 1500);
+        } else {
+            autoMsgSent = true; // sudah ada pesan dari advokat, skip
+        }
+    } catch(e) {
+        console.error('[AutoMsg] Count failed:', e);
     }
 }
 
