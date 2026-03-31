@@ -386,3 +386,94 @@ window.toggleSidebar = function() {
 // ============================================
 
 console.log('✅ Lawyers AI Config v3.6 (Full Restoration) Loaded!');
+
+
+// ============================================
+// 11. IOS RESPONSIVENESS & VHB FIX
+// ============================================
+
+(function() {
+    // Fix untuk masalah 100vh di iOS Safari (Address bar yang muncul/hilang)
+    const vhFix = () => {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    window.addEventListener('resize', vhFix);
+    window.addEventListener('orientationchange', vhFix);
+    vhFix();
+
+    // Tambahkan CSS khusus iOS ke dalam head
+    const iosStyle = document.createElement('style');
+    iosStyle.textContent = `
+        /* Gunakan variabel --vh yang sudah dihitung */
+        .min-h-screen {
+            min-height: 100vh;
+            min-height: calc(var(--vh, 1vh) * 100);
+        }
+        
+        /* Smooth scrolling untuk elemen chat di iOS */
+        #chatBox, .chat-container, .overflow-y-auto {
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        /* Hilangkan delay tap pada button di iOS */
+        button, a, .nav-link, .theme-toggle {
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Fix input zoom saat fokus di iOS (jika font-size < 16px) */
+        @media screen and (max-width: 768px) {
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Mencegah bouncing effect yang merusak layout pada body */
+        body {
+            position: fixed;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
+        }
+
+        /* Elemen utama yang boleh di-scroll */
+        main, #sidebar, .scrollable-content {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    `;
+    document.head.appendChild(iosStyle);
+
+    // Mencegah "Pull to Refresh" yang tidak sengaja pada area chat
+    document.addEventListener('touchmove', function(e) {
+        if (e.target.closest('.no-bounce')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    console.log("📱 iOS Responsiveness Engine Active");
+})();
+
+// ============================================
+// 12. FAST-CLICK & FORM AUTO-SYNC
+// ============================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Memastikan UI Sync berjalan segera setelah DOM siap
+    const checkUser = async () => {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if (user) window.syncGlobalUI(user);
+    };
+    checkUser();
+
+    // Mencegah double-tap zoom pada tombol
+    document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('touchend', (e) => {
+            // Memicu hover state manual untuk iOS jika diperlukan
+        });
+    });
+});
