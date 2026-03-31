@@ -540,17 +540,12 @@ function imgSrc(url, name) {
     return url;
 }
 
-// FIX: Build avatar cache and guarantee it's ready before renderMessages
+// FIX: Header chat avatar = profiles.avatar_url (foto lengkap profil)
+// Sidebar/bubble avatar = mitra_ahli.foto_profil_url (foto daftar advokat)
 async function buildAdvAvatarCache() {
     if (!receiverId) { _advAvatarCache = avatarFallback('A'); return; }
 
-    // Priority 1: foto_profil_url from mitra_ahli
-    if (advData?.foto_profil_url) {
-        _advAvatarCache = imgSrc(advData.foto_profil_url, advName);
-        return;
-    }
-
-    // Priority 2: avatar_url from profiles table
+    // Header chat: gunakan avatar_url dari tabel profiles
     try {
         const { data: rp } = await window.supabase
             .from('profiles').select('avatar_url').eq('id', receiverId).maybeSingle();
@@ -686,6 +681,7 @@ async function loadInbox() {
         const p = pMap[pid];
         const name = m?.nama_lengkap || p?.full_name || 'Advokat';
         const spec = m?.spesialisasi || '';
+        // Sidebar: prioritas foto_profil_url (foto daftar advokat), fallback avatar_url profil
         const foto = imgSrc(m?.foto_profil_url || p?.avatar_url, name);
         return {
             pid, mitraId: m?.id || null,
@@ -838,8 +834,11 @@ async function renderMessages() {
     const box = document.getElementById('chat-box');
     box.innerHTML = '';
 
-    // FIX: Always use cached avatar — never fall back to empty string
-    const advAv = _advAvatarCache || avatarFallback(advName || 'A');
+    // Bubble chat advokat: pakai foto_profil_url dari mitra_ahli (foto daftar advokat)
+    // Header chat: pakai _advAvatarCache = profiles.avatar_url (diset di buildAdvAvatarCache)
+    const bubbleAdvAv = advData?.foto_profil_url
+        ? imgSrc(advData.foto_profil_url, advName)
+        : (_advAvatarCache || avatarFallback(advName || 'A'));
     const myProfileName = currentProfile?.full_name || currentUser.email?.split('@')[0] || 'U';
     const myInit = myProfileName[0].toUpperCase();
     const myAvatar = currentProfile?.avatar_url || null;
@@ -858,7 +857,7 @@ async function renderMessages() {
         const txt = esc(m.message_text || '').replace(/\n/g, '<br>');
         const avatarHtml = isMe
             ? (myAvatar ? `<img src="${myAvatar}" class="msg-avatar" onerror="this.style.display='none'">` : `<div class="msg-avatar-me">${myInit}</div>`)
-            : `<img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
+            : `<img src="${esc(bubbleAdvAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">`;
         box.innerHTML += `
             <div class="msg-row ${isMe?'me':'them'}">
                 ${!isMe ? avatarHtml : ''}
@@ -875,7 +874,7 @@ async function renderMessages() {
 
     box.innerHTML += `
         <div id="typing-row" class="typing-row" style="display:none">
-            <img src="${esc(advAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
+            <img src="${esc(bubbleAdvAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
             <div class="typing-bubble"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
         </div>`;
 
