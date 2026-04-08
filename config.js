@@ -1,37 +1,32 @@
 // ============================================
-// config.js - Konfigurasi Jantung Lawyers AI
-// Version: 3.6 - Full Restoration & Identity Sync
+// config.js - Konfigurasi Lawyers AI
+// Version: 4.0 - Security & Mobile Hardened
 // ============================================
 
 // ============================================
 // 1. KONFIGURASI SUPABASE
 // ============================================
-const supabaseUrl = 'https://mrurkzuulwfudkwgwgva.supabase.co'; 
+const supabaseUrl = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
 
 // ============================================
 // 2. KONFIGURASI AI PROXY
-// API Key TIDAK disimpan di sini (aman dari GitHub!)
-// Key disimpan di Netlify Environment Variables
 // ============================================
 window.CONFIG = {
-    // ⚠️ JANGAN isi API key di sini — sudah dipindah ke Netlify Function!
     OPENROUTER_API_KEY: null,
-    
-    // Endpoint proxy Netlify (key aman di server) 
     AI_PROXY_ENDPOINT: '/api/ai-proxy',
-    
-    // Model default
     AI_MODEL: "google/gemini-2.5-flash-lite-preview-06-17"
 };
-
-console.log("✅ Config: AI Proxy mode aktif (API key aman di server)");
 
 // ============================================
 // 3. INISIALISASI SUPABASE
 // ============================================
-try {
-    if (typeof supabase !== 'undefined') {
+(function initSupabase() {
+    if (typeof supabase === 'undefined') {
+        console.error("❌ Supabase SDK not loaded");
+        return;
+    }
+    try {
         window.supabase = supabase.createClient(supabaseUrl, supabaseKey, {
             auth: {
                 storage: window.localStorage,
@@ -41,76 +36,102 @@ try {
                 detectSessionInUrl: false
             }
         });
-        console.log("✅ Supabase Connected (localStorage mode)");
+        console.log("✅ Supabase Connected");
+    } catch (error) {
+        console.error("❌ Supabase Connection Failed:", error);
     }
-} catch (error) {
-    console.error("❌ Supabase Connection Failed:", error);
-}
+})();
 
 // ============================================
 // 4. KONSTANTA APLIKASI
 // ============================================
 window.APP_CONFIG = {
     MESSAGE: { MAX_LENGTH: 5000, PAGE_SIZE: 50, MIN_LENGTH: 1 },
-    UI: { TOAST_DURATION: 3000, TYPING_INDICATOR_TIMEOUT: 2000, DEBOUNCE_DELAY: 300, LOADING_DELAY: 500 },
+    UI: { TOAST_DURATION: 3500, TYPING_INDICATOR_TIMEOUT: 2000, DEBOUNCE_DELAY: 300, LOADING_DELAY: 500 },
     STATUS: { VERIFIED: 'verified', PENDING: 'pending', REJECTED: 'rejected' },
-    
-    // Konfigurasi API OpenRouter
-    API: {
-        ENDPOINT: 'https://openrouter.ai/api/v1/chat/completions',
-        TIMEOUT: 30000
-    }
+    API: { ENDPOINT: 'https://openrouter.ai/api/v1/chat/completions', TIMEOUT: 30000 }
 };
 
 // ============================================
-// 4.1 REALTIME CHAT ENGINE (TAMBAHAN)
+// 4.1 REALTIME CHAT ENGINE
 // ============================================
 window.subscribeRT = function(targetId, userId, callback) {
     if (!targetId || !userId) return null;
-    
-    // Bersihkan channel lama agar tidak terjadi duplikasi listener
     window.supabase.removeAllChannels();
-
     return window.supabase
-        .channel('public:messages')
-        .on('postgres_changes', { 
-            event: 'INSERT', 
-            schema: 'public', 
-            table: 'messages' 
+        .channel('public:messages:' + userId)
+        .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages'
         }, (payload) => {
             const newMsg = payload.new;
-            
-            // Filter: Hanya proses jika pesan relevan dengan percakapan aktif
             const isRelevant = (newMsg.sender_id === targetId && newMsg.receiver_id === userId) ||
                                (newMsg.sender_id === userId && newMsg.receiver_id === targetId);
-            
-            if (isRelevant && typeof callback === 'function') {
-                callback(newMsg);
-            }
+            if (isRelevant && typeof callback === 'function') callback(newMsg);
         })
         .subscribe();
 };
 
 // ============================================
-// 5. UTILITY FUNCTIONS - SECURITY & UI
+// 5. UTILITY FUNCTIONS - SECURITY
 // ============================================
 
+// FIX: Escape HTML untuk cegah XSS — versi lebih robust
 window.escapeHtml = function(unsafe) {
-    if (!unsafe) return '';
-    return String(unsafe).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    if (unsafe === null || unsafe === undefined) return '';
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/\//g, "&#x2F;");
 };
 
-// --- CHAT IDENTITY UTILITIES ---
+// FIX: Sanitize URL untuk cegah javascript: injection
+window.safeUrl = function(url) {
+    if (!url) return '#';
+    const trimmed = url.trim();
+    if (/^javascript:/i.test(trimmed)) return '#';
+    if (/^data:/i.test(trimmed)) return '#';
+    return trimmed;
+};
+
+// FIX: Rate limiter sederhana untuk form submit
+window.RateLimiter = (function() {
+    const attempts = {};
+    return {
+        check: function(key, maxAttempts, windowMs) {
+            const now = Date.now();
+            if (!attempts[key]) attempts[key] = [];
+            attempts[key] = attempts[key].filter(t => now - t < windowMs);
+            if (attempts[key].length >= maxAttempts) return false;
+            attempts[key].push(now);
+            return true;
+        },
+        reset: function(key) { delete attempts[key]; }
+    };
+})();
+
+// FIX: Validasi email lebih ketat
+window.isValidEmail = function(email) {
+    if (!email || typeof email !== 'string') return false;
+    if (email.length > 254) return false;
+    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+};
+
+// FIX: Validasi password lebih aman
+window.isValidPassword = function(pass) {
+    if (!pass || typeof pass !== 'string') return false;
+    return pass.length >= 6 && /[a-zA-Z]/.test(pass) && /[0-9]/.test(pass);
+};
+
+// CHAT IDENTITY UTILITIES
 window.getChatPartnerId = function(message, currentUserId) {
     if (!message || !currentUserId) return null;
-    // 🔥 PRIORITAS: gunakan lawyer_id jika ada (identitas advokat yang benar)
-    if (message.lawyer_id) {
-        return message.lawyer_id;
-    }
-    // Fallback: cari partner berdasarkan sender/receiver
-    return message.sender_id === currentUserId
-        ? message.receiver_id
-        : message.sender_id;
+    if (message.lawyer_id) return message.lawyer_id;
+    return message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
 };
 
 window.getPartnerProfile = async function(partnerId) {
@@ -128,98 +149,85 @@ window.getPartnerProfile = async function(partnerId) {
             tag: data?.specialization || 'Klien'
         };
     } catch (err) {
-        // FIX: TIDAK PERNAH return "Akun Coba" — fallback aman ke auth user
         try {
             const { data: { user } } = await window.supabase.auth.getUser();
             if (user?.email) {
                 const fallbackName = user.email.split('@')[0];
-                return {
-                    name: fallbackName,
-                    avatar: window.getAvatarUrl(fallbackName),
-                    tag: 'Umum'
-                };
+                return { name: fallbackName, avatar: window.getAvatarUrl(fallbackName), tag: 'Umum' };
             }
         } catch(e2) {}
-        // Last resort — generic, bukan "Akun Coba"
         return { name: 'Pengguna', avatar: window.getAvatarUrl('P'), tag: 'Umum' };
     }
 };
 
+// FIX: Toast pakai CSS vars, bukan Tailwind (konsisten dengan semua halaman)
 window.showToast = function(message, type = 'info') {
     const existingToast = document.getElementById('app-toast');
     if (existingToast) existingToast.remove();
     const toast = document.createElement('div');
     toast.id = 'app-toast';
-    toast.className = 'fixed top-6 right-6 z-[200] px-6 py-4 rounded-2xl shadow-2xl font-bold text-sm transition-all transform';
-    const colors = { success: 'bg-emerald-500 text-white', error: 'bg-red-500 text-white', warning: 'bg-amber-500 text-white', info: 'bg-blue-500 text-white' };
-    toast.className += ' ' + (colors[type] || colors.info);
-    toast.innerHTML = `<span>${window.escapeHtml(message)}</span>`;
+    const colors = {
+        success: { bg: '#10B981', text: '#fff' },
+        error:   { bg: '#EF4444', text: '#fff' },
+        warning: { bg: '#F59E0B', text: '#fff' },
+        info:    { bg: '#3B82F6', text: '#fff' }
+    };
+    const c = colors[type] || colors.info;
+    toast.style.cssText = `
+        position:fixed;top:20px;right:16px;z-index:99999;
+        padding:12px 18px;border-radius:12px;
+        background:${c.bg};color:${c.text};
+        font-family:'Plus Jakarta Sans',sans-serif;
+        font-size:13px;font-weight:700;
+        box-shadow:0 8px 24px rgba(0,0,0,0.25);
+        max-width:calc(100vw - 32px);
+        word-break:break-word;
+        transition:opacity 0.3s ease, transform 0.3s ease;
+        transform:translateY(0);opacity:1;
+    `;
+    toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, window.APP_CONFIG.UI.TOAST_DURATION);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        setTimeout(() => toast.remove(), 350);
+    }, window.APP_CONFIG.UI.TOAST_DURATION);
 };
 
 window.getAvatarUrl = function(name, customBg = '2563EB') {
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${customBg}&color=fff&bold=true&size=128`;
+    const safeName = encodeURIComponent(String(name || 'U').substring(0, 50));
+    return `https://ui-avatars.com/api/?name=${safeName}&background=${customBg}&color=fff&bold=true&size=128`;
 };
 
 window.formatDate = function(dateString, includeTime = true) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' };
-    if (includeTime) { options.hour = '2-digit'; options.minute = '2-digit'; }
-    return new Date(dateString).toLocaleDateString('id-ID', options);
+    if (!dateString) return '—';
+    try {
+        const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' };
+        if (includeTime) { options.hour = '2-digit'; options.minute = '2-digit'; }
+        return new Date(dateString).toLocaleDateString('id-ID', options);
+    } catch (e) { return '—'; }
 };
 
 // ============================================
 // 6. SESSION & UI SYNC
 // ============================================
-
-window.handleLogout = function() {
-    const doLogout = async () => {
-        try {
-            await window.supabase.auth.signOut();
-            localStorage.clear();
-            window.location.href = 'login.html';
-        } catch (error) { window.showToast('Gagal logout.', 'error'); }
-    };
-    if (typeof laiConfirm === 'function') {
-        laiConfirm({
-            title: 'Keluar dari Lawyers AI?',
-            message: 'Sesi kamu akan diakhiri. Sampai jumpa lagi!',
-            confirmText: 'Ya, Keluar',
-            cancelText: 'Batal',
-            danger: true,
-            onConfirm: doLogout
-        });
-    } else {
-        if (confirm('Yakin ingin keluar?')) doLogout();
-    }
-};
-
-window.syncGlobalUI = async function(user) {
-    if (!user) return;
+window.syncUserUI = async function() {
     try {
-        const { data: profile } = await window.supabase.from('profiles').select('*').eq('id', user.id).single();
-        // FIX: nama dari profile atau email, TIDAK pernah "Akun Coba"
-        const name = profile?.full_name || user.email?.split('@')[0] || 'Pengguna';
-        const avatarUrl = profile?.avatar_url || window.getAvatarUrl(name);
-        
-        const elements = { 'side-name': name, 'side-avatar': avatarUrl, 'header-avatar': avatarUrl, 'menu-name': name, 'menu-email': user.email };
-        Object.entries(elements).forEach(([id, value]) => {
-            const el = document.getElementById(id);
-            if (el) {
-                if (id.includes('avatar')) el.src = value;
-                else el.textContent = value;
-            }
+        const { data: { user }, error } = await window.supabase.auth.getUser();
+        if (error || !user) return;
+        const { data: profile } = await window.supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single();
+        const name = profile?.full_name || user.email?.split('@')[0] || 'User';
+        const avatar = profile?.avatar_url || window.getAvatarUrl(name);
+        const sn = document.getElementById('side-name');
+        const sa = document.getElementById('side-avatar');
+        const sc = document.getElementById('side-email');
+        if (sn) sn.textContent = window.escapeHtml(name);
+        if (sa) sa.src = avatar;
+        if (sc) sc.textContent = window.escapeHtml(user.email || '');
+        // FIX: Jangan pernah tampilkan "Akun Coba"
+        document.querySelectorAll('[data-user-name]').forEach(el => {
+            el.textContent = window.escapeHtml(name);
         });
-
-        // FIX: Ganti teks "Akun Coba" di seluruh UI dengan nama asli
-        // Hanya target elemen yang HANYA berisi teks "Akun Coba" (exact match)
-        document.querySelectorAll('h2, h3, span, p, div').forEach(el => {
-            // Pastikan tidak ada child element agar tidak merusak struktur
-            if (el.children.length === 0 && el.textContent.trim() === 'Akun Coba') {
-                el.textContent = name;
-            }
-        });
-
         console.log("✅ UI synced for user:", name);
     } catch (error) { console.error("UI Sync error:", error); }
 };
@@ -227,116 +235,83 @@ window.syncGlobalUI = async function(user) {
 // ============================================
 // 7. SIDEBAR MANAGEMENT
 // ============================================
-
 window.toggleSidebar = function() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
     if (!sidebar) return;
-    sidebar.classList.toggle('active');
-    if (overlay) overlay.classList.toggle('hidden');
+    const isOpen = sidebar.classList.toggle('active');
+    if (overlay) {
+        overlay.classList.toggle('hidden', !isOpen);
+        overlay.style.display = isOpen ? 'block' : 'none';
+    }
+    // FIX: Prevent body scroll saat sidebar terbuka di mobile
+    document.body.style.overflow = isOpen ? 'hidden' : '';
 };
 
-// ============================================
-// 9. GLOBAL THEME SYSTEM (Siang / Malam)
-// ============================================
+// FIX: Tutup sidebar saat tap overlay
+document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.getElementById('overlay');
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('active')) {
+                window.toggleSidebar();
+            }
+        });
+    }
+    // FIX: Swipe gesture untuk tutup sidebar di iOS
+    let touchStartX = 0;
+    document.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    document.addEventListener('touchend', function(e) {
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && sidebar.classList.contains('active') && dx < -60) {
+            window.toggleSidebar();
+        }
+    }, { passive: true });
+});
 
+// ============================================
+// 8. GLOBAL THEME SYSTEM
+// ============================================
 (function() {
     const THEME_KEY = 'lawyers_ai_theme';
-
     const styleId = 'lawyers-ai-theme-css';
+
     if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
             /* ── Global light mode overrides ── */
             body.light { background: #F0F4F8 !important; color: #0F172A !important; }
-
-            /* Sidebar */
             body.light #sidebar { background: #FFFFFF !important; border-color: #E2E8F0 !important; box-shadow: 4px 0 24px rgba(0,0,0,0.06) !important; }
-            body.light #sidebar h1 { color: #0F172A !important; }
             body.light #sidebar .nav-link { color: #94A3B8 !important; }
             body.light #sidebar .nav-link:hover { background: #F1F5F9 !important; color: #475569 !important; }
             body.light #sidebar .nav-link.active { background: rgba(59,130,246,0.1) !important; color: #2563EB !important; }
             body.light #sidebar .nav-link .icon-wrap { background: #F1F5F9 !important; }
-            body.light #sidebar .text-slate-400, body.light #sidebar .text-slate-500, body.light #sidebar .text-slate-600 { color: #64748B !important; }
-            body.light #sidebar p, body.light #sidebar span:not(.nav-link span) { color: #64748B; }
-
-            /* Cards */
+            body.light #sidebar .text-slate-400, body.light #sidebar .text-slate-500 { color: #64748B !important; }
             body.light .stat-card, body.light .notif-card, body.light .cat-card {
-                background: #FFFFFF !important;
-                border-color: #E2E8F0 !important;
+                background: #FFFFFF !important; border-color: #E2E8F0 !important;
                 box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
             }
-            body.light .stat-card:hover, body.light .notif-card:hover { border-color: #93C5FD !important; }
-            body.light .stat-card .text-white, body.light .notif-card .text-white { color: #0F172A !important; }
-            body.light .stat-card .text-3xl { color: #0F172A !important; }
-            body.light .stat-card .text-slate-400, body.light .stat-card .text-slate-500, body.light .stat-card .text-slate-600,
-            body.light .notif-card .text-slate-400, body.light .notif-card .text-slate-500, body.light .notif-card .text-slate-600 { color: #94A3B8 !important; }
-            body.light .cat-card p { color: #475569 !important; }
-            body.light .cat-card:hover { background: rgba(59,130,246,0.06) !important; }
-
-            /* Section labels, general text */
-            body.light .section-label { color: #CBD5E1 !important; }
-            body.light .text-white:not(.hero-card .text-white):not(.notif-card .notif-icon *) { color: #0F172A !important; }
-            body.light .text-slate-400:not(#sidebar *):not(.hero-card *) { color: #64748B !important; }
-            body.light .text-slate-500, body.light .text-slate-600 { color: #94A3B8 !important; }
-
-            /* Member tag / badge */
-            body.light .bg-slate-800, body.light .bg-\\[\\#1E293B\\] { background: #E2E8F0 !important; }
-            body.light .member-tag { background: #EFF6FF !important; color: #2563EB !important; }
-
-            /* Hero tetap gelap (by design) */
             body.light .hero-card { background: linear-gradient(135deg,#1E3A6E 0%,#2563EB 60%,#1d4ed8 100%) !important; }
             body.light .hero-card * { color: #fff !important; }
-            body.light .hero-card a.bg-white\\/8 { background: rgba(255,255,255,0.15) !important; border-color: rgba(255,255,255,0.2) !important; }
-
-            /* Premium pill */
-            body.light .premium-pill { background: linear-gradient(135deg,#FEF3C7,#FDE68A) !important; border-color: rgba(245,158,11,0.5) !important; }
-            body.light .premium-pill .prem-title { color: #78350F !important; }
-            body.light .premium-pill .prem-sub { color: #B45309 !important; }
-            body.light .premium-pill span { color: #92400E !important; background: rgba(120,53,15,0.15) !important; }
-
-            /* Toast */
-            body.light .toast { background: #FFFFFF !important; border-color: #E2E8F0 !important; box-shadow: 0 8px 30px rgba(0,0,0,0.12) !important; }
-            body.light .toast .text-white { color: #0F172A !important; }
-            body.light .toast .text-slate-400 { color: #64748B !important; }
-
-            /* Theme toggle */
+            body.light .toast { background: #FFFFFF !important; border-color: #E2E8F0 !important; }
             body.light .theme-toggle { background: #BFDBFE !important; border-color: #93C5FD !important; }
             body.light .theme-toggle .knob { transform: translateX(20px); background: #F59E0B !important; }
-
-            /* Buttons */
-            body.light .bg-white\\/5, body.light .bg-white\\/\\[0\\.03\\], body.light .bg-white\\/\\[0\\.02\\] { background: #F8FAFC !important; }
-            body.light .border-white\\/8, body.light .border-white\\/10 { border-color: #E2E8F0 !important; }
-
-            /* Header logout btn */
-            body.light .bg-red-500\\/10 { background: #FEF2F2 !important; }
-
-            /* Scrollbar */
-            body.light ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1) !important; }
-
-            /* Chat advokat */
-            body.light .blur-header { background: rgba(240,244,248,0.9) !important; backdrop-filter: blur(12px); }
-            body.light .message-in { background: #FFFFFF !important; border-color: #E2E8F0 !important; }
-            body.light .message-out { background: #2563EB !important; }
-            body.light #chatBox { background: #F0F4F8; }
-
-            /* Konsultasi AI */
-            body.light .chat-container { background: #F0F4F8 !important; }
-            body.light .ai-bubble { background: #FFFFFF !important; border-color: #E2E8F0 !important; color: #0F172A !important; }
-            body.light .user-bubble { background: #2563EB !important; color: #fff !important; }
-
-            /* Input fields */
-            body.light input, body.light textarea {
-                background: #FFFFFF !important;
-                border-color: #E2E8F0 !important;
-                color: #0F172A !important;
+            body.light input, body.light textarea, body.light select {
+                background: #FFFFFF !important; border-color: #E2E8F0 !important; color: #0F172A !important;
             }
             body.light input::placeholder, body.light textarea::placeholder { color: #94A3B8 !important; }
             body.light input:focus, body.light textarea:focus { border-color: #3B82F6 !important; }
+            body.light .message-in { background: #FFFFFF !important; border-color: #E2E8F0 !important; }
+            body.light #chatBox, body.light #chat-box { background: #F0F4F8; }
+            body.light .blur-header { background: rgba(240,244,248,0.92) !important; }
 
-            /* Prevent transition flash on page load */
-            body.light-loading * { transition: none !important; }
+            /* Prevent flash */
+            html.light-pending * { transition: none !important; }
         `;
         document.head.appendChild(style);
     }
@@ -371,9 +346,7 @@ window.toggleSidebar = function() {
         const next = isLight ? 'dark' : 'light';
         localStorage.setItem(THEME_KEY, next);
         applyTheme(next);
-        if (typeof showToast === 'function') {
-            showToast(next === 'light' ? '☀️ Mode Siang aktif' : '🌙 Mode Malam aktif', 'info');
-        }
+        window.showToast?.(next === 'light' ? '☀️ Mode Siang aktif' : '🌙 Mode Malam aktif', 'info');
     };
 
     window.getCurrentTheme = function() {
@@ -382,7 +355,149 @@ window.toggleSidebar = function() {
 })();
 
 // ============================================
-// 10. FINAL INITIALIZATION MESSAGE
+// 9. GLOBAL MOBILE RESPONSIVE CSS
 // ============================================
+(function() {
+    const styleId = 'lai-mobile-css';
+    if (document.getElementById(styleId)) return;
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        /* ═══ MOBILE & iOS GLOBAL FIXES ═══ */
+        * { -webkit-tap-highlight-color: transparent; }
 
-console.log('✅ Lawyers AI Config v3.6 (Full Restoration) Loaded!');
+        /* Fix iOS bounce scroll */
+        html { -webkit-overflow-scrolling: touch; }
+
+        /* Fix iOS input zoom (font-size >= 16px) */
+        @media (max-width: 768px) {
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Fix sidebar mobile */
+        @media (max-width: 1023px) {
+            #sidebar {
+                position: fixed !important;
+                left: 0; top: 0; bottom: 0;
+                z-index: 300 !important;
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4,0,0.2,1) !important;
+                width: 260px !important;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            #sidebar.active {
+                transform: translateX(0) !important;
+                box-shadow: 4px 0 32px rgba(0,0,0,0.4);
+            }
+            #overlay {
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.55);
+                z-index: 299;
+                display: none;
+                backdrop-filter: blur(2px);
+            }
+            .main-scroll { margin-left: 0 !important; }
+        }
+
+        /* Mobile header burger */
+        .mobile-menu-btn {
+            display: none;
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: var(--bg-input, rgba(255,255,255,0.05));
+            border: 1px solid var(--border, rgba(255,255,255,0.08));
+            align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-2, #94A3B8);
+            font-size: 14px; flex-shrink: 0;
+        }
+        @media (max-width: 1023px) { .mobile-menu-btn { display: flex; } }
+
+        /* Fix notif panel */
+        #notifPanel {
+            position: fixed !important;
+            top: 60px; right: 12px;
+            width: min(360px, calc(100vw - 24px)) !important;
+            z-index: 250;
+            background: var(--bg-sidebar, #0C1220);
+            border: 1px solid var(--border, rgba(255,255,255,0.08));
+            border-radius: 18px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            max-height: 70vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+        body.light #notifPanel {
+            background: #FFFFFF;
+            border-color: #E2E8F0;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+        }
+
+        /* Safe area for iOS notch */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            .bottom-safe { padding-bottom: env(safe-area-inset-bottom); }
+            #input-wrap, .chat-input-wrap { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+        }
+
+        /* Prevent text select on UI elements */
+        .theme-toggle, .nav-link, .cat-card, .action-card, .stat-card { user-select: none; }
+
+        /* Touch target minimum size */
+        button, a, [onclick] { min-height: 44px; min-width: 44px; }
+        .theme-toggle, .notif-dot { min-height: unset; min-width: unset; }
+
+        /* Scrollbar hide untuk mobile */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Fix hero card padding mobile */
+        @media (max-width: 640px) {
+            .hero-card { padding: 24px 20px !important; }
+            .hero-card h3 { font-size: 20px !important; }
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+// ============================================
+// 10. SECURE SESSION CHECK HELPER
+// ============================================
+window.requireAuth = async function(redirectTo = 'login.html') {
+    try {
+        const { data: { session }, error } = await window.supabase.auth.getSession();
+        if (error || !session) {
+            window.location.replace(redirectTo);
+            return null;
+        }
+        // FIX: Refresh token bila hampir expired (< 5 menit)
+        const expiresAt = session.expires_at;
+        if (expiresAt && (expiresAt - Math.floor(Date.now()/1000)) < 300) {
+            await window.supabase.auth.refreshSession();
+        }
+        return session;
+    } catch (e) {
+        window.location.replace(redirectTo);
+        return null;
+    }
+};
+
+// FIX: Logout bersih — hapus session + channel
+window.doLogout = async function() {
+    try {
+        window.supabase?.removeAllChannels();
+        await window.supabase?.auth.signOut();
+        // Hapus hanya auth keys, bukan tema/preferensi user
+        const keysToKeep = ['lawyers_ai_theme', 'lai_read_notifs'];
+        Object.keys(localStorage).forEach(k => {
+            if (!keysToKeep.includes(k)) localStorage.removeItem(k);
+        });
+        window.location.replace('login.html');
+    } catch (e) {
+        window.location.replace('login.html');
+    }
+};
+
+console.log('✅ Lawyers AI Config v4.0 (Security + Mobile) Loaded!');
