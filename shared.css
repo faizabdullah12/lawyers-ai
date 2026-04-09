@@ -549,9 +549,10 @@ body.light #sidebar .text-slate-400 { color: #64748B !important; }
         padding-top: 0;
     }
 
-    /* Semua page wrapper: padding top 72px buat ruang hamburger */
+    /* Semua page wrapper: padding top 72px buat ruang hamburger
+       KECUALI chat-advokat-wrap yang punya handling sendiri */
     .page-wrap,
-    [class*="wrap"]:not(#sidebar):not(.sp-avatar-wrap):not(.input-bar) {
+    [class*="wrap"]:not(#sidebar):not(.sp-avatar-wrap):not(.input-bar):not(.chat-advokat-wrap):not(.chat-input-wrap) {
         padding-top: 72px !important;
     }
 }
@@ -670,11 +671,83 @@ body.light #sidebar .text-slate-400 { color: #64748B !important; }
     }
 }
 
-/* ── CHAT ADVOKAT MOBILE ── */
+/* ── CHAT ADVOKAT MOBILE & iOS ── */
 @media (max-width: 1023px) {
+    /* Wrapper utama: full height dinamis, handle iOS keyboard */
     .chat-advokat-wrap {
-        height: calc(100vh - 72px) !important;
-        margin-top: 72px;
+        height: 100dvh !important;
+        height: -webkit-fill-available !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Header chat: ruang untuk hamburger + iOS notch */
+    .chat-advokat-header,
+    .ca-header {
+        padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 56px)) !important;
+        padding-left: 60px !important;
+        flex-shrink: 0;
+        background: var(--bg-sidebar) !important;
+        border-bottom: 1px solid var(--border);
+        z-index: 10;
+    }
+
+    /* Area pesan: flex-grow, scrollable */
+    .chat-advokat-messages,
+    .ca-messages,
+    .messages-area {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        background: var(--bg-base) !important;
+        padding: 16px !important;
+        padding-bottom: 8px !important;
+    }
+
+    /* Input bar: sticky di bawah, aman dari iOS home indicator */
+    .chat-advokat-input,
+    .ca-input-bar,
+    .chat-input-wrap {
+        flex-shrink: 0 !important;
+        position: sticky !important;
+        bottom: 0 !important;
+        z-index: 20 !important;
+        background: var(--bg-sidebar) !important;
+        border-top: 1px solid var(--border) !important;
+        padding: 12px 16px !important;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+}
+
+/* iOS: pastikan background tidak putih */
+@media (max-width: 1023px) {
+    /* Fix background putih di iOS Safari/PWA */
+    body {
+        background-color: var(--bg-base) !important;
+    }
+
+    /* Bubble pesan: pastikan lebar tidak meluber */
+    .message-bubble,
+    .msg-bubble,
+    .bubble-in,
+    .bubble-out {
+        max-width: 78% !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+}
+
+/* iOS Safe area: notch atas & home indicator bawah */
+@supports (padding: env(safe-area-inset-bottom)) {
+    @media (max-width: 1023px) {
+        .chat-advokat-wrap {
+            padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        }
+        #menuBtn {
+            top: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) !important;
+        }
     }
 }
 
@@ -733,8 +806,18 @@ body.light #sidebar .text-slate-400 { color: #64748B !important; }
         height: auto;
     }
 
+    /* main-scroll: default scrollable, kecuali chat page pakai flex */
     .main-scroll {
-        overflow-y: visible;
+        overflow-y: auto;
         height: auto;
+    }
+
+    /* Khusus chat advokat: main-scroll harus full height flex */
+    body:has(.chat-advokat-wrap) .main-scroll {
+        height: 100dvh;
+        height: -webkit-fill-available;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 }
