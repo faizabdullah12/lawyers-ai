@@ -249,6 +249,147 @@
 
         @keyframes notifPop { 0%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
         .notif-pop { animation: notifPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+
+        /* ═══════════ MOBILE & iOS FIXES ═══════════ */
+
+/* iOS safe area — notch & home indicator */
+@supports (padding: env(safe-area-inset-bottom)) {
+    #input-wrap {
+        padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    }
+    #chat-header {
+        padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    }
+}
+
+/* Fix iOS Safari — cegah input naik di atas keyboard */
+@media (max-width: 768px) {
+    html, body {
+        height: 100%;
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+    }
+
+    #app { height: 100dvh; }
+
+    /* Header chat lebih compact di mobile */
+    #chat-header {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    /* Nama advokat tidak overflow */
+    #adv-name {
+        font-size: 13px;
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Sembunyikan tombol trash & sound di mobile */
+    #chat-header > div:last-child > button:nth-child(3),
+    #chat-header > div:last-child > button:nth-child(4) {
+        display: none;
+    }
+
+    /* Header buttons lebih kecil */
+    .header-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 11px;
+    }
+
+    /* Chat box padding lebih kecil */
+    #chat-box {
+        padding: 12px 10px;
+        gap: 3px;
+    }
+
+    /* Bubble lebih lebar */
+    .msg-bubble { max-width: 82%; }
+
+    /* Font bubble lebih kecil */
+    .msg-bubble .bubble {
+        padding: 8px 11px;
+        font-size: 13px;
+    }
+
+    /* Avatar bubble lebih kecil */
+    .msg-avatar,
+    .msg-avatar-me {
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        font-size: 9px;
+    }
+
+    /* Upgrade wall lebih compact */
+    #upgrade-wall {
+        margin: 8px 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+    }
+
+    #upgrade-wall p:first-child { font-size: 12px; }
+    #upgrade-wall p:last-child { font-size: 10px; }
+
+    #upgrade-wall a {
+        padding: 7px 10px;
+        font-size: 9px;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+
+    /* Input wrap lebih tight */
+    #input-wrap { padding: 10px 12px; }
+
+    #msg-input {
+        font-size: 14px;
+        padding: 9px 42px 9px 12px;
+    }
+
+    .attach-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Quick reply lebih kecil */
+    .qr-chip {
+        padding: 5px 10px;
+        font-size: 10px;
+    }
+
+    #quick-reply-bar { padding: 6px 10px; }
+
+    /* Status kecil */
+    #adv-spec,
+    #adv-status-text,
+    #adv-typing {
+        font-size: 9px;
+    }
+
+    /* Avatar header */
+    .adv-avatar-wrap img {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Premium badge */
+    #premium-marker {
+        font-size: 7px;
+        padding: 2px 5px;
+    }
+}
+
+/* Tablet tweaks */
+@media (min-width: 769px) and (max-width: 1024px) {
+    #chat-header { padding: 12px 16px; }
+    .msg-bubble { max-width: 75%; }
+    #adv-name { font-size: 14px; }
+}
     </style>
 </head>
 <body>
