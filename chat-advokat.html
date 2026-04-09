@@ -255,100 +255,70 @@
         /* Hamburger: tersembunyi di desktop */
         #menuBtn {
             display: none;
-            width: 32px; height: 32px;
-            border-radius: 9px;
+            width: 30px; height: 30px;
+            border-radius: 8px;
             background: var(--bg-3);
             border: 1px solid var(--border-2);
             align-items: center; justify-content: center;
             cursor: pointer;
             color: var(--text-2);
-            font-size: 13px;
+            font-size: 12px;
             flex-shrink: 0;
+            transition: all 0.15s;
         }
+        #menuBtn:hover { background: var(--bg-4); color: var(--text-1); }
 
         @media (max-width: 1024px) {
-            /* App container: full height dinamis, handle iOS keyboard */
+            /* App: full dynamic height */
             #app {
                 height: 100dvh;
                 height: -webkit-fill-available;
                 overflow: hidden;
             }
 
-            /* Hamburger: tampil di mobile, INLINE di dalam header */
+            /* Hamburger: tampil inline di header */
             #menuBtn { display: flex !important; }
 
-            /* Header: padding iOS notch, layout rapi */
+            /* Header: compact, rapi, safe area iOS */
             #chat-header {
-                padding: max(12px, env(safe-area-inset-top, 12px)) 12px 12px !important;
+                padding: 12px 12px 12px 12px !important;
+                padding-top: max(12px, env(safe-area-inset-top, 12px)) !important;
+                min-height: unset !important;
                 gap: 8px;
-                align-items: center;
-                min-height: unset;
             }
 
-            /* Kiri header: hamburger + avatar + info */
-            #chat-header > div:first-child {
-                flex: 1;
-                min-width: 0;
-                gap: 8px !important;
-            }
-
-            /* Nama advokat: truncate */
-            #adv-name {
-                font-size: 13px !important;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 120px;
-                display: block;
-            }
-
-            /* Spesialisasi: sembunyikan di layar kecil */
-            #adv-spec { display: none !important; }
-
-            /* Tombol kanan: compact, sembunyikan yg tidak penting */
-            #chat-header > div:last-child { gap: 4px !important; flex-shrink: 0; }
+            /* Tombol kanan: compact di mobile */
             #sound-toggle { display: none !important; }
-            .header-btn { width: 30px !important; height: 30px !important; font-size: 11px !important; }
+            .header-btn {
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 11px !important;
+                border-radius: 8px !important;
+            }
 
-            /* Chat box: flex 1, scrollable */
+            /* Chat box scrollable */
             #chat-box {
                 flex: 1;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
-                padding: 14px 14px !important;
+                padding: 14px !important;
             }
 
-            /* Input wrap: sticky bawah + iOS home indicator */
+            /* Input: safe area bawah */
             #input-wrap {
                 flex-shrink: 0;
-                padding: 10px 14px !important;
+                padding: 10px 12px !important;
                 padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
             }
 
             /* Upgrade wall: tidak kepotong */
-            #upgrade-wall {
-                flex-shrink: 0;
-                margin: 8px 12px !important;
-            }
+            #upgrade-wall { flex-shrink: 0; margin: 6px 10px !important; }
 
-            /* Quick reply: scrollable horizontal */
-            #quick-reply-bar { padding: 8px 12px !important; }
-
-            /* Inbox header: notch safe area */
+            /* Inbox safe area */
             .inbox-header {
                 padding-top: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) !important;
             }
-
-            /* Inbox panel full screen */
             #inbox-panel { height: 100dvh !important; }
-        }
-
-        /* iOS notch: body safe area */
-        @supports (padding: env(safe-area-inset-top)) {
-            @media (max-width: 1024px) {
-                body { padding-top: env(safe-area-inset-top, 0px); }
-                #chat-header { padding-top: 12px !important; }
-            }
         }
     </style>
 </head>
@@ -439,34 +409,38 @@
 
         <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
             <div id="chat-header">
-                <div style="display:flex;align-items:center;gap:12px">
+                <!-- Kiri: hamburger + back + avatar + info -->
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
                     <button id="menuBtn" onclick="toggleSidebar()" aria-label="Buka menu">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <button id="back-btn" onclick="backToInbox()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center">
+                    <button id="back-btn" onclick="backToInbox()"
+                        style="display:none;width:28px;height:28px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:11px;align-items:center;justify-content:center;flex-shrink:0;">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <div class="adv-avatar-wrap">
-                        <img id="adv-img" src="" onerror="this.src=avatarFallback(advName||'A')" style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border-2)">
+                    <div class="adv-avatar-wrap" style="flex-shrink:0;">
+                        <img id="adv-img" src="" onerror="this.src=avatarFallback(advName||'A')"
+                            style="width:34px;height:34px;border-radius:10px;object-fit:cover;border:1.5px solid var(--border-2);">
                         <div id="online-dot" class="online-badge"></div>
                     </div>
-                    <div>
-                        <div style="display:flex;align-items:center;gap:7px">
-                            <span id="adv-name" style="font-size:15px;font-weight:800;font-style:italic;letter-spacing:-0.2px">Memuat...</span>
-                            <span id="premium-marker" style="display:none" class="pro-badge">💎 PRO</span>
+                    <div style="min-width:0;flex:1;">
+                        <div style="display:flex;align-items:center;gap:5px;">
+                            <span id="adv-name"
+                                style="font-size:13px;font-weight:800;font-style:italic;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:block;">Memuat...</span>
+                            <span id="premium-marker" style="display:none;" class="pro-badge">💎 PRO</span>
                         </div>
-                        <div style="display:flex;align-items:center;gap:6px;margin-top:1px">
-                            <span id="adv-spec" style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em"></span>
-                            <span id="adv-status-text" style="font-size:10px;font-weight:600;color:var(--text-3)">• offline</span>
-                            <span id="adv-typing" style="display:none;font-size:10px;font-weight:600;color:var(--emerald)">• mengetik...</span>
+                        <div style="display:flex;align-items:center;gap:4px;margin-top:1px;">
+                            <span id="adv-status-text" style="font-size:10px;font-weight:600;color:var(--text-3);">• offline</span>
+                            <span id="adv-typing" style="display:none;font-size:10px;font-weight:600;color:var(--emerald);">• mengetik...</span>
                         </div>
                     </div>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <button class="header-btn" onclick="openRatingModal()" title="Beri Rating" id="rating-btn" style="color:#F59E0B"><i class="fas fa-star"></i></button>
+                <!-- Kanan: action buttons -->
+                <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                    <button class="header-btn" onclick="openRatingModal()" title="Beri Rating" id="rating-btn" style="color:#F59E0B;"><i class="fas fa-star"></i></button>
                     <button class="header-btn" onclick="openContactModal()" title="Info Kontak"><i class="fas fa-address-card"></i></button>
                     <button id="sound-toggle" class="header-btn" onclick="toggleSound()" title="Notifikasi Suara"><i class="fas fa-volume-high"></i></button>
-                    <button class="header-btn" onclick="clearChatConfirm()" title="Hapus Riwayat" style="color:var(--text-3)"><i class="fas fa-trash-alt"></i></button>
+                    <button class="header-btn" onclick="clearChatConfirm()" title="Hapus Riwayat" style="color:var(--text-3);"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
 
