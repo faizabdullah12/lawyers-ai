@@ -246,16 +246,23 @@
     };
 
     // ── LOGOUT ──
+    // FIX: Pakai window.doLogout dari config.js agar tema/preferensi tidak ikut terhapus
     window.handleLogout = function() {
-        const doLogout = async () => {
-            try {
-                await window.supabase.auth.signOut();
-                localStorage.clear();
-                window.location.href = 'login.html';
-            } catch(e) {
-                window.showLALToast('error', 'Gagal Logout', 'Coba lagi.');
-            }
-        };
+        const execLogout = typeof window.doLogout === 'function'
+            ? window.doLogout
+            : async () => {
+                try {
+                    await window.supabase.auth.signOut();
+                    // FIX: Hapus hanya auth keys, bukan tema/preferensi
+                    const keysToKeep = ['lawyers_ai_theme', 'lai_read_notifs'];
+                    Object.keys(localStorage).forEach(k => {
+                        if (!keysToKeep.includes(k)) localStorage.removeItem(k);
+                    });
+                    window.location.href = 'login.html';
+                } catch(e) {
+                    window.showLALToast('error', 'Gagal Logout', 'Coba lagi.');
+                }
+            };
         if (typeof laiConfirm === 'function') {
             laiConfirm({
                 title: 'Keluar dari Lawyers AI?',
@@ -263,9 +270,9 @@
                 confirmText: 'Ya, Keluar',
                 cancelText: 'Batal',
                 type: 'logout',
-            }).then(confirmed => { if (confirmed) doLogout(); });
+            }).then(confirmed => { if (confirmed) execLogout(); });
         } else {
-            if (confirm('Yakin ingin keluar?')) doLogout();
+            if (confirm('Yakin ingin keluar?')) execLogout();
         }
     };
 
@@ -273,6 +280,48 @@
     (function applyThemeEarly() {
         const theme = localStorage.getItem('lawyers_ai_theme') || 'dark';
         if (theme === 'light') document.documentElement.classList.add('light-pending');
+    })();
+
+    // ── INJECT SIDEBAR-SPECIFIC MOBILE FIXES ──
+    (function injectSidebarMobileCss() {
+        const id = 'lai-sidebar-mobile-css';
+        if (document.getElementById(id)) return;
+        const style = document.createElement('style');
+        style.id = id;
+        style.textContent = `
+            /* FIX: iOS safe area untuk sidebar bawah */
+            @supports (padding: env(safe-area-inset-bottom)) {
+                #sidebar {
+                    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+                }
+                #sidebar .sidebar-profile {
+                    margin-bottom: max(20px, env(safe-area-inset-bottom));
+                }
+            }
+            /* FIX: menuBtn tidak boleh overlap konten heading */
+            @media (max-width: 1023px) {
+                #menuBtn {
+                    position: fixed !important;
+                    top: max(16px, env(safe-area-inset-top, 16px)) !important;
+                    left: 16px !important;
+                    z-index: 310 !important;
+                }
+            }
+            /* FIX: Touch target — hanya button/a interaktif, bukan badge/dot */
+            button:not(.lal-toast-close):not(#lai-confirm):not(#lai-cancel):not(.lai-modal-btn),
+            a.nav-link,
+            a.btn-primary,
+            a.btn-ghost {
+                min-height: 44px !important;
+            }
+            /* FIX: notif panel z-index lebih tinggi dari overlay */
+            #notifPanel { z-index: 320 !important; }
+            /* FIX: overlay z-index konsisten */
+            #overlay { z-index: 299 !important; }
+            #sidebar { z-index: 300 !important; }
+            #menuBtn { z-index: 310 !important; }
+        `;
+        document.head.appendChild(style);
     })();
 
     // ── BOOT ──
