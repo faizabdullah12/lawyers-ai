@@ -44,12 +44,8 @@
             #sidebar.open { transform: translateX(0); }
         }
         @media (max-width: 768px) {
-            #inbox-panel { width: 100%; position: absolute; z-index: 50; height: 100%; top: 0; left: 0; }
+            #inbox-panel { width: 100%; position: absolute; z-index: 10; height: 100%; }
             #inbox-panel.hidden-mobile { display: none; }
-        }
-        /* chat-panel tidak boleh overlap inbox */
-        @media (max-width: 1024px) {
-            #chat-panel { position: relative; z-index: 10; }
         }
 
         .logo { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -253,77 +249,7 @@
 
         @keyframes notifPop { 0%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
         .notif-pop { animation: notifPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
-
-        /* ══ MOBILE & iOS FIX ══ */
-        /* inbox-panel: absolute fullscreen di mobile, z-index tinggi */
-        @media (max-width: 1024px) {
-            #inbox-panel {
-                width: 100%;
-                position: absolute;
-                top: 0; left: 0;
-                z-index: 50;
-                height: 100dvh;
-                height: -webkit-fill-available;
-            }
-            #inbox-panel.hidden-mobile { display: none !important; }
-            #chat-panel { position: relative; z-index: 10; }
-            #app { height: 100dvh; height: -webkit-fill-available; overflow: hidden; }
-        }
-
-        /* Hamburger button */
-        #menuBtn {
-            display: none;
-            width: 30px; height: 30px;
-            border-radius: 8px;
-            background: var(--bg-3);
-            border: 1px solid var(--border-2);
-            align-items: center; justify-content: center;
-            cursor: pointer; color: var(--text-2);
-            font-size: 12px; flex-shrink: 0;
-            transition: all 0.15s;
-        }
-        #menuBtn:hover { background: var(--bg-4); color: var(--text-1); }
-
-        @media (max-width: 1024px) {
-            /* Tampilkan hamburger inline di header */
-            #menuBtn { display: flex !important; }
-
-            /* Header compact + iOS notch safe area */
-            #chat-header {
-                padding: 12px !important;
-                padding-top: max(12px, env(safe-area-inset-top, 12px)) !important;
-                min-height: unset !important;
-                gap: 8px;
-            }
-            /* Nama advokat: truncate dengan ellipsis */
-            #adv-name {
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                max-width: 130px !important;
-                display: block !important;
-                font-size: 13px !important;
-            }
-            /* Tombol kanan: compact, sound disembunyikan */
-            #sound-toggle { display: none !important; }
-            .header-btn { width: 28px !important; height: 28px !important; font-size: 11px !important; border-radius: 8px !important; }
-
-            /* Chat area scrollable */
-            #chat-box { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px !important; }
-
-            /* Input bar + iOS home indicator */
-            #input-wrap {
-                flex-shrink: 0;
-                padding: 10px 12px !important;
-                padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
-            }
-            #upgrade-wall { flex-shrink: 0; margin: 6px 10px !important; }
-
-            /* Inbox header safe area */
-            .inbox-header {
-                padding-top: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) !important;
-            }
-        }
+    </style>
 </head>
 <body>
 
@@ -412,34 +338,31 @@
 
         <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
             <div id="chat-header">
-                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
-                    <button id="menuBtn" onclick="toggleSidebar()" aria-label="Buka menu">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <button id="back-btn" onclick="backToInbox()" style="display:none;width:28px;height:28px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:11px;align-items:center;justify-content:center;flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <button id="back-btn" onclick="backToInbox()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <div class="adv-avatar-wrap" style="flex-shrink:0;">
-                        <img id="adv-img" src="" onerror="this.src=avatarFallback(advName||'A')" style="width:34px;height:34px;border-radius:10px;object-fit:cover;border:1.5px solid var(--border-2);">
+                    <div class="adv-avatar-wrap">
+                        <img id="adv-img" src="" onerror="this.src=avatarFallback(advName||'A')" style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border-2)">
                         <div id="online-dot" class="online-badge"></div>
                     </div>
-                    <div style="min-width:0;flex:1;">
-                        <div style="display:flex;align-items:center;gap:5px;">
-                            <span id="adv-name" style="font-size:13px;font-weight:800;font-style:italic;letter-spacing:-0.2px;">Memuat...</span>
-                            <span id="premium-marker" style="display:none;" class="pro-badge">💎 PRO</span>
+                    <div>
+                        <div style="display:flex;align-items:center;gap:7px">
+                            <span id="adv-name" style="font-size:15px;font-weight:800;font-style:italic;letter-spacing:-0.2px">Memuat...</span>
+                            <span id="premium-marker" style="display:none" class="pro-badge">💎 PRO</span>
                         </div>
-                        <div style="display:flex;align-items:center;gap:4px;margin-top:1px;">
-                            <span id="adv-spec" style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;"></span>
-                            <span id="adv-status-text" style="font-size:10px;font-weight:600;color:var(--text-3);">• offline</span>
-                            <span id="adv-typing" style="display:none;font-size:10px;font-weight:600;color:var(--emerald);">• mengetik...</span>
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:1px">
+                            <span id="adv-spec" style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em"></span>
+                            <span id="adv-status-text" style="font-size:10px;font-weight:600;color:var(--text-3)">• offline</span>
+                            <span id="adv-typing" style="display:none;font-size:10px;font-weight:600;color:var(--emerald)">• mengetik...</span>
                         </div>
                     </div>
                 </div>
-                <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
-                    <button class="header-btn" onclick="openRatingModal()" title="Beri Rating" id="rating-btn" style="color:#F59E0B;"><i class="fas fa-star"></i></button>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <button class="header-btn" onclick="openRatingModal()" title="Beri Rating" id="rating-btn" style="color:#F59E0B"><i class="fas fa-star"></i></button>
                     <button class="header-btn" onclick="openContactModal()" title="Info Kontak"><i class="fas fa-address-card"></i></button>
                     <button id="sound-toggle" class="header-btn" onclick="toggleSound()" title="Notifikasi Suara"><i class="fas fa-volume-high"></i></button>
-                    <button class="header-btn" onclick="clearChatConfirm()" title="Hapus Riwayat" style="color:var(--text-3);"><i class="fas fa-trash-alt"></i></button>
+                    <button class="header-btn" onclick="clearChatConfirm()" title="Hapus Riwayat" style="color:var(--text-3)"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
 
@@ -708,7 +631,7 @@ window.onload = async () => {
     }
 
     if (window.innerWidth <= 1024) document.getElementById('menu-toggle').style.display = 'flex';
-    // back-btn jangan ditampilkan saat load — hanya tampil saat masuk room chat
+    if (window.innerWidth <= 768) document.getElementById('back-btn').style.display = 'flex';
 
     await loadInbox();
     document.getElementById('load-overlay').style.display = 'none';
@@ -716,7 +639,7 @@ window.onload = async () => {
     if (receiverId) {
         showChatView();
         await loadChatMode();
-        if (window.innerWidth <= 1024) hideMobileInbox();
+        if (window.innerWidth <= 768) hideMobileInbox();
     }
 };
 
@@ -826,19 +749,11 @@ async function openConv(pid, name) {
     renderConvList(allConvs);
     showChatView();
     await loadChatMode();
-    if (window.innerWidth <= 1024) hideMobileInbox();
+    if (window.innerWidth <= 768) hideMobileInbox();
 }
 
-function hideMobileInbox() {
-    document.getElementById('inbox-panel').classList.add('hidden-mobile');
-    const backBtn = document.getElementById('back-btn');
-    if (backBtn && window.innerWidth <= 1024) backBtn.style.display = 'flex';
-}
-function showMobileInbox() {
-    document.getElementById('inbox-panel').classList.remove('hidden-mobile');
-    const backBtn = document.getElementById('back-btn');
-    if (backBtn) backBtn.style.display = 'none';
-}
+function hideMobileInbox() { document.getElementById('inbox-panel').classList.add('hidden-mobile'); }
+function showMobileInbox() { document.getElementById('inbox-panel').classList.remove('hidden-mobile'); }
 function backToInbox() { showMobileInbox(); }
 
 function showChatView() {
@@ -1163,7 +1078,6 @@ function copyWA() {
 }
 
 function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('show'); }
-function toggleSidebar() { const s=document.getElementById('sidebar'),o=document.getElementById('sidebar-overlay'); s.classList.toggle('open'); o.classList.toggle('show'); }
 function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('show'); }
 
 // ═══════════════════════════════ TOAST ═══════════════════════════════
@@ -1291,4 +1205,4 @@ async function submitRating() {
 
 <script src="shared-modal.js"></script>
 </body>
-</html>
+</html> 
