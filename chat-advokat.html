@@ -44,7 +44,7 @@
             #sidebar.open { transform: translateX(0); }
         }
         @media (max-width: 768px) {
-            #inbox-panel { width: 100%; position: absolute; z-index: 10; height: 100%; }
+            #inbox-panel { width: 100%; position: absolute; z-index: 50; height: 100%; top: 0; left: 0; }
             #inbox-panel.hidden-mobile { display: none; }
         }
 
@@ -318,7 +318,10 @@
             .inbox-header {
                 padding-top: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) !important;
             }
-            #inbox-panel { height: 100dvh !important; }
+            #inbox-panel {
+                height: 100dvh !important;
+                height: -webkit-fill-available !important;
+            }
         }
     </style>
 </head>
@@ -827,11 +830,22 @@ async function openConv(pid, name) {
     renderConvList(allConvs);
     showChatView();
     await loadChatMode();
-    if (window.innerWidth <= 768) hideMobileInbox();
+    // Fix: gunakan 1024px sesuai breakpoint CSS inbox-panel absolute
+    if (window.innerWidth <= 1024) hideMobileInbox();
 }
 
-function hideMobileInbox() { document.getElementById('inbox-panel').classList.add('hidden-mobile'); }
-function showMobileInbox() { document.getElementById('inbox-panel').classList.remove('hidden-mobile'); }
+function hideMobileInbox() {
+    document.getElementById('inbox-panel').classList.add('hidden-mobile');
+    // Tampilkan back button di mobile
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) backBtn.style.display = 'flex';
+}
+function showMobileInbox() {
+    document.getElementById('inbox-panel').classList.remove('hidden-mobile');
+    // Sembunyikan back button saat di inbox
+    const backBtn = document.getElementById('back-btn');
+    if (backBtn) backBtn.style.display = 'none';
+}
 function backToInbox() { showMobileInbox(); }
 
 function showChatView() {
