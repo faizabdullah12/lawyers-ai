@@ -250,64 +250,104 @@
         @keyframes notifPop { 0%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
         .notif-pop { animation: notifPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
 
-        /* ── MOBILE & iOS HEADER FIX ── */
+        /* ── MOBILE & iOS — FULL FIX ── */
+
+        /* Hamburger: tersembunyi di desktop */
+        #menuBtn {
+            display: none;
+            width: 32px; height: 32px;
+            border-radius: 9px;
+            background: var(--bg-3);
+            border: 1px solid var(--border-2);
+            align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-2);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
         @media (max-width: 1024px) {
+            /* App container: full height dinamis, handle iOS keyboard */
             #app {
                 height: 100dvh;
                 height: -webkit-fill-available;
-            }
-
-            /* Header: padding untuk iOS notch + ruang hamburger kiri */
-            #chat-header {
-                padding-top: max(14px, env(safe-area-inset-top, 14px)) !important;
-                padding-left: 56px !important;
-                padding-right: 12px !important;
-                flex-wrap: nowrap;
-                min-height: 64px;
-                gap: 8px;
-                position: relative;
-            }
-
-            /* Info advokat: flex shrink agar tidak dorong tombol */
-            #chat-header > div:first-child {
-                flex: 1;
-                min-width: 0;
                 overflow: hidden;
             }
 
-            /* Nama advokat: truncate kalau terlalu panjang */
+            /* Hamburger: tampil di mobile, INLINE di dalam header */
+            #menuBtn { display: flex !important; }
+
+            /* Header: padding iOS notch, layout rapi */
+            #chat-header {
+                padding: max(12px, env(safe-area-inset-top, 12px)) 12px 12px !important;
+                gap: 8px;
+                align-items: center;
+                min-height: unset;
+            }
+
+            /* Kiri header: hamburger + avatar + info */
+            #chat-header > div:first-child {
+                flex: 1;
+                min-width: 0;
+                gap: 8px !important;
+            }
+
+            /* Nama advokat: truncate */
             #adv-name {
                 font-size: 13px !important;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                max-width: 150px;
+                max-width: 120px;
                 display: block;
             }
 
-            /* Sembunyikan sound toggle di mobile — biar tidak desak-desakan */
+            /* Spesialisasi: sembunyikan di layar kecil */
+            #adv-spec { display: none !important; }
+
+            /* Tombol kanan: compact, sembunyikan yg tidak penting */
+            #chat-header > div:last-child { gap: 4px !important; flex-shrink: 0; }
             #sound-toggle { display: none !important; }
+            .header-btn { width: 30px !important; height: 30px !important; font-size: 11px !important; }
 
-            /* Tombol kanan: compact */
-            #chat-header > div:last-child {
-                flex-shrink: 0;
-                gap: 4px !important;
+            /* Chat box: flex 1, scrollable */
+            #chat-box {
+                flex: 1;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                padding: 14px 14px !important;
             }
 
-            .header-btn {
-                width: 30px !important;
-                height: 30px !important;
-                font-size: 11px !important;
-            }
-
-            /* Input area: safe area bawah iOS home indicator */
+            /* Input wrap: sticky bawah + iOS home indicator */
             #input-wrap {
-                padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+                flex-shrink: 0;
+                padding: 10px 14px !important;
+                padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
             }
 
-            /* Inbox header: safe area atas */
+            /* Upgrade wall: tidak kepotong */
+            #upgrade-wall {
+                flex-shrink: 0;
+                margin: 8px 12px !important;
+            }
+
+            /* Quick reply: scrollable horizontal */
+            #quick-reply-bar { padding: 8px 12px !important; }
+
+            /* Inbox header: notch safe area */
             .inbox-header {
-                padding-top: max(18px, calc(env(safe-area-inset-top, 0px) + 56px)) !important;
+                padding-top: max(16px, calc(env(safe-area-inset-top, 0px) + 12px)) !important;
+            }
+
+            /* Inbox panel full screen */
+            #inbox-panel { height: 100dvh !important; }
+        }
+
+        /* iOS notch: body safe area */
+        @supports (padding: env(safe-area-inset-top)) {
+            @media (max-width: 1024px) {
+                body { padding-top: env(safe-area-inset-top, 0px); }
+                #chat-header { padding-top: 12px !important; }
             }
         }
     </style>
@@ -320,11 +360,6 @@
     <span style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3)">Memuat...</span>
 </div>
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
-
-<!-- Hamburger mobile -->
-<button id="menuBtn" onclick="toggleSidebar()" aria-label="Buka menu">
-    <i class="fas fa-bars"></i>
-</button>
 
 <div id="app">
 
@@ -405,6 +440,9 @@
         <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
             <div id="chat-header">
                 <div style="display:flex;align-items:center;gap:12px">
+                    <button id="menuBtn" onclick="toggleSidebar()" aria-label="Buka menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <button id="back-btn" onclick="backToInbox()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center">
                         <i class="fas fa-arrow-left"></i>
                     </button>
