@@ -2,7 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Chat Konsultasi — Lawyers AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -247,6 +249,67 @@
 
         @keyframes notifPop { 0%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
         .notif-pop { animation: notifPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+
+        /* ── MOBILE & iOS HEADER FIX ── */
+        @media (max-width: 1024px) {
+            #app {
+                height: 100dvh;
+                height: -webkit-fill-available;
+            }
+
+            /* Header: padding untuk iOS notch + ruang hamburger kiri */
+            #chat-header {
+                padding-top: max(14px, env(safe-area-inset-top, 14px)) !important;
+                padding-left: 56px !important;
+                padding-right: 12px !important;
+                flex-wrap: nowrap;
+                min-height: 64px;
+                gap: 8px;
+                position: relative;
+            }
+
+            /* Info advokat: flex shrink agar tidak dorong tombol */
+            #chat-header > div:first-child {
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+            }
+
+            /* Nama advokat: truncate kalau terlalu panjang */
+            #adv-name {
+                font-size: 13px !important;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 150px;
+                display: block;
+            }
+
+            /* Sembunyikan sound toggle di mobile — biar tidak desak-desakan */
+            #sound-toggle { display: none !important; }
+
+            /* Tombol kanan: compact */
+            #chat-header > div:last-child {
+                flex-shrink: 0;
+                gap: 4px !important;
+            }
+
+            .header-btn {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 11px !important;
+            }
+
+            /* Input area: safe area bawah iOS home indicator */
+            #input-wrap {
+                padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+            }
+
+            /* Inbox header: safe area atas */
+            .inbox-header {
+                padding-top: max(18px, calc(env(safe-area-inset-top, 0px) + 56px)) !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -257,6 +320,11 @@
     <span style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3)">Memuat...</span>
 </div>
 <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- Hamburger mobile -->
+<button id="menuBtn" onclick="toggleSidebar()" aria-label="Buka menu">
+    <i class="fas fa-bars"></i>
+</button>
 
 <div id="app">
 
@@ -1076,6 +1144,7 @@ function copyWA() {
 }
 
 function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').classList.add('show'); }
+function toggleSidebar() { const s = document.getElementById('sidebar'); const o = document.getElementById('sidebar-overlay'); s.classList.toggle('open'); o.classList.toggle('show'); }
 function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').classList.remove('show'); }
 
 // ═══════════════════════════════ TOAST ═══════════════════════════════
