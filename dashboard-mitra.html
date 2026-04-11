@@ -2,7 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Advokat Dashboard — Lawyers AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -28,6 +30,14 @@
             flex-direction: column;
             overflow: hidden;
             min-width: 0;
+        }
+
+        /* On mobile shared.css adds a top navbar ~56px */
+        @media (max-width: 1023px) {
+            #adv-app {
+                /* Account for shared mobile topnav */
+                padding-top: 56px;
+            }
         }
 
         /* ── Top bar ── */
@@ -687,11 +697,105 @@
             flex-shrink: 0;
         }
 
-        /* Mobile responsive */
+        /* ══ MOBILE RESPONSIVE ══ */
         @media (max-width: 768px) {
-            #conv-sidebar { width: 100%; position: absolute; height: 100%; z-index: 10; }
-            #conv-sidebar.mobile-hidden { display: none; }
+            /* Topbar compact */
+            #topbar {
+                padding: 0 14px;
+                height: 52px;
+                gap: 8px;
+            }
+            .topbar-tabs { gap: 2px; }
+            .tab-btn {
+                padding: 6px 10px;
+                font-size: 10px;
+                gap: 5px;
+            }
             .topbar-tabs .tab-btn span.label { display: none; }
+
+            /* Inbox: conv-sidebar slides over chat on mobile */
+            #panel-inbox { position: relative; overflow: hidden; }
+            #conv-sidebar {
+                width: 100%;
+                position: absolute;
+                inset: 0;
+                height: 100%;
+                z-index: 10;
+                transition: transform 0.28s cubic-bezier(0.16,1,0.3,1);
+                transform: translateX(0);
+            }
+            #conv-sidebar.mobile-hidden {
+                transform: translateX(-100%);
+                pointer-events: none;
+            }
+
+            /* Chat area fills full width on mobile */
+            #chat-area {
+                width: 100%;
+            }
+            #chat-view {
+                width: 100%;
+            }
+
+            /* Back button visible on mobile */
+            #back-btn {
+                display: flex !important;
+            }
+
+            /* Chat header on mobile */
+            #chat-top {
+                padding: 10px 14px;
+            }
+
+            /* Chat box padding */
+            #chat-box {
+                padding: 14px 12px;
+            }
+
+            /* Input wrap safe area */
+            #chat-input-wrap {
+                padding: 10px 12px;
+                padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            }
+
+            /* Message textarea iOS fix */
+            #msg-textarea {
+                font-size: max(16px, 13px); /* prevent iOS zoom */
+                min-width: 0;
+            }
+
+            /* Bubble max width mobile */
+            .msg-bubble-wrap { max-width: 84%; }
+
+            /* Profil inner padding */
+            .profil-inner {
+                padding: 20px 14px 80px;
+            }
+            .profil-banner {
+                height: 120px;
+                margin-bottom: 60px;
+            }
+            .form-grid { grid-template-columns: 1fr; }
+
+            /* Conv list items bigger touch target */
+            .conv-item { padding: 14px 14px; min-height: 64px; }
+
+            /* Hide verbose labels on small screen */
+            #rt-status { display: none; }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 380px) {
+            #topbar { padding: 0 10px; }
+            .tab-btn { padding: 6px 8px; }
+            #chat-box { padding: 12px 10px; }
+        }
+
+        /* iOS safe area for bottom elements */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            #chat-input-wrap {
+                padding-bottom: calc(14px + env(safe-area-inset-bottom));
+            }
         }
     </style>
 </head>
