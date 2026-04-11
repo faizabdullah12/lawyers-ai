@@ -32,14 +32,6 @@
             min-width: 0;
         }
 
-        /* On mobile shared.css adds a top navbar ~56px */
-        @media (max-width: 1023px) {
-            #adv-app {
-                /* Account for shared mobile topnav */
-                padding-top: 56px;
-            }
-        }
-
         /* ── Top bar ── */
         #topbar {
             display: flex;
@@ -223,6 +215,27 @@
             flex-direction: column;
             overflow: hidden;
             background: var(--bg-base);
+            min-width: 0;
+        }
+
+        /* Chat-view: ALWAYS flex column when visible */
+        #chat-view {
+            flex-direction: column !important;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* chat-box: takes remaining space, scrollable */
+        #chat-box {
+            flex: 1 !important;
+            overflow-y: auto !important;
+            min-height: 0 !important;
+        }
+
+        /* input wrap: never shrinks, always at bottom */
+        #chat-input-wrap {
+            flex-shrink: 0 !important;
         }
 
         /* Chat header */
@@ -697,31 +710,33 @@
             flex-shrink: 0;
         }
 
-        /* ══ MOBILE RESPONSIVE ══ */
+        /* ══ MOBILE FIXES ══ */
         @media (max-width: 768px) {
-            /* Topbar compact */
+
+            /* 1. Topbar — kompak, tidak overflow */
             #topbar {
-                padding: 0 14px;
-                height: 52px;
+                padding: 0 12px;
+                height: 50px;
                 gap: 8px;
             }
-            .topbar-tabs { gap: 2px; }
-            .tab-btn {
-                padding: 6px 10px;
-                font-size: 10px;
-                gap: 5px;
-            }
             .topbar-tabs .tab-btn span.label { display: none; }
+            .tab-btn { padding: 6px 10px; }
+            #rt-status { display: none; }
 
-            /* Inbox: conv-sidebar slides over chat on mobile */
-            #panel-inbox { position: relative; overflow: hidden; }
+            /* 2. Panel inbox — relative container untuk absolute child */
+            #panel-inbox {
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* 3. Conv sidebar — slide dari kiri, full layar */
             #conv-sidebar {
-                width: 100%;
                 position: absolute;
                 inset: 0;
+                width: 100%;
                 height: 100%;
-                z-index: 10;
-                transition: transform 0.28s cubic-bezier(0.16,1,0.3,1);
+                z-index: 20;
+                transition: transform 0.26s cubic-bezier(0.4,0,0.2,1);
                 transform: translateX(0);
             }
             #conv-sidebar.mobile-hidden {
@@ -729,73 +744,61 @@
                 pointer-events: none;
             }
 
-            /* Chat area fills full width on mobile */
+            /* 4. Chat area — isi sisa ruang, tidak overflow horizontal */
             #chat-area {
                 width: 100%;
+                min-width: 0;
+                overflow: hidden;
             }
+
+            /* 5. Chat view — flex column, input bar selalu di bawah */
             #chat-view {
-                width: 100%;
-            }
-
-            /* Back button visible on mobile */
-            #back-btn {
                 display: flex !important;
+                flex-direction: column;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
             }
 
-            /* Chat header on mobile */
-            #chat-top {
-                padding: 10px 14px;
-            }
-
-            /* Chat box padding */
+            /* 6. Chat box — flex: 1 agar ambil sisa ruang, input tidak kepotong */
             #chat-box {
+                flex: 1;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
                 padding: 14px 12px;
+                min-height: 0;
             }
 
-            /* Input wrap safe area */
+            /* 7. Input wrap — SELALU di bawah, tidak pernah hilang */
             #chat-input-wrap {
+                flex-shrink: 0;
                 padding: 10px 12px;
                 padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+                background: var(--bg-sidebar);
+                border-top: 1px solid var(--border);
             }
 
-            /* Message textarea iOS fix */
+            /* 8. Textarea — cegah iOS zoom saat focus */
             #msg-textarea {
-                font-size: max(16px, 13px); /* prevent iOS zoom */
-                min-width: 0;
+                font-size: 16px; /* iOS auto-zoom terjadi jika < 16px */
             }
 
-            /* Bubble max width mobile */
-            .msg-bubble-wrap { max-width: 84%; }
+            /* 9. Bubble — lebih lebar di mobile */
+            .msg-bubble-wrap { max-width: 85%; }
 
-            /* Profil inner padding */
-            .profil-inner {
-                padding: 20px 14px 80px;
-            }
-            .profil-banner {
-                height: 120px;
-                margin-bottom: 60px;
-            }
-            .form-grid { grid-template-columns: 1fr; }
+            /* 10. Tombol back — tampilkan di mobile */
+            #back-btn { display: flex !important; }
 
-            /* Conv list items bigger touch target */
-            .conv-item { padding: 14px 14px; min-height: 64px; }
+            /* 11. Chat header — padding compact */
+            #chat-top { padding: 10px 14px; }
 
-            /* Hide verbose labels on small screen */
-            #rt-status { display: none; }
+            /* 12. Typing indicator positioning */
+            #typing-indicator-row { padding: 0 12px 10px; }
         }
 
-        /* Extra small screens */
-        @media (max-width: 380px) {
-            #topbar { padding: 0 10px; }
-            .tab-btn { padding: 6px 8px; }
-            #chat-box { padding: 12px 10px; }
-        }
-
-        /* iOS safe area for bottom elements */
-        @supports (padding-bottom: env(safe-area-inset-bottom)) {
-            #chat-input-wrap {
-                padding-bottom: calc(14px + env(safe-area-inset-bottom));
-            }
+        @media (max-width: 400px) {
+            #chat-box { padding: 10px 8px; }
+            .tab-btn { padding: 5px 8px; font-size: 10px; }
         }
     </style>
 </head>
@@ -929,12 +932,12 @@
             </div>
 
             <!-- Chat view (hidden until conv selected) -->
-            <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+            <div id="chat-view" style="flex-direction:column;flex:1;overflow:hidden;display:none;">
 
                 <!-- Chat header -->
                 <div id="chat-top">
                     <div style="display:flex;align-items:center;gap:11px;">
-                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;">
+                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;flex-shrink:0;">
                             <i class="fas fa-chevron-left"></i>
                         </button>
                         <div class="online-ring" style="flex-shrink:0;">
