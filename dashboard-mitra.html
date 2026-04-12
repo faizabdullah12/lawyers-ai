@@ -17,11 +17,9 @@
            ADVOKAT DASHBOARD
         ══════════════════════════════════════════════ */
 
-        /* ── KUNCI LAYOUT: adv-app pakai position fixed
-           sehingga tidak bisa digeser oleh shared.css ── */
+        /* ── KUNCI LAYOUT: adv-app pakai position fixed ── */
         #adv-app {
             position: fixed !important;
-            /* Desktop: mulai setelah sidebar (260px) */
             left: var(--sidebar-w, 260px);
             right: 0;
             top: 0;
@@ -30,16 +28,14 @@
             flex-direction: column;
             overflow: hidden;
             background: var(--bg-base);
-            /* Override shared.css padding-top !important */
             padding-top: 0 !important;
         }
 
-        /* Mobile: sidebar disembunyikan, adv-app full width */
+        /* Mobile: full width, mulai dari top:0 */
         @media (max-width: 1023px) {
             #adv-app {
                 left: 0 !important;
-                /* Sisakan ruang untuk #menuBtn (fixed, top:16px, tinggi ~44px) */
-                top: 60px !important;
+                top: 0 !important;
                 padding-top: 0 !important;
             }
         }
@@ -49,19 +45,54 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 20px;
+            padding: 0 16px 0 16px;
             height: 52px;
             border-bottom: 1px solid var(--border);
             background: var(--bg-sidebar);
             flex-shrink: 0;
             gap: 12px;
-            /* Override shared.css padding !important rules */
             padding-top: 0 !important;
             padding-bottom: 0 !important;
         }
         body.light #topbar { background: #FFFFFF; }
 
+        /* Mobile: topbar jadi container 2-row:
+           row 1 (tinggi 60px): background area untuk menuBtn yang fixed
+           row 2 (tinggi 46px): tabs + bell — geser kanan agar tidak nabrak menuBtn */
+        @media (max-width: 1023px) {
+            #topbar {
+                height: auto !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 0 !important;
+                gap: 0 !important;
+                /* Kasih background sama supaya menuBtn area terlihat menyatu */
+                padding-top: 60px !important; /* ruang untuk menuBtn fixed */
+            }
+            .topbar-inner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 14px;
+                height: 46px;
+                border-top: 1px solid var(--border);
+                gap: 8px;
+            }
+            .topbar-tabs .tab-btn span.label { display: none; }
+            #rt-status { display: none; }
+            #back-btn { display: flex !important; }
+        }
+
         .topbar-tabs { display: flex; gap: 4px; }
+
+        /* Desktop: topbar-inner tidak ada efek, transparan */
+        .topbar-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex: 1;
+            gap: 12px;
+        }
         .tab-btn {
             display: flex;
             align-items: center;
@@ -408,6 +439,7 @@
 
     <!-- Top bar with tabs -->
     <div id="topbar">
+        <div class="topbar-inner">
         <div class="topbar-tabs">
             <button class="tab-btn active" onclick="switchTab('inbox', this)" id="tab-inbox">
                 <i class="fas fa-inbox"></i>
@@ -428,6 +460,7 @@
                 <i class="fas fa-bell"></i>
                 <span id="bell-badge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#EF4444;border-radius:50%;font-size:7px;font-weight:900;color:#fff;align-items:center;justify-content:center;border:2px solid var(--bg-sidebar);">0</span>
             </button>
+        </div>
         </div>
     </div>
 
