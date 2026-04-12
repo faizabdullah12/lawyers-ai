@@ -13,59 +13,69 @@
     <script src="shared-modal.js"></script>
 
     <style>
-        /* ══════════════════════════════════════════
-           BASE
-        ══════════════════════════════════════════ */
+        /* ══ RESET KRITIS — override shared.css ══ */
         * { box-sizing: border-box; }
 
-        html { height: 100%; }
+        html, body {
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
 
         body {
-            display: flex;
-            height: 100%;
-            margin: 0;
-            overflow: hidden;
+            display: flex !important;
+            overflow: hidden !important; /* sidebar tidak geser */
         }
 
-        /* ── MAIN SCROLL WRAPPER ── */
+        /*
+         * STRATEGI MOBILE:
+         *   .main-scroll = satu-satunya scroll container.
+         *   Semua konten (chat + panel) tersusun vertikal di dalamnya.
+         *   Pengguna scroll .main-scroll untuk lihat panel bawah.
+         *
+         * STRATEGI DESKTOP (≥1024px):
+         *   .main-scroll = overflow hidden.
+         *   Tiap kolom punya scroll sendiri.
+         */
+
         .main-scroll {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            height: 100%;
+            flex: 1 !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            /* MOBILE: main-scroll yang scroll */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            height: 100% !important;
         }
 
-        /* ══════════════════════════════════════════
-           MOBILE: seluruh halaman bisa scroll vertikal
-           DESKTOP (1024px+): layout fixed flex
-        ══════════════════════════════════════════ */
+        @media (min-width: 1024px) {
+            .main-scroll {
+                overflow: hidden !important; /* desktop: kolom scroll sendiri */
+            }
+        }
 
-        /* ── MOBILE layout ── */
+        /* ── WRAPPER ── */
         .konsultasi-wrap {
             display: flex;
             flex-direction: column;
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 68px 14px 24px;
+            padding: 68px 14px 40px;
             gap: 16px;
-            /* Mobile: bisa scroll penuh ke bawah */
-            overflow-y: auto;
-            overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
-            flex: 1;
+            /* TIDAK overflow hidden di mobile */
         }
 
-        /* ── DESKTOP layout: fixed height, tidak scroll ── */
         @media (min-width: 1024px) {
             .konsultasi-wrap {
-                padding: 36px 24px 0;
                 flex-direction: row;
+                padding: 36px 24px 0;
                 gap: 20px;
-                overflow: hidden; /* Desktop: overflow di dalam masing-masing kolom */
+                overflow: hidden;
                 min-height: 0;
+                flex: 1;
             }
         }
 
@@ -73,10 +83,8 @@
         .chat-col {
             display: flex;
             flex-direction: column;
-            gap: 0;
         }
 
-        /* Desktop: chat column mengisi tinggi dan punya scroll sendiri */
         @media (min-width: 1024px) {
             .chat-col {
                 flex: 1;
@@ -95,29 +103,21 @@
             scrollbar-color: var(--border) transparent;
             -webkit-overflow-scrolling: touch;
             scroll-behavior: smooth;
+            /* Mobile: dibatasi agar panel bawah terlihat */
+            max-height: 58vh;
+            min-height: 200px;
         }
 
-        /* Mobile: tinggi chat window tetap, tidak infinite */
-        @media (max-width: 1023px) {
-            .chat-window {
-                max-height: 55vh;
-                min-height: 240px;
-            }
-        }
-
-        /* Desktop: chat window mengisi sisa ruang */
         @media (min-width: 1024px) {
             .chat-window {
                 flex: 1;
                 min-height: 0;
+                max-height: none;
             }
         }
 
         .chat-window::-webkit-scrollbar { width: 4px; }
-        .chat-window::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 10px;
-        }
+        .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         /* ── CHAT HEADER ── */
         .chat-header {
@@ -142,10 +142,6 @@
             flex-shrink: 0;
             padding: 10px 0 4px;
             background: var(--bg);
-            /* Mobile: sticky di bawah chat window */
-            position: sticky;
-            bottom: 0;
-            z-index: 10;
         }
 
         .input-bar {
@@ -179,9 +175,7 @@
             font-size: max(16px, 13px);
         }
 
-        @media (min-width: 480px) {
-            .input-bar input { font-size: 13px; }
-        }
+        @media (min-width: 480px) { .input-bar input { font-size: 13px; } }
 
         .input-bar input::placeholder { color: var(--text-4); }
 
@@ -208,10 +202,7 @@
             overflow-wrap: anywhere;
         }
 
-        body.light .message-ai {
-            background: #FFFFFF;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
+        body.light .message-ai { background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
 
         .message-user {
             background: linear-gradient(135deg, #2563EB, #3B82F6);
@@ -232,9 +223,8 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            /* Mobile: panel muncul di bawah chat, full width */
             width: 100%;
-            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
         }
 
         @media (min-width: 1024px) {
@@ -254,10 +244,7 @@
             padding: 18px;
         }
 
-        body.light .panel-box {
-            background: #FFFFFF;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
+        body.light .panel-box { background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
 
         .panel-box-dark {
             background: #0F172A;
@@ -266,7 +253,6 @@
             padding: 18px;
         }
 
-        /* ── PASAL BOX ── */
         #pasal-box {
             max-height: 220px;
             overflow-y: auto;
@@ -275,46 +261,20 @@
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
 
-        /* ── TYPOGRAPHY HELPERS ── */
-        .ai-label {
-            font-size: 9px;
-            font-weight: 800;
-            color: var(--text-3);
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-        }
+        .ai-label { font-size: 9px; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.12em; }
+        .ai-title { font-size: 14px; font-weight: 900; font-style: italic; color: var(--text-1); }
+        .ai-body  { font-size: 13px; color: var(--text-2); line-height: 1.7; margin: 0; }
 
-        .ai-title {
-            font-size: 14px;
-            font-weight: 900;
-            font-style: italic;
-            color: var(--text-1);
-        }
-
-        .ai-body {
-            font-size: 13px;
-            color: var(--text-2);
-            line-height: 1.7;
-            margin: 0;
-        }
-
-        /* ── LOADING ANIMATION ── */
-        .loading-dots:after {
-            content: ' .';
-            animation: dots 1.5s steps(5, end) infinite;
-        }
+        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5,end) infinite; }
 
         @keyframes dots {
-            0%, 20% { color: rgba(0,0,0,0); }
-            40% { color: white; }
-            60% { text-shadow: .25em 0 0 white; }
-            80%, 100% { text-shadow: .25em 0 0 white, .5em 0 0 white; }
+            0%,20%{ color:rgba(0,0,0,0) }
+            40%{ color:white }
+            60%{ text-shadow:.25em 0 0 white }
+            80%,100%{ text-shadow:.25em 0 0 white,.5em 0 0 white }
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .4; }
-        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     </style>
 </head>
 <body>
