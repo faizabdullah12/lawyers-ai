@@ -334,6 +334,9 @@ function renderProfile(adv) {
 <button onclick="copyProfileLink('${esc(chatId)}',this)" class="btn-ghost" style="flex:1;font-size:11px;padding:10px 14px;">
                 <i class="fas fa-link"></i> Salin Link
             </button>
+            <button onclick="openReportModal('${esc(adv.id)}')" class="btn-ghost" style="font-size:11px;padding:10px 14px;color:#F87171;border-color:rgba(239,68,68,0.25);" title="Laporkan Advokat">
+                <i class="fas fa-flag"></i> Laporkan
+            </button>
         </div>
 
         <!-- Bottom CTA -->
@@ -397,6 +400,24 @@ function copyProfileLink(id, btn) {
     }
 }
 
+
+// ── Tombol Laporkan Advokat ──
+window.openReportModal = async function(advokatRowId) {
+    if (typeof laiConfirm !== 'function') {
+        window.location.href = 'pengaduan.html?id=' + advokatRowId;
+        return;
+    }
+    const confirmed = await laiConfirm({
+        type: 'danger',
+        title: 'Laporkan Advokat?',
+        message: 'Kamu akan diarahkan ke formulir pengaduan. Laporan palsu dapat berakibat hukum. Lanjutkan?',
+        confirmText: 'Ya, Buat Laporan',
+        cancelText: 'Batal',
+    });
+    if (confirmed) {
+        window.location.href = 'pengaduan.html?id=' + advokatRowId;
+    }
+};
 
 loadAdvokat();
 
