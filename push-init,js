@@ -1,0 +1,387 @@
+// ============================================
+// push-init.js — Lawyers AI v1.0
+// Push Notification + Tab Badge + Realtime
+// Tambahkan di semua halaman setelah config.js
+// ============================================
+
+(function () {
+  // ── VAPID PUBLIC KEY ──
+  // Ganti dengan key dari dashboard Supabase/web-push Anda
+  // Generate: npx web-push generate-vapid-keys
+  const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
+
+  // ── STATE ──
+  let _swReg        = null;
+  let _unreadCount  = 0;
+  let _originalTitle = document.title;
+  let _blinkInterval = null;
+
+  // ════════════════════════════════════════
+  // 1. REGISTER SERVICE WORKER
+  // ════════════════════════════════════════
+  async function registerSW() {
+    if (!('serviceWorker' in navigator)) return null;
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      _swReg = reg;
+      console.log('✅ SW registered:', reg.scope);
+
+      // Update otomatis saat ada versi baru
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+
+      return reg;
+    } catch (err) {
+      console.warn('SW registration failed:', err);
+      return null;
+    }
+  }
+
+  // ════════════════════════════════════════
+  // 2. MINTA IZIN & SUBSCRIBE PUSH
+  // ════════════════════════════════════════
+  async function subscribePush(userId) {
+    if (!_swReg) return null;
+    if (!('PushManager' in window)) {
+      console.warn('Push not supported');
+      return null;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.warn('Notifikasi ditolak user.');
+      return null;
+    }
+
+    try {
+      // Cek apakah sudah subscribe
+      let sub = await _swReg.pushManager.getSubscription();
+
+      if (!sub) {
+        sub = await _swReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      }
+
+      // Simpan subscription ke Supabase
+      if (userId && window.supabase) {
+        const subJson = sub.toJSON();
+        await window.supabase.from('push_subscriptions').upsert({
+          user_id:  userId,
+          endpoint: subJson.endpoint,
+          p256dh:   subJson.keys?.p256dh,
+          auth:     subJson.keys?.auth,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+        console.log('✅ Push subscription saved');
+      }
+
+      return sub;
+    } catch (err) {
+      console.error('Subscribe push error:', err);
+      return null;
+    }
+  }
+
+  // ════════════════════════════════════════
+  // 3. BADGE TAB BROWSER
+  // ════════════════════════════════════════
+  function setTabBadge(count) {
+    _unreadCount = count;
+
+    // a) App Badge API (Android Chrome / PWA)
+    if ('setAppBadge' in navigator) {
+      count > 0 ? navigator.setAppBadge(count) : navigator.clearAppBadge();
+    }
+
+    // b) Favicon badge (semua browser)
+    updateFaviconBadge(count);
+
+    // c) Title blink saat tab tidak aktif
+    if (count > 0 && document.hidden) {
+      startTitleBlink(count);
+    } else {
+      stopTitleBlink();
+    }
+
+    // d) Update badge sidebar jika ada
+    const sidebarBadge = document.getElementById('sidebar-badge-inbox');
+    if (sidebarBadge) {
+      if (count > 0) {
+        sidebarBadge.textContent = count > 9 ? '9+' : count;
+        sidebarBadge.classList.add('show');
+      } else {
+        sidebarBadge.textContent = '0';
+        sidebarBadge.classList.remove('show');
+      }
+    }
+
+    // e) Kirim ke SW untuk App Badge
+    if (_swReg?.active) {
+      _swReg.active.postMessage({ type: 'SET_BADGE', count });
+    }
+  }
+
+  function updateFaviconBadge(count) {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 32; canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+
+      // Gambar favicon original dulu
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = '/favicon.ico';
+
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, 32, 32);
+        if (count > 0) drawBadgeCircle(ctx, canvas, count);
+        applyFavicon(canvas.toDataURL());
+      };
+
+      img.onerror = () => {
+        // Fallback: buat favicon sederhana
+        ctx.fillStyle = '#1E293B';
+        ctx.fillRect(0, 0, 32, 32);
+        ctx.fillStyle = '#3B82F6';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('L', 16, 24);
+        if (count > 0) drawBadgeCircle(ctx, canvas, count);
+        applyFavicon(canvas.toDataURL());
+      };
+    } catch (e) {
+      console.warn('Favicon badge error:', e);
+    }
+  }
+
+  function drawBadgeCircle(ctx, canvas, count) {
+    const r = 9;
+    const x = canvas.width  - r - 1;
+    const y = r + 1;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    ctx.fillStyle = '#EF4444';
+    ctx.fill();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(count > 9 ? '9+' : String(count), x, y);
+  }
+
+  function applyFavicon(dataUrl) {
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = dataUrl;
+  }
+
+  function startTitleBlink(count) {
+    if (_blinkInterval) return;
+    let show = true;
+    _blinkInterval = setInterval(() => {
+      document.title = show
+        ? `(${count}) Pesan Baru — Lawyers AI`
+        : _originalTitle;
+      show = !show;
+    }, 1500);
+  }
+
+  function stopTitleBlink() {
+    if (_blinkInterval) {
+      clearInterval(_blinkInterval);
+      _blinkInterval = null;
+    }
+    document.title = _originalTitle;
+  }
+
+  // Hentikan blink saat tab aktif lagi
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && _blinkInterval) stopTitleBlink();
+    if (!document.hidden && _unreadCount > 0) {
+      document.title = `(${_unreadCount}) ${_originalTitle}`;
+    }
+  });
+
+  // ════════════════════════════════════════
+  // 4. LISTEN PESAN MASUK REALTIME
+  // ════════════════════════════════════════
+  async function listenIncomingMessages(userId) {
+    if (!window.supabase || !userId) return;
+
+    // Hitung unread awal
+    await refreshUnreadCount(userId);
+
+    // Subscribe realtime
+    window.supabase
+      .channel('push-inbox-' + userId)
+      .on('postgres_changes', {
+        event:  'INSERT',
+        schema: 'public',
+        table:  'messages',
+        filter: `receiver_id=eq.${userId}`,
+      }, async (payload) => {
+        const msg = payload.new;
+
+        // Update badge
+        await refreshUnreadCount(userId);
+
+        // Tampilkan toast jika tab aktif
+        if (!document.hidden && window.showLALToast) {
+          window.showLALToast('info', 'Pesan Baru', msg.content?.substring(0, 60) || 'Ada pesan baru masuk.');
+        }
+      })
+      .subscribe();
+  }
+
+  async function refreshUnreadCount(userId) {
+    try {
+      const { count } = await window.supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', userId)
+        .eq('is_read', false);
+
+      setTabBadge(count || 0);
+    } catch (e) {
+      console.warn('refreshUnreadCount error:', e);
+    }
+  }
+
+  // Expose untuk reset badge saat buka halaman chat
+  window.clearInboxBadge = async function (userId) {
+    if (!userId) return;
+    setTabBadge(0);
+    // Mark semua as read
+    await window.supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('receiver_id', userId)
+      .eq('is_read', false);
+  };
+
+  // ════════════════════════════════════════
+  // 5. TOMBOL AKTIFKAN NOTIFIKASI (UI)
+  // ════════════════════════════════════════
+  window.showNotifPrompt = function () {
+    if (Notification.permission === 'granted') {
+      if (window.showLALToast) showLALToast('success', 'Notifikasi Aktif', 'Anda sudah mengaktifkan notifikasi.');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      if (window.showLALToast) showLALToast('warning', 'Notifikasi Diblokir', 'Aktifkan notifikasi di pengaturan browser Anda.');
+      return;
+    }
+    // Tampilkan banner soft prompt
+    const banner = document.createElement('div');
+    banner.id = 'notif-prompt-banner';
+    banner.innerHTML = `
+      <div style="
+        position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+        background:#1E293B;border:1px solid rgba(59,130,246,0.3);
+        border-radius:20px;padding:16px 20px;z-index:9999;
+        display:flex;align-items:center;gap:14px;
+        box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        max-width:calc(100vw - 32px);width:380px;
+        animation: slideUp 0.3s ease;">
+        <div style="width:40px;height:40px;background:rgba(59,130,246,0.15);border-radius:12px;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class='fas fa-bell' style='color:#60A5FA;font-size:16px;'></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;font-weight:800;color:#F1F5F9;margin:0 0 3px;">Aktifkan Notifikasi</p>
+          <p style="font-size:11px;color:#64748B;margin:0;line-height:1.5;">
+            Dapat notif saat advokat membalas pesan Anda.
+          </p>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button onclick="
+            document.getElementById('notif-prompt-banner')?.remove();
+            window._pushInit?.requestPermission();"
+            style="padding:8px 14px;background:#2563EB;border:none;border-radius:10px;
+              font-size:11px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            Aktifkan
+          </button>
+          <button onclick="document.getElementById('notif-prompt-banner')?.remove();"
+            style="padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.1);
+              border-radius:10px;font-size:11px;color:#64748B;cursor:pointer;font-family:inherit;">
+            <i class='fas fa-times'></i>
+          </button>
+        </div>
+      </div>
+      <style>
+        @keyframes slideUp {
+          from { opacity:0; transform:translateX(-50%) translateY(20px); }
+          to   { opacity:1; transform:translateX(-50%) translateY(0); }
+        }
+      </style>`;
+    document.body.appendChild(banner);
+  };
+
+  // ════════════════════════════════════════
+  // 6. BOOT
+  // ════════════════════════════════════════
+  window._pushInit = {
+    requestPermission: async function () {
+      try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) return;
+        await subscribePush(session.user.id);
+      } catch (e) {
+        console.error('requestPermission error:', e);
+      }
+    }
+  };
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    // Daftar SW
+    await registerSW();
+
+    // Cek sesi user
+    try {
+      if (!window.supabase) return;
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (!session) return;
+
+      const userId = session.user.id;
+
+      // Listen pesan masuk
+      await listenIncomingMessages(userId);
+
+      // Subscribe push jika sudah izin
+      if (Notification.permission === 'granted') {
+        await subscribePush(userId);
+      } else if (Notification.permission === 'default') {
+        // Tampilkan soft prompt setelah 3 detik
+        setTimeout(() => {
+          // Hanya tampilkan di halaman chat
+          const isChat = window.location.pathname.includes('chat') ||
+                         window.location.pathname.includes('konsultasi');
+          if (isChat) window.showNotifPrompt?.();
+        }, 3000);
+      }
+    } catch (e) {
+      console.warn('[PushInit] Boot error:', e);
+    }
+  });
+
+  // ── UTIL: VAPID key converter ──
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  }
+
+})();
