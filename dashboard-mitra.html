@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="shared.css">
 
     <style>
-    /* ── #adv-app: position fixed agar tidak kena shared.css body height:auto override ── */
     #adv-app {
         position: fixed;
         top: 0; bottom: 0; right: 0;
@@ -29,7 +28,6 @@
     }
 
     /* ── TOPBAR ── */
-    /* menuBtn: fixed top:18px left:18px width:42px height:42px → kanan dari 18+42=60px */
     #topbar {
         display: flex;
         align-items: center;
@@ -43,7 +41,7 @@
     }
     body.light #topbar { background: #FFFFFF; }
     @media (max-width: 1024px) {
-        #topbar { padding-left: 72px; } /* 18+42+12 = beri ruang menuBtn */
+        #topbar { padding-left: 72px; }
         .topbar-tabs .tab-btn .label { display: none; }
         #rt-status { display: none; }
     }
@@ -109,10 +107,27 @@
     #chat-top { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--bg-sidebar); flex-shrink:0; }
     body.light #chat-top { background:#FFFFFF; }
     .chat-adv-avatar { width:38px; height:38px; border-radius:11px; object-fit:cover; border:1.5px solid var(--border); }
-    .online-ring { position:relative; }
-    .online-ring::after { content:''; position:absolute; bottom:-2px; right:-2px; width:10px; height:10px; border-radius:50%; background:#10B981; border:2px solid var(--bg-sidebar); animation:aiPulse 2.5s infinite; }
 
-    /* CRITICAL: flex:1 + min-height:0 pada chat-box agar input tidak hilang */
+    /* ── STATUS ONLINE KLIEN — realtime ── */
+    .online-ring { position:relative; }
+    .online-ring::after {
+        content:''; position:absolute; bottom:-2px; right:-2px;
+        width:10px; height:10px; border-radius:50%;
+        background: var(--client-online-color, var(--text-3));
+        border:2px solid var(--bg-sidebar);
+        transition: background 0.4s ease;
+    }
+    .online-ring.status-online::after {
+        background: #10B981 !important;
+        animation: clientPulse 2.5s infinite;
+    }
+    .online-ring.status-away::after { background: #F59E0B !important; animation: none; }
+    .online-ring.status-offline::after { background: var(--text-3) !important; animation: none; }
+    @keyframes clientPulse {
+        0%,100% { box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+        50% { box-shadow: 0 0 0 4px rgba(16,185,129,0.08); }
+    }
+
     #chat-box { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; display:flex; flex-direction:column; gap:4px; min-height:0; }
 
     .date-sep { display:flex; align-items:center; gap:10px; margin:14px 0 10px; }
@@ -124,7 +139,6 @@
     .msg-av { width:26px; height:26px; border-radius:8px; object-fit:cover; flex-shrink:0; border:1px solid var(--border); min-height:unset !important; }
     .msg-av-init { width:26px; height:26px; border-radius:8px; background:var(--accent-dark); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; min-height:unset !important; }
 
-    /* msg-bubble-box: nama SENGAJA tidak mengandung "wrap" → tidak kena shared.css */
     .msg-bubble-box { max-width:72%; min-width:0; }
     @media (max-width:1024px) { .msg-bubble-box { max-width:82%; } }
     .msg-bubble { padding:10px 14px; font-size:14px; line-height:1.6; word-break:break-word; border-radius:14px; min-height:unset !important; }
@@ -141,7 +155,6 @@
     .t-dot:nth-child(2){animation-delay:0.15s;} .t-dot:nth-child(3){animation-delay:0.3s;}
     @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:0.4;} 30%{transform:translateY(-5px);opacity:1;} }
 
-    /* chat-input-area: nama SENGAJA tidak mengandung "wrap" → tidak kena shared.css */
     #chat-input-area {
         flex-shrink: 0;
         padding: 12px 16px;
@@ -345,7 +358,7 @@
                 </div>
             </div>
 
-            <!-- Chat view (hidden until conv selected) -->
+            <!-- Chat view -->
             <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
 
                 <!-- Chat header -->
@@ -354,7 +367,8 @@
                         <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <div class="online-ring" style="flex-shrink:0;">
+                        <!-- Ring menampilkan status online klien -->
+                        <div class="online-ring status-offline" id="client-avatar-ring" style="flex-shrink:0;">
                             <img id="active-client-av" src="" class="chat-adv-avatar" alt="Klien">
                         </div>
                         <div>
@@ -427,7 +441,7 @@
                 </div>
             </div>
 
-            <!-- ── Section: Identitas ── -->
+            <!-- Identitas -->
             <div class="fade-up fade-up-2">
                 <p class="section-heading">Data <span>Identitas</span></p>
                 <div class="form-grid">
@@ -461,13 +475,12 @@
                         <label class="form-label">Pengalaman (Tahun)</label>
                         <input type="number" class="field" id="f-pengalaman" placeholder="Contoh: 10" min="0" max="60">
                     </div>
-
                 </div>
             </div>
 
             <hr class="section-divider fade-up fade-up-3">
 
-            <!-- ── Section: Pendidikan & Lokasi ── -->
+            <!-- Pendidikan & Lokasi -->
             <div class="fade-up fade-up-3">
                 <p class="section-heading">Pendidikan & <span>Lokasi</span></p>
                 <div class="form-grid">
@@ -492,7 +505,7 @@
 
             <hr class="section-divider fade-up fade-up-4">
 
-            <!-- ── Section: Bio ── -->
+            <!-- Bio -->
             <div class="fade-up fade-up-4">
                 <p class="section-heading">Bio <span>Singkat</span></p>
                 <div class="form-group">
@@ -506,7 +519,7 @@
 
             <hr class="section-divider fade-up fade-up-5">
 
-            <!-- ── Section: Ketersediaan ── -->
+            <!-- Ketersediaan -->
             <div class="fade-up fade-up-5">
                 <p class="section-heading">Status <span>Ketersediaan</span></p>
                 <div class="avail-toggle-row">
@@ -520,7 +533,7 @@
                 </div>
             </div>
 
-            <!-- ── Save Bar ── -->
+            <!-- Save Bar -->
             <div class="save-bar fade-up">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <button class="btn-primary" onclick="saveProfile()" id="save-btn" style="flex:1;justify-content:center;">
@@ -542,22 +555,126 @@
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-let currentMitra = null;        // row mitra_ahli
-let allConvs = [];              // cache konversasi
+let currentMitra = null;
+let allConvs = [];
 let selectedConvId = null;
 let selectedClientId = null;
 let selectedClientName = '';
 let selectedClientAv = '';
 let filterMode = 'all';
 let rtChannel = null;
+let rtClientOnlineChannel = null;    // ← BARU: realtime status klien
 let typingTimer = null;
 let typingDebounce = null;
 let isAvailable = true;
 let totalUnread = 0;
+let clientStatusInterval = null;
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
 const SUPA_HDRS = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' };
+
+// ══════════════════════════════════════════════
+// LAST SEEN ADVOKAT — Update berkala agar klien tahu advokat online
+// ══════════════════════════════════════════════
+let _lsDebounce = null;
+
+async function updateAdvLastSeen() {
+    if (!currentMitra) return;
+    try {
+        await window.supabase
+            .from('profiles')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', currentMitra.user_id);
+    } catch(e) {}
+}
+
+function debounceLastSeen() {
+    clearTimeout(_lsDebounce);
+    _lsDebounce = setTimeout(updateAdvLastSeen, 5000);
+}
+
+function startLastSeenUpdater() {
+    // Update saat pertama load
+    updateAdvLastSeen();
+    // Update setiap 20 detik selama dashboard terbuka
+    setInterval(updateAdvLastSeen, 20000);
+    // Update juga saat user aktif di halaman
+    document.addEventListener('mousemove', debounceLastSeen, { passive: true });
+    document.addEventListener('keydown', debounceLastSeen, { passive: true });
+    document.addEventListener('click', debounceLastSeen, { passive: true });
+    document.addEventListener('touchstart', debounceLastSeen, { passive: true });
+    // Update saat tab kembali aktif
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) updateAdvLastSeen();
+    });
+}
+
+// ══════════════════════════════════════════════
+// STATUS ONLINE KLIEN — Realtime + Polling
+// ══════════════════════════════════════════════
+function applyClientStatus(lastSeen) {
+    const el = document.getElementById('client-online-status');
+    const ring = document.getElementById('client-avatar-ring');
+    if (!el || !ring) return;
+
+    if (!lastSeen) {
+        el.textContent = '● Offline';
+        el.style.color = 'var(--text-3)';
+        ring.className = 'online-ring status-offline';
+        return;
+    }
+
+    const diff = Date.now() - new Date(lastSeen).getTime();
+    if (diff < 3 * 60 * 1000) {
+        el.textContent = '● Online & Aktif';
+        el.style.color = '#10B981';
+        ring.className = 'online-ring status-online';
+    } else if (diff < 30 * 60 * 1000) {
+        const mins = Math.floor(diff / 60000);
+        el.textContent = `● Aktif ${mins}m lalu`;
+        el.style.color = '#F59E0B';
+        ring.className = 'online-ring status-away';
+    } else {
+        el.textContent = '● Offline';
+        el.style.color = 'var(--text-3)';
+        ring.className = 'online-ring status-offline';
+    }
+}
+
+async function checkClientOnlineStatus(clientId) {
+    if (!clientId) return;
+    try {
+        const { data } = await window.supabase
+            .from('profiles')
+            .select('last_seen')
+            .eq('id', clientId)
+            .maybeSingle();
+        applyClientStatus(data?.last_seen || null);
+    } catch(e) {}
+}
+
+function subscribeClientOnlineRealtime(clientId) {
+    // Bersihkan channel lama
+    if (rtClientOnlineChannel) {
+        window.supabase.removeChannel(rtClientOnlineChannel);
+        rtClientOnlineChannel = null;
+    }
+    if (!clientId) return;
+
+    rtClientOnlineChannel = window.supabase
+        .channel('client-online-' + clientId)
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${clientId}`
+        }, (payload) => {
+            // Update UI seketika saat last_seen klien berubah
+            applyClientStatus(payload.new?.last_seen || null);
+        })
+        .subscribe();
+}
 
 // ══════════════════════════════════════════════
 // INIT
@@ -566,7 +683,6 @@ async function init() {
     const { data: { session } } = await window.supabase.auth.getSession();
     if (!session) { location.href = 'login.html'; return; }
 
-    // Ambil data mitra
     const { data: mitra, error } = await window.supabase
         .from('mitra_ahli').select('*').eq('user_id', session.user.id).single();
 
@@ -580,9 +696,12 @@ async function init() {
     }
 
     currentMitra = mitra;
-    isAvailable = true; // kolom is_available belum ada di schema
+    isAvailable = true;
     updateSidebarUI();
     updateAvailUI();
+
+    // ── MULAI update last_seen advokat secara berkala ──
+    startLastSeenUpdater();
 
     await loadConvList();
     subscribeRealtime();
@@ -615,8 +734,6 @@ async function loadConvList() {
     const icon = document.getElementById('refresh-icon');
     icon.style.animation = 'spin 0.8s linear infinite';
 
-    // ── PATCH: query lebih luas — ambil semua pesan yang melibatkan mitra ini
-    // baik lewat lawyer_id (pesan klien) maupun sender_id/receiver_id (pesan advokat)
     const { data: byLawyer } = await window.supabase
         .from('messages').select('*')
         .eq('lawyer_id', currentMitra.id)
@@ -634,7 +751,6 @@ async function loadConvList() {
 
     icon.style.animation = '';
 
-    // Gabungkan & deduplicate by id
     const allRaw = [...(byLawyer || []), ...(bySender || []), ...(byReceiver || [])];
     const seenIds = new Set();
     const messages = allRaw.filter(m => {
@@ -649,14 +765,12 @@ async function loadConvList() {
         return;
     }
 
-    // Dedupe by conversation_id (keep latest)
     const convMap = new Map();
     for (const m of messages) {
         if (!convMap.has(m.conversation_id)) convMap.set(m.conversation_id, m);
     }
     const uniqueConvs = [...convMap.values()];
 
-    // Collect unique client IDs (semua pihak selain advokat sendiri)
     const clientIds = [...new Set(uniqueConvs.map(m => {
         const otherId = m.sender_id === currentMitra.user_id ? m.receiver_id : m.sender_id;
         return otherId;
@@ -668,13 +782,11 @@ async function loadConvList() {
         return;
     }
 
-    // Batch-fetch profiles
     const { data: profiles } = await window.supabase
         .from('profiles').select('id, full_name, avatar_url').in('id', clientIds);
     const profMap = {};
     (profiles || []).forEach(p => { profMap[p.id] = p; });
 
-    // Unread counts per conv — pesan yang dikirim ke mitra dan belum dibaca
     const { data: unreadRows } = await window.supabase
         .from('messages').select('conversation_id')
         .eq('receiver_id', currentMitra.user_id)
@@ -720,7 +832,7 @@ function renderConvList(convs) {
     if (!convs.length) { renderEmptyConvList(); return; }
     const html = convs.map(cv => `
         <div class="conv-item ${cv.convId === selectedConvId ? 'active' : ''}"
-             onclick="openConv('${cv.convId}','${esc(cv.clientId)}','${esc(cv.clientName)}','${esc(cv.clientAv)}')">
+             onclick="openConv('${esc(cv.convId)}','${esc(cv.clientId)}','${esc(cv.clientName)}','${esc(cv.clientAv)}')">
             <div style="position:relative;flex-shrink:0;">
                 <img src="${cv.clientAv}" class="conv-avatar"
                      onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(cv.clientName)}&background=EFF6FF&color=2563EB&bold=true'"
@@ -772,52 +884,12 @@ function updateUnreadBadges() {
 // ══════════════════════════════════════════════
 // OPEN CONVERSATION
 // ══════════════════════════════════════════════
-
-// ══════════════════════════════════════════════
-// CEK STATUS ONLINE KLIEN
-// ══════════════════════════════════════════════
-let clientStatusInterval = null;
-
-async function checkClientOnlineStatus(clientId) {
-    if (!clientId) return;
-    try {
-        const { data } = await window.supabase
-            .from('profiles')
-            .select('last_seen')
-            .eq('id', clientId)
-            .maybeSingle();
-
-        const el = document.getElementById('client-online-status');
-        if (!el) return;
-
-        if (!data?.last_seen) {
-            el.textContent = '● Offline';
-            el.style.color = 'var(--text-3)';
-            return;
-        }
-
-        const diff = Date.now() - new Date(data.last_seen).getTime();
-        if (diff < 3 * 60 * 1000) {
-            el.textContent = '● Online & Aktif';
-            el.style.color = '#10B981';
-        } else if (diff < 30 * 60 * 1000) {
-            const mins = Math.floor(diff / 60000);
-            el.textContent = `● Aktif ${mins}m lalu`;
-            el.style.color = '#F59E0B';
-        } else {
-            el.textContent = '● Offline';
-            el.style.color = 'var(--text-3)';
-        }
-    } catch(e) {}
-}
-
 async function openConv(convId, clientId, clientName, clientAv) {
     selectedConvId = convId;
     selectedClientId = clientId;
     selectedClientName = clientName;
     selectedClientAv = clientAv;
 
-    // Update header
     document.getElementById('active-client-name').textContent = clientName;
     const avEl = document.getElementById('active-client-av');
     avEl.src = clientAv;
@@ -825,12 +897,10 @@ async function openConv(convId, clientId, clientName, clientAv) {
     const typingAvEl = document.getElementById('typing-av');
     typingAvEl.src = clientAv;
 
-    // Show chat view
     document.getElementById('chat-empty-state').style.display = 'none';
     const cv = document.getElementById('chat-view');
     cv.style.display = 'flex';
 
-    // Mobile: hide conv list
     if (window.innerWidth <= 1024) {
         document.getElementById('conv-sidebar').classList.add('mobile-hidden');
         document.getElementById('back-btn').style.display = 'flex';
@@ -839,10 +909,11 @@ async function openConv(convId, clientId, clientName, clientAv) {
     renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
     await loadMessages();
 
-    // Cek status online klien
+    // ── Mulai realtime status online klien ──
     clearInterval(clientStatusInterval);
-    await checkClientOnlineStatus(clientId);
-    clientStatusInterval = setInterval(() => checkClientOnlineStatus(clientId), 30000);
+    subscribeClientOnlineRealtime(clientId);      // realtime
+    await checkClientOnlineStatus(clientId);       // initial check
+    clientStatusInterval = setInterval(() => checkClientOnlineStatus(clientId), 15000); // polling backup
 
     // Mark as read
     await window.supabase.from('messages')
@@ -850,7 +921,6 @@ async function openConv(convId, clientId, clientName, clientAv) {
         .eq('conversation_id', selectedConvId)
         .eq('receiver_id', currentMitra.user_id);
 
-    // Reset unread in cache
     const conv = allConvs.find(c => c.convId === convId);
     if (conv) {
         totalUnread = Math.max(0, totalUnread - conv.unread);
@@ -866,21 +936,17 @@ function backToConvList() {
 }
 
 // ══════════════════════════════════════════════
-// LOAD MESSAGES — PATCHED
+// LOAD MESSAGES
 // ══════════════════════════════════════════════
 async function loadMessages() {
     if (!selectedConvId) return;
 
-    // Query utama: by conversation_id
     let { data: msgs } = await window.supabase
         .from('messages').select('*')
         .eq('conversation_id', selectedConvId)
         .order('created_at', { ascending: true });
 
-    // ── PATCH: Fallback query by sender+receiver jika conversation_id tidak match ──
-    // Ini menangani kasus di mana pesan lama tidak punya conversation_id yang sama
     if ((!msgs || msgs.length === 0) && selectedClientId) {
-        console.warn('[loadMessages] Fallback query by sender/receiver untuk convId:', selectedConvId);
         const { data: fallback } = await window.supabase
             .from('messages').select('*')
             .or(
@@ -901,7 +967,6 @@ async function loadMessages() {
         return;
     }
 
-    // Avatar advokat (saya)
     const myAv = currentMitra.foto_profil_url ||
         `https://ui-avatars.com/api/?name=${encodeURIComponent(currentMitra.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
     const myInit = (currentMitra.nama_lengkap || 'A')[0].toUpperCase();
@@ -927,7 +992,6 @@ async function loadMessages() {
         const row = document.createElement('div');
         row.className = `msg-row ${isMe ? 'me' : 'them'}`;
 
-        // Avatar kiri (klien)
         if (!isMe) {
             const img = document.createElement('img');
             img.src = selectedClientAv;
@@ -945,7 +1009,7 @@ async function loadMessages() {
         bubble.innerHTML = `<p>${txt}</p>`;
 
         const meta = document.createElement('div');
-        meta.className = `msg-meta ${isMe ? '' : ''}`;
+        meta.className = 'msg-meta';
         meta.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
         meta.innerHTML = `<span>${time}</span>${isMe
             ? (m.is_read
@@ -957,7 +1021,6 @@ async function loadMessages() {
         wrap.appendChild(meta);
         row.appendChild(wrap);
 
-        // Avatar kanan (advokat/saya)
         if (isMe) {
             const img = document.createElement('img');
             img.src = myAv;
@@ -996,7 +1059,7 @@ async function sendMessage() {
         const { error } = await window.supabase.from('messages').insert([{
             sender_id:       currentMitra.user_id,
             receiver_id:     selectedClientId,
-            lawyer_id:       currentMitra.id,          // ← selalu set lawyer_id
+            lawyer_id:       currentMitra.id,
             conversation_id: selectedConvId,
             message_text:    text,
             is_read:         false
@@ -1004,7 +1067,6 @@ async function sendMessage() {
         if (error) throw error;
         await loadMessages();
 
-        // Update preview in conv list
         const conv = allConvs.find(c => c.convId === selectedConvId);
         if (conv) { conv.lastMsg = text; conv.isMe = true; conv.lastTime = new Date().toISOString(); }
         renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
@@ -1049,27 +1111,24 @@ async function clearChatConfirm() {
 }
 
 // ══════════════════════════════════════════════
-// REALTIME — PATCHED
+// REALTIME — PESAN MASUK
 // ══════════════════════════════════════════════
 function subscribeRealtime() {
     if (rtChannel) window.supabase.removeChannel(rtChannel);
 
     rtChannel = window.supabase
         .channel('adv-rt-' + currentMitra.id)
-        // ── Listener 1: pesan masuk via lawyer_id (klien kirim pesan)
         .on('postgres_changes', {
             event: 'INSERT', schema: 'public', table: 'messages',
             filter: `lawyer_id=eq.${currentMitra.id}`
         }, async (payload) => {
             await handleIncomingMessage(payload.new);
         })
-        // ── Listener 2: pesan masuk via receiver_id (fallback jika lawyer_id null)
         .on('postgres_changes', {
             event: 'INSERT', schema: 'public', table: 'messages',
             filter: `receiver_id=eq.${currentMitra.user_id}`
         }, async (payload) => {
             const m = payload.new;
-            // Hindari duplikat: skip jika lawyer_id sudah ter-set (sudah ditangani listener 1)
             if (m.lawyer_id && m.lawyer_id === currentMitra.id) return;
             await handleIncomingMessage(m);
         })
@@ -1088,21 +1147,16 @@ function subscribeRealtime() {
         });
 }
 
-// ── PATCH: handler terpusat untuk pesan masuk ──
 async function handleIncomingMessage(m) {
-    // Reload conv list DULU agar data fresh sebelum dicek
     await loadConvList();
 
     if (m.conversation_id === selectedConvId) {
-        // Pesan untuk percakapan yang sedang dibuka — tampilkan langsung
         await loadMessages();
-        // Mark as read
         await window.supabase.from('messages')
             .update({ is_read: true })
             .eq('conversation_id', selectedConvId)
             .eq('receiver_id', currentMitra.user_id);
     } else {
-        // Pesan untuk percakapan lain — bell + toast
         ringBell();
         const conv = allConvs.find(c => c.convId === m.conversation_id);
         const senderName = conv?.clientName || 'Klien baru';
@@ -1113,10 +1167,11 @@ async function handleIncomingMessage(m) {
 function ringBell() {
     const bell = document.getElementById('notif-bell');
     bell.classList.remove('bell-shake');
-    void bell.offsetWidth; // reflow
+    void bell.offsetWidth;
     bell.classList.add('bell-shake');
     bell.style.color = '#F59E0B';
     setTimeout(() => { bell.style.color = ''; }, 800);
+    playNotifSound();
 }
 
 function showTyping() {
@@ -1132,7 +1187,7 @@ function showTyping() {
 }
 
 // ══════════════════════════════════════════════
-// PROFIL — LOAD
+// PROFIL
 // ══════════════════════════════════════════════
 async function loadProfile() {
     if (!currentMitra) return;
@@ -1143,20 +1198,16 @@ async function loadProfile() {
     document.getElementById('profil-avatar-img').src = m.foto_profil_url ||
         `https://ui-avatars.com/api/?name=${encodeURIComponent(m.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
 
-    // Fill form
     setField('f-nama', m.nama_lengkap);
     setField('f-nia', m.nomor_nia);
     document.getElementById('f-spesialisasi').value = m.spesialisasi || '';
     setField('f-pengalaman', m.pengalaman);
-
     setField('f-lulusan', m.lulusan);
     setField('f-jurusan', m.jurusan);
     setField('f-kabupaten', m.kabupaten);
     setField('f-provinsi', m.provinsi);
     setField('f-bio', m.bio_singkat);
     updateBioCount(document.getElementById('f-bio'));
-
-    // isAvailable tidak disimpan ke DB karena kolom belum ada
     updateAvailUI();
     document.getElementById('save-hint').textContent = '';
 }
@@ -1166,14 +1217,10 @@ function setField(id, val) {
     if (el) el.value = val || '';
 }
 
-// ══════════════════════════════════════════════
-// PROFIL — SAVE
-// ══════════════════════════════════════════════
 async function saveProfile() {
     const btn = document.getElementById('save-btn');
     const hint = document.getElementById('save-hint');
 
-    // Kumpulkan data lebih dulu
     const updates = {
         nama_lengkap:  document.getElementById('f-nama').value.trim(),
         nomor_nia:     document.getElementById('f-nia').value.trim(),
@@ -1186,7 +1233,6 @@ async function saveProfile() {
         bio_singkat:   document.getElementById('f-bio').value.trim(),
     };
 
-    // Validasi SEBELUM disable button — supaya button tidak stuck disabled
     if (!updates.nama_lengkap) {
         hint.textContent = '⚠️ Nama lengkap wajib diisi!';
         hint.style.color = '#F87171';
@@ -1201,7 +1247,6 @@ async function saveProfile() {
     hint.style.color = '';
 
     try {
-        // Gunakan access_token sesi aktif agar RLS policy UPDATE terpenuhi
         const { data: { session } } = await window.supabase.auth.getSession();
         if (!session) throw new Error('Sesi habis, silakan login ulang.');
 
@@ -1248,9 +1293,6 @@ async function saveProfile() {
     }
 }
 
-// ══════════════════════════════════════════════
-// PROFIL — AVATAR UPLOAD
-// ══════════════════════════════════════════════
 async function uploadAvatar(input) {
     const file = input.files[0];
     if (!file) return;
@@ -1289,9 +1331,6 @@ async function uploadAvatar(input) {
     }
 }
 
-// ══════════════════════════════════════════════
-// AVAILABILITY TOGGLE
-// ══════════════════════════════════════════════
 function toggleAvailability() {
     isAvailable = !isAvailable;
     updateAvailUI();
@@ -1336,10 +1375,8 @@ function fmtTime(iso) {
 }
 
 // ══════════════════════════════════════════════
-// BOOT
+// SOUND NOTIF
 // ══════════════════════════════════════════════
-
-// ═══════════════════════════════ SOUND NOTIF (ADVOKAT) ═══════════════════════════════
 let soundEnabled = localStorage.getItem('adv_sound') !== 'off';
 let audioCtx = null;
 
@@ -1352,7 +1389,6 @@ function playNotifSound() {
     if (!soundEnabled) return;
     try {
         const ctx = getAudioCtx();
-        // 3 nada pendek - mirip notif WA
         [0, 0.12, 0.24].forEach((t, i) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
@@ -1367,14 +1403,9 @@ function playNotifSound() {
     } catch(e) {}
 }
 
-// Patch ringBell untuk tambah sound
-const _origRingBell = ringBell;
-window.ringBell = function() {
-    _origRingBell();
-    playNotifSound();
-};
-
-// Quick reply templates untuk advokat
+// ══════════════════════════════════════════════
+// QUICK REPLY TEMPLATES
+// ══════════════════════════════════════════════
 const ADV_QUICK_REPLIES = [
     'Baik, saya pahami masalah Anda.',
     'Silakan kirim dokumen pendukung.',
@@ -1384,22 +1415,19 @@ const ADV_QUICK_REPLIES = [
     'Ada pertanyaan tambahan?'
 ];
 
-// Tambah quick reply ke input advokat
 document.addEventListener('DOMContentLoaded', () => {
     const textarea = document.getElementById('msg-textarea');
     if (!textarea) return;
-    
-    // Buat quick reply bar
+
     const qrBar = document.createElement('div');
     qrBar.id = 'adv-qr-bar';
     qrBar.style.cssText = 'display:none;padding:8px 14px;border-top:1px solid var(--border);background:var(--bg-sidebar);overflow-x:auto;scrollbar-width:none;flex-shrink:0;gap:6px;align-items:center;';
     qrBar.innerHTML = '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);flex-shrink:0;">Template:</span>' +
         ADV_QUICK_REPLIES.map(r => `<div onclick="useAdvQR(this)" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.color='#60A5FA';this.style.borderColor='rgba(59,130,246,0.3)'" onmouseout="this.style.color='var(--text-2)';this.style.borderColor='var(--border)'">${r}</div>`).join('');
-    
+
     const inputWrap = document.getElementById('chat-input-area');
     if (inputWrap) inputWrap.insertBefore(qrBar, inputWrap.firstChild);
-    
-    // Show/hide on focus
+
     textarea.addEventListener('focus', () => {
         if (!textarea.value.trim()) qrBar.style.display = 'flex';
     });
@@ -1418,6 +1446,9 @@ function useAdvQR(el) {
     }
 }
 
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
 init().catch(err => {
     console.error('[Dashboard Advokat] Fatal:', err);
     document.getElementById('load-overlay').innerHTML = `
