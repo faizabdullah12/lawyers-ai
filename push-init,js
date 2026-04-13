@@ -8,7 +8,7 @@
   // ── VAPID PUBLIC KEY ──
   // Ganti dengan key dari dashboard Supabase/web-push Anda
   // Generate: npx web-push generate-vapid-keys
-  const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
+  const VAPID_PUBLIC_KEY = 'BM7ViMP2CNCk8y4CG5fz84gvIVOCF3uW9PaXTj0a9ynDLO0TuX6V0497g1W6hmYAZ0kLzk6dDyGMEod7nVbhW2w';
 
   // ── STATE ──
   let _swReg        = null;
