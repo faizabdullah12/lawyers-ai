@@ -18,7 +18,6 @@
             --text-1: #F1F5F9; --text-2: #94A3B8; --text-3: #475569; --text-4: #2D3748;
             --accent: #3B82F6; --accent-2: #1D4ED8; --gold: #F59E0B; --emerald: #10B981;
             --scrollbar: rgba(255,255,255,0.05);
-            /* New mobile-specific tokens */
             --header-h: 64px;
             --input-h: 72px;
             --safe-top: env(safe-area-inset-top, 0px);
@@ -46,7 +45,6 @@
             height: 100vh;
             height: -webkit-fill-available;
             overflow: hidden;
-            /* iOS font size fix */
             -webkit-text-size-adjust: 100%;
         }
 
@@ -80,7 +78,6 @@
             min-width: 0;
         }
 
-        /* ─── MOBILE BREAKPOINTS ─── */
         @media (max-width: 1024px) {
             #sidebar {
                 position: fixed; z-index: 300;
@@ -130,7 +127,7 @@
             padding: 10px 10px; border-radius: 12px;
             font-size: 12.5px; font-weight: 500; color: var(--text-2);
             cursor: pointer; transition: all 0.15s; text-decoration: none;
-            min-height: 44px; /* iOS touch target */
+            min-height: 44px;
         }
         .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
         .nav-item.active { background: rgba(59,130,246,0.12); color: #60A5FA; }
@@ -183,7 +180,7 @@
             font-size: 13px; color: var(--text-1);
             font-family: 'Plus Jakarta Sans', sans-serif;
             outline: none; transition: border-color 0.2s;
-            min-height: 42px; /* iOS tap */
+            min-height: 42px;
         }
         .search-box input:focus { border-color: var(--accent); }
         .search-box input::placeholder { color: var(--text-3); }
@@ -200,7 +197,7 @@
             border-bottom: 1px solid var(--border);
             transition: background 0.12s;
             position: relative;
-            min-height: 72px; /* Comfortable touch target */
+            min-height: 72px;
         }
         .conv-item:hover { background: rgba(255,255,255,0.025); }
         .conv-item.active { background: rgba(59,130,246,0.07); }
@@ -231,14 +228,26 @@
             object-fit: cover;
             border: 1.5px solid var(--border-2);
         }
+
+        /* ─── ONLINE BADGE — realtime ─── */
         .online-badge {
             position: absolute; bottom: -2px; right: -2px;
             width: 12px; height: 12px; border-radius: 50%;
             background: var(--text-3);
             border: 2px solid var(--bg-2);
-            transition: background 0.3s;
+            transition: background 0.4s ease;
         }
-        .online-badge.online { background: var(--emerald); box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+        .online-badge.online {
+            background: var(--emerald) !important;
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.25);
+            animation: pulse-online 2.5s infinite;
+        }
+        .online-badge.away { background: #F59E0B !important; }
+        .online-badge.offline { background: var(--text-3) !important; box-shadow: none; animation: none; }
+        @keyframes pulse-online {
+            0%,100% { box-shadow: 0 0 0 3px rgba(16,185,129,0.25); }
+            50% { box-shadow: 0 0 0 5px rgba(16,185,129,0.1); }
+        }
         body.light .online-badge { border-color: rgba(255,255,255,0.95); }
 
         .header-btn {
@@ -247,7 +256,6 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: var(--text-2); font-size: 13px;
             transition: all 0.15s;
-            /* Good touch target */
             -webkit-tap-highlight-color: transparent;
         }
         .header-btn:hover { background: var(--bg-4); color: var(--text-1); }
@@ -274,9 +282,8 @@
         .msg-row { display: flex; align-items: flex-end; gap: 7px; margin-bottom: 2px; }
         .msg-row.me { justify-content: flex-end; }
         .msg-row.them { justify-content: flex-start; }
-        /* Group spacing */
-        .msg-row + .msg-row.me { margin-top: 1px; }
-        .msg-row + .msg-row.them { margin-top: 1px; }
+        .msg-row.me + .msg-row.me { margin-top: 1px; }
+        .msg-row.them + .msg-row.them { margin-top: 1px; }
         .msg-row.me + .msg-row.them,
         .msg-row.them + .msg-row.me { margin-top: 8px; }
 
@@ -322,10 +329,6 @@
         body.light .bubble-out {
             box-shadow: 0 2px 12px rgba(37,99,235,0.3);
         }
-
-        /* Consecutive bubble radius tightening */
-        .msg-row.them + .msg-row.them .bubble-in { border-radius: var(--radius-bubble) var(--radius-bubble) var(--radius-bubble) 5px; }
-        .msg-row.me + .msg-row.me .bubble-out { border-radius: var(--radius-bubble) var(--radius-bubble) 5px var(--radius-bubble); }
 
         /* ─── TYPING INDICATOR ─── */
         .typing-row { display: flex; align-items: flex-end; gap: 7px; margin-top: 6px; }
@@ -458,7 +461,6 @@
         }
         body.light .modal-card { background: #FFFFFF; border-color: #E2E8F0; }
 
-        /* Drag handle indicator */
         .modal-card::before {
             content: ''; display: block;
             width: 36px; height: 4px;
@@ -601,7 +603,6 @@
         #sound-toggle.muted { color: var(--text-3); }
         body.light #sound-toggle { background: #F8FAFC; border-color: #E2E8F0; }
 
-        /* ─── BACK BUTTON MOBILE (improved) ─── */
         #back-btn {
             width: 36px; height: 36px; border-radius: 10px;
             background: var(--bg-3); border: 1px solid var(--border);
@@ -612,7 +613,6 @@
         }
         #back-btn:active { transform: scale(0.9); background: var(--bg-4); }
 
-        /* ─── MOBILE HEADER ACTIONS (compact) ─── */
         @media (max-width: 380px) {
             #chat-header-actions { gap: 4px !important; }
             #chat-header-actions .header-btn { width: 32px; height: 32px; font-size: 11px; }
@@ -624,16 +624,9 @@
             .msg-bubble .bubble { font-size: 14px; padding: 10px 13px; }
         }
 
-        /* ─── NOTIF ANIMATION ─── */
         @keyframes notifPop { 0%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} 100%{transform:scale(1)} }
         .notif-pop { animation: notifPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
 
-        /* ─── ONLINE BADGE ─── */
-        .online-badge.online { background: #10B981 !important; }
-        .online-badge.away { background: #F59E0B !important; }
-        .online-badge.offline { background: var(--text-3) !important; }
-
-        /* ─── LIGHT MODE OVERRIDES ─── */
         body.light #sidebar { background: #FFFFFF; border-color: #E2E8F0; }
         body.light #inbox-panel { background: #F0F4F8 !important; border-color: #E2E8F0 !important; }
         body.light #chat-panel { background: #EEF2F7 !important; }
@@ -643,15 +636,6 @@
         body.light .nav-icon { background: #F1F5F9 !important; }
         body.light .premium-card { background: linear-gradient(135deg,#FFFBEB,#FEF3C7) !important; border-color: rgba(245,158,11,0.3) !important; }
         body.light .profile-row { background: #F8FAFC !important; }
-
-        /* ─── FILE BUBBLE ─── */
-        .file-bubble { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-bubble); }
-        .file-bubble.out { background: linear-gradient(135deg,#2563EB,#1D4ED8); border-radius: var(--radius-bubble) var(--radius-bubble) 5px var(--radius-bubble); }
-        .file-bubble.in { background: var(--bg-3); border: 1px solid var(--border); border-radius: var(--radius-bubble) var(--radius-bubble) var(--radius-bubble) 5px; }
-        body.light .file-bubble.in { background: #FFFFFF; border-color: #E2E8F0; }
-        .file-bubble-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-        .file-bubble.out .file-bubble-icon { background: rgba(255,255,255,0.15); color: #fff; }
-        .file-bubble.in .file-bubble-icon { background: rgba(59,130,246,0.1); color: #60A5FA; }
     </style>
 </head>
 <body>
@@ -753,7 +737,7 @@
                     </button>
                     <div class="adv-avatar-wrap">
                         <img id="adv-img" src="" onerror="this.src=avatarFallback(advName||'A')">
-                        <div id="online-dot" class="online-badge"></div>
+                        <div id="online-dot" class="online-badge offline"></div>
                     </div>
                     <div style="min-width:0;flex:1">
                         <div style="display:flex;align-items:center;gap:6px">
@@ -913,7 +897,7 @@ let currentUser = null, currentProfile = null;
 let receiverId = new URLSearchParams(location.search).get('id');
 let advData = null, advName = '', lawyerTableId = null, activeConvId = null;
 let isPremium = false, allConvs = [], attachedFile = null;
-let rtChannel = null, typingHideTimer = null, typingDebounce = null;
+let rtChannel = null, rtOnlineChannel = null, typingHideTimer = null, typingDebounce = null;
 let autoMsgSent = false, _advAvatarCache = null;
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
@@ -938,6 +922,84 @@ function imgSrc(url,name) {
     return url;
 }
 
+// ══════════════════════════════════════════════
+// STATUS ONLINE — REALTIME
+// ══════════════════════════════════════════════
+function applyOnlineStatus(lastSeen) {
+    const dot = document.getElementById('online-dot');
+    const statusText = document.getElementById('adv-status-text');
+    if (!dot || !statusText) return;
+
+    if (!lastSeen) {
+        dot.className = 'online-badge offline';
+        statusText.textContent = '• offline';
+        statusText.style.color = 'var(--text-3)';
+        return;
+    }
+
+    const diff = Date.now() - new Date(lastSeen).getTime();
+    if (diff < 3 * 60 * 1000) {
+        dot.className = 'online-badge online';
+        statusText.textContent = '• online';
+        statusText.style.color = '#10B981';
+    } else if (diff < 30 * 60 * 1000) {
+        dot.className = 'online-badge away';
+        statusText.textContent = `• ${Math.floor(diff / 60000)}m lalu`;
+        statusText.style.color = '#F59E0B';
+    } else {
+        dot.className = 'online-badge offline';
+        const hrs = Math.floor(diff / 3600000);
+        statusText.textContent = hrs > 0 ? `• ${hrs}j lalu` : '• offline';
+        statusText.style.color = 'var(--text-3)';
+    }
+}
+
+async function updateOnlineStatus() {
+    if (!receiverId) return;
+    try {
+        const { data } = await window.supabase
+            .from('profiles')
+            .select('last_seen')
+            .eq('id', receiverId)
+            .maybeSingle();
+        applyOnlineStatus(data?.last_seen || null);
+    } catch(e) {}
+}
+
+function subscribeOnlineRealtime() {
+    if (rtOnlineChannel) {
+        window.supabase.removeChannel(rtOnlineChannel);
+        rtOnlineChannel = null;
+    }
+    if (!receiverId) return;
+
+    rtOnlineChannel = window.supabase
+        .channel('online-status-' + receiverId)
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${receiverId}`
+        }, (payload) => {
+            // Langsung update UI saat last_seen berubah
+            applyOnlineStatus(payload.new?.last_seen || null);
+        })
+        .subscribe();
+}
+
+async function updateMyLastSeen() {
+    if (!currentUser) return;
+    try {
+        await window.supabase
+            .from('profiles')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', currentUser.id);
+    } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
 async function buildAdvAvatarCache() {
     if(!receiverId){_advAvatarCache=avatarFallback('A');return;}
     if(advData?.foto_profil_url){_advAvatarCache=imgSrc(advData.foto_profil_url,advName);return;}
@@ -1000,12 +1062,23 @@ window.onload = async () => {
     }
     if(window.innerWidth<=1024) document.getElementById('menu-toggle').style.display='flex';
     if(window.innerWidth<=768) document.getElementById('back-btn').style.display='flex';
+
+    // Update last_seen sendiri setiap 30 detik
+    await updateMyLastSeen();
+    setInterval(updateMyLastSeen, 30000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) updateMyLastSeen();
+    });
+
     await loadInbox();
     document.getElementById('load-overlay').style.opacity='0';
     setTimeout(()=>document.getElementById('load-overlay').style.display='none',300);
     if(receiverId){showChatView();await loadChatMode();if(window.innerWidth<=768)hideMobileInbox();}
 };
 
+// ══════════════════════════════════════════════
+// INBOX
+// ══════════════════════════════════════════════
 async function loadInbox() {
     const{data:msgs}=await window.supabase.from('messages').select('*')
         .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
@@ -1093,11 +1166,22 @@ function showChatView(){
     else{document.getElementById('upgrade-wall').style.display='none';document.getElementById('input-wrap').style.display='block';}
 }
 
+// ══════════════════════════════════════════════
+// LOAD CHAT MODE
+// ══════════════════════════════════════════════
 async function loadChatMode() {
+    // Bersihkan channel lama
     if(rtChannel){window.supabase.removeChannel(rtChannel);rtChannel=null;}
+    if(rtOnlineChannel){window.supabase.removeChannel(rtOnlineChannel);rtOnlineChannel=null;}
+    clearInterval(window._onlineCheckInterval);
+
     advData=null;autoMsgSent=false;_advAvatarCache=null;
     document.getElementById('adv-name').textContent='Memuat...';
     document.getElementById('adv-spec').textContent='';
+
+    // Reset status ke offline saat ganti percakapan
+    applyOnlineStatus(null);
+
     const adv=await fetchMitraData(receiverId);
     if(adv){
         advData=adv;
@@ -1114,20 +1198,30 @@ async function loadChatMode() {
     const advImgEl=document.getElementById('adv-img');
     advImgEl.src=_advAvatarCache;
     advImgEl.onerror=function(){this.onerror=null;this.src=avatarFallback(advName);};
+
     const{data:ex}=await window.supabase.from('messages').select('conversation_id')
         .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${currentUser.id})`)
         .not('conversation_id','is',null).limit(1);
     activeConvId=ex?.[0]?.conversation_id||crypto.randomUUID();
+
     await renderMessages();
+
+    // Mulai realtime chat
     subscribeRT();
-    await checkAutoMsg();
-    clearInterval(window._onlineCheckInterval);
+
+    // ── REALTIME STATUS ONLINE — subscribe dulu, polling setelah itu
+    subscribeOnlineRealtime();
     await updateOnlineStatus();
-    window._onlineCheckInterval=setInterval(updateOnlineStatus,30000);
-    await updateMyLastSeen();
-    if(!window._lastSeenInterval){window._lastSeenInterval=setInterval(updateMyLastSeen,60000);}
+
+    // Polling fallback setiap 15 detik (backup jika realtime lambat)
+    window._onlineCheckInterval = setInterval(updateOnlineStatus, 15000);
+
+    await checkAutoMsg();
 }
 
+// ══════════════════════════════════════════════
+// RENDER MESSAGES
+// ══════════════════════════════════════════════
 async function renderMessages() {
     if(!receiverId) return;
     const{data:msgs}=await window.supabase.from('messages').select('*')
@@ -1140,7 +1234,7 @@ async function renderMessages() {
     const myInit=myProfileName[0].toUpperCase();
     const myAvatar=currentProfile?.avatar_url||null;
     let lastDate='', prevSender='';
-    (msgs||[]).forEach((m,i)=>{
+    (msgs||[]).forEach((m)=>{
         const isMe=m.sender_id===currentUser.id;
         if(m.conversation_id) activeConvId=m.conversation_id;
         const dObj=new Date(m.created_at);
@@ -1180,6 +1274,9 @@ async function renderMessages() {
     if(conv){conv.unread=0;renderConvList(allConvs);}
 }
 
+// ══════════════════════════════════════════════
+// SEND MESSAGE
+// ══════════════════════════════════════════════
 async function sendMsg() {
     if(!isPremium){toast('🔒 Upgrade PRO untuk membalas pesan','warn');return;}
     if(!receiverId){toast('Pilih percakapan terlebih dahulu','warn');return;}
@@ -1209,6 +1306,9 @@ function handleFileAttach(inp){
 }
 function clearAttach(){attachedFile=null;document.getElementById('file-input').value='';document.getElementById('file-preview').style.display='none';}
 
+// ══════════════════════════════════════════════
+// REALTIME — CHAT + TYPING
+// ══════════════════════════════════════════════
 function subscribeRT() {
     if(!receiverId) return;
     rtChannel=window.supabase.channel('msgs-'+receiverId+'-'+Date.now())
@@ -1237,6 +1337,9 @@ function notifyTyping(){
     typingDebounce=setTimeout(()=>{rtChannel.send({type:'broadcast',event:'typing',payload:{from:currentUser.id}});},350);
 }
 
+// ══════════════════════════════════════════════
+// AUTO MESSAGE
+// ══════════════════════════════════════════════
 async function checkAutoMsg() {
     if(autoMsgSent) return;
     const safeName=advData?.nama_lengkap||advName;
@@ -1255,6 +1358,9 @@ async function checkAutoMsg() {
     }catch(e){console.error('[AutoMsg] Count failed:',e);}
 }
 
+// ══════════════════════════════════════════════
+// CLEAR CHAT
+// ══════════════════════════════════════════════
 async function clearChatConfirm() {
     if(!confirm(`Hapus semua riwayat chat dengan ${advName}?`)) return;
     await window.supabase.from('messages').delete()
@@ -1265,6 +1371,9 @@ async function clearChatConfirm() {
     toast('Riwayat chat dihapus','info');
 }
 
+// ══════════════════════════════════════════════
+// CONTACT MODAL
+// ══════════════════════════════════════════════
 function openContactModal() {
     if(!advData&&!advName){toast('Data advokat tidak tersedia','warn');return;}
     const av=_advAvatarCache||avatarFallback(advName||'A');
@@ -1301,9 +1410,15 @@ function copyWA(){
     }).catch(()=>toast('Gagal menyalin nomor','error'));
 }
 
+// ══════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('show');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');}
 
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
 function toast(msg,type='info'){
     const icons={info:'#60A5FA',error:'#F87171',warn:'#FBBF24',success:'#34D399'};
     const imap={info:'fa-info-circle',error:'fa-times-circle',warn:'fa-exclamation-circle',success:'fa-check-circle'};
@@ -1315,6 +1430,9 @@ function toast(msg,type='info'){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeContactModal();closeRatingModal();}});
 
+// ══════════════════════════════════════════════
+// SOUND
+// ══════════════════════════════════════════════
 let soundEnabled=localStorage.getItem('chat_sound')!=='off';
 let audioCtx=null;
 function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
@@ -1348,24 +1466,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
 });
 
-async function updateOnlineStatus(){
-    if(!receiverId) return;
-    try{
-        const{data}=await window.supabase.from('profiles').select('last_seen').eq('id',receiverId).maybeSingle();
-        const dot=document.getElementById('online-dot'),statusText=document.getElementById('adv-status-text');
-        if(!dot||!statusText) return;
-        if(!data?.last_seen){dot.className='online-badge offline';statusText.textContent='• offline';statusText.style.color='var(--text-3)';return;}
-        const diff=Date.now()-new Date(data.last_seen).getTime();
-        if(diff<3*60*1000){dot.className='online-badge online';statusText.textContent='• online';statusText.style.color='#10B981';}
-        else if(diff<30*60*1000){dot.className='online-badge away';statusText.textContent=`• ${Math.floor(diff/60000)}m lalu`;statusText.style.color='#F59E0B';}
-        else{dot.className='online-badge offline';const hrs=Math.floor(diff/3600000);statusText.textContent=hrs>0?`• ${hrs}j lalu`:'• offline';statusText.style.color='var(--text-3)';}
-    }catch(e){}
-}
-async function updateMyLastSeen(){
-    if(!currentUser) return;
-    try{await window.supabase.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',currentUser.id);}catch(e){}
-}
-
+// ══════════════════════════════════════════════
+// QUICK REPLY
+// ══════════════════════════════════════════════
 function useQuickReply(el){
     if(!isPremium){toast('🔒 Upgrade PRO untuk mengirim pesan','warn');return;}
     const inp=document.getElementById('msg-input');
@@ -1373,6 +1476,9 @@ function useQuickReply(el){
     document.getElementById('quick-reply-bar').classList.remove('show');
 }
 
+// ══════════════════════════════════════════════
+// RATING MODAL
+// ══════════════════════════════════════════════
 let selectedRating=0;
 const RATING_LABELS=['','Kurang Memuaskan','Cukup','Baik','Sangat Baik','Luar Biasa! ⭐'];
 function setRating(val){
