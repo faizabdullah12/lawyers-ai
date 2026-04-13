@@ -636,6 +636,34 @@
         body.light .nav-icon { background: #F1F5F9 !important; }
         body.light .premium-card { background: linear-gradient(135deg,#FFFBEB,#FEF3C7) !important; border-color: rgba(245,158,11,0.3) !important; }
         body.light .profile-row { background: #F8FAFC !important; }
+
+        /* ─── REPORT BUTTON ─── */
+        .btn-report-modal {
+            width: 100%; margin-top: 8px; padding: 11px;
+            border-radius: 12px;
+            background: rgba(239,68,68,0.06);
+            border: 1px solid rgba(239,68,68,0.18);
+            color: #F87171;
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.07em;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background 0.15s, border-color 0.15s;
+            min-height: 44px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .btn-report-modal:hover {
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.35);
+        }
+        body.light .btn-report-modal {
+            background: rgba(239,68,68,0.05);
+            border-color: rgba(239,68,68,0.2);
+            color: #DC2626;
+        }
+        body.light .btn-report-modal:hover {
+            background: rgba(239,68,68,0.1);
+        }
     </style>
 </head>
 <body>
@@ -884,9 +912,14 @@
                 <i class="fas fa-copy" style="font-size:11px"></i>
                 <span id="copy-wa-label">Salin Nomor WA</span>
             </button>
-            <a id="m-profile-link" href="#" style="display:block;width:100%;margin-top:8px;padding:11px;border-radius:12px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);color:#60A5FA;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;text-align:center;text-decoration:none;transition:background 0.15s;min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px">
+            <a id="m-profile-link" href="#" style="display:flex;width:100%;margin-top:8px;padding:11px;border-radius:12px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);color:#60A5FA;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;text-align:center;text-decoration:none;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;min-height:44px;">
                 <i class="fas fa-id-card"></i>Lihat Profil Lengkap
             </a>
+            <!-- ── REPORT BUTTON (BARU) ── -->
+            <button class="btn-report-modal" onclick="reportFromModal()">
+                <i class="fas fa-flag" style="font-size:11px"></i>
+                <span>Laporkan Advokat</span>
+            </button>
         </div>
     </div>
 </div>
@@ -929,14 +962,12 @@ function applyOnlineStatus(lastSeen) {
     const dot = document.getElementById('online-dot');
     const statusText = document.getElementById('adv-status-text');
     if (!dot || !statusText) return;
-
     if (!lastSeen) {
         dot.className = 'online-badge offline';
         statusText.textContent = '• offline';
         statusText.style.color = 'var(--text-3)';
         return;
     }
-
     const diff = Date.now() - new Date(lastSeen).getTime();
     if (diff < 3 * 60 * 1000) {
         dot.className = 'online-badge online';
@@ -957,43 +988,24 @@ function applyOnlineStatus(lastSeen) {
 async function updateOnlineStatus() {
     if (!receiverId) return;
     try {
-        const { data } = await window.supabase
-            .from('profiles')
-            .select('last_seen')
-            .eq('id', receiverId)
-            .maybeSingle();
+        const { data } = await window.supabase.from('profiles').select('last_seen').eq('id', receiverId).maybeSingle();
         applyOnlineStatus(data?.last_seen || null);
     } catch(e) {}
 }
 
 function subscribeOnlineRealtime() {
-    if (rtOnlineChannel) {
-        window.supabase.removeChannel(rtOnlineChannel);
-        rtOnlineChannel = null;
-    }
+    if (rtOnlineChannel) { window.supabase.removeChannel(rtOnlineChannel); rtOnlineChannel = null; }
     if (!receiverId) return;
-
-    rtOnlineChannel = window.supabase
-        .channel('online-status-' + receiverId)
-        .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'profiles',
-            filter: `id=eq.${receiverId}`
-        }, (payload) => {
-            // Langsung update UI saat last_seen berubah
-            applyOnlineStatus(payload.new?.last_seen || null);
-        })
+    rtOnlineChannel = window.supabase.channel('online-status-' + receiverId)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${receiverId}` },
+            (payload) => { applyOnlineStatus(payload.new?.last_seen || null); })
         .subscribe();
 }
 
 async function updateMyLastSeen() {
     if (!currentUser) return;
     try {
-        await window.supabase
-            .from('profiles')
-            .update({ last_seen: new Date().toISOString() })
-            .eq('id', currentUser.id);
+        await window.supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUser.id);
     } catch(e) {}
 }
 
@@ -1063,12 +1075,9 @@ window.onload = async () => {
     if(window.innerWidth<=1024) document.getElementById('menu-toggle').style.display='flex';
     if(window.innerWidth<=768) document.getElementById('back-btn').style.display='flex';
 
-    // Update last_seen sendiri setiap 30 detik
     await updateMyLastSeen();
     setInterval(updateMyLastSeen, 30000);
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) updateMyLastSeen();
-    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) updateMyLastSeen(); });
 
     await loadInbox();
     document.getElementById('load-overlay').style.opacity='0';
@@ -1170,7 +1179,6 @@ function showChatView(){
 // LOAD CHAT MODE
 // ══════════════════════════════════════════════
 async function loadChatMode() {
-    // Bersihkan channel lama
     if(rtChannel){window.supabase.removeChannel(rtChannel);rtChannel=null;}
     if(rtOnlineChannel){window.supabase.removeChannel(rtOnlineChannel);rtOnlineChannel=null;}
     clearInterval(window._onlineCheckInterval);
@@ -1178,8 +1186,6 @@ async function loadChatMode() {
     advData=null;autoMsgSent=false;_advAvatarCache=null;
     document.getElementById('adv-name').textContent='Memuat...';
     document.getElementById('adv-spec').textContent='';
-
-    // Reset status ke offline saat ganti percakapan
     applyOnlineStatus(null);
 
     const adv=await fetchMitraData(receiverId);
@@ -1205,17 +1211,10 @@ async function loadChatMode() {
     activeConvId=ex?.[0]?.conversation_id||crypto.randomUUID();
 
     await renderMessages();
-
-    // Mulai realtime chat
     subscribeRT();
-
-    // ── REALTIME STATUS ONLINE — subscribe dulu, polling setelah itu
     subscribeOnlineRealtime();
     await updateOnlineStatus();
-
-    // Polling fallback setiap 15 detik (backup jika realtime lambat)
     window._onlineCheckInterval = setInterval(updateOnlineStatus, 15000);
-
     await checkAutoMsg();
 }
 
@@ -1408,6 +1407,28 @@ function copyWA(){
         const l=document.getElementById('copy-wa-label');l.textContent='✓ Tersalin!';
         setTimeout(()=>{l.textContent='Salin: '+wa;},2000);
     }).catch(()=>toast('Gagal menyalin nomor','error'));
+}
+
+// ══════════════════════════════════════════════
+// REPORT FROM MODAL  ← BARU
+// ══════════════════════════════════════════════
+function reportFromModal() {
+    closeContactModal();
+    const targetId = lawyerTableId || receiverId;
+    if (typeof laiConfirm !== 'function') {
+        window.location.href = 'pengaduan.html?id=' + targetId;
+        return;
+    }
+    laiConfirm({
+        type: 'danger',
+        title: 'Laporkan Advokat?',
+        message: 'Kamu akan diarahkan ke formulir pengaduan. Laporan palsu dapat berakibat hukum. Lanjutkan?',
+        confirmText: 'Ya, Buat Laporan',
+        cancelText: 'Batal',
+        onConfirm: () => {
+            window.location.href = 'pengaduan.html?id=' + targetId;
+        }
+    });
 }
 
 // ══════════════════════════════════════════════
