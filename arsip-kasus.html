@@ -154,11 +154,11 @@
             <!-- Empty -->
             <div id="empty-state" style="display:none;text-align:center;padding:60px 20px;" class="fade-up">
                 <div style="width:64px;height:64px;background:var(--bg-input);border:1px solid var(--border);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
-                    <i class="fas fa-folder-open" style="font-size:24px;color:var(--text-3);"></i>
+                    <i id="empty-icon" class="fas fa-folder-open" style="font-size:24px;color:var(--text-3);"></i>
                 </div>
-                <h3 style="font-size:16px;font-weight:800;color:var(--text-1);margin:0 0 8px;">Belum Ada Riwayat</h3>
-                <p style="font-size:13px;color:var(--text-3);margin:0 0 20px;">Mulai konsultasi untuk melihat arsip kasus kamu di sini</p>
-                <a href="konsultasi.html" class="btn-primary">Mulai Konsultasi AI</a>
+                <h3 id="empty-title" style="font-size:16px;font-weight:800;color:var(--text-1);margin:0 0 8px;">Belum Ada Riwayat</h3>
+                <p id="empty-desc" style="font-size:13px;color:var(--text-3);margin:0 0 20px;">Mulai konsultasi untuk melihat arsip kasus kamu di sini</p>
+                <a id="empty-cta" href="konsultasi.html" class="btn-primary">Mulai Konsultasi AI</a>
             </div>
 
         </div>
@@ -252,79 +252,67 @@
                     });
                 }
 
-                // 2. Pesan advokat dari messages
-                // Kolom asli: sender_id, receiver_id, lawyer_id, message_text,
-                //             conversation_id, topic, inserted_at, created_at
+                // 2. Percakapan advokat dari messages
+                // Ambil semua pesan yang melibatkan user ini (sebagai sender ATAU receiver)
+                // karena bisa jadi user = receiver saat advokat yang mulai duluan
                 const { data: msgs, error: msgError } = await window.supabase
                     .from('messages')
-                    .select(`
-                        id, conversation_id, message_text, topic,
-                        inserted_at, created_at,
-                        lawyer_id, receiver_id,
-                        lawyer_profile:profiles!receiver_id ( full_name, specialization )
-                    `)
-                    .eq('sender_id', currentUser.id)
+                    .select('id, conversation_id, message_text, topic, inserted_at, created_at, lawyer_id, sender_id, receiver_id')
+                    .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
                     .not('lawyer_id', 'is', null)
                     .order('created_at', { ascending: false });
 
-                if (!msgError && msgs && msgs.length > 0) {
+                if (msgError) console.warn('Messages error:', msgError.message);
+
+                if (msgs && msgs.length > 0) {
                     const convMap = new Map();
                     msgs.forEach(m => {
                         const cid = m.conversation_id || m.id;
                         if (!convMap.has(cid)) {
-                            // Cari nama advokat dari profiles via receiver_id
-                            const lawyerName = m.lawyer_profile?.full_name
-                                || m.lawyer_profile?.nama_lengkap
-                                || 'Advokat';
-                            const lawyerSpec = m.lawyer_profile?.specialization
-                                || m.lawyer_profile?.spesialisasi
-                                || 'Hukum Umum';
-                            const judul = m.topic
-                                || (m.message_text ? m.message_text.substring(0, 60) : null)
-                                || 'Konsultasi Advokat';
+                            // Tentukan siapa advokat: bisa dari lawyer_id, sender, atau receiver
+                            const lawyerId = m.lawyer_id
+                                || (m.sender_id !== currentUser.id ? m.sender_id : m.receiver_id);
 
                             convMap.set(cid, {
                                 type:            'lawyer',
                                 id:              cid,
-                                title:           judul,
+                                rawLawyerId:     lawyerId,
+                                title:           m.topic || (m.message_text ? m.message_text.substring(0, 60) : 'Konsultasi Advokat'),
                                 date:            new Date(m.created_at || m.inserted_at),
-                                lawyer:          lawyerName,
-                                specialization:  lawyerSpec,
-                                lawyer_id:       m.lawyer_id,
+                                lawyer:          'Memuat...',
+                                specialization:  'Hukum Umum',
+                                lawyer_id:       lawyerId,
                                 handling_status: 'menunggu',
                             });
                         }
                     });
-                    convMap.forEach(c => allCases.push(c));
-                } else if (msgError) {
-                    console.warn('Messages query error:', msgError.message);
-                    // Fallback: coba tanpa join profiles
-                    const { data: msgs2 } = await window.supabase
-                        .from('messages')
-                        .select('id, conversation_id, message_text, topic, inserted_at, created_at, lawyer_id, receiver_id')
-                        .eq('sender_id', currentUser.id)
-                        .not('lawyer_id', 'is', null)
-                        .order('created_at', { ascending: false });
 
-                    if (msgs2 && msgs2.length > 0) {
-                        const convMap = new Map();
-                        msgs2.forEach(m => {
-                            const cid = m.conversation_id || m.id;
-                            if (!convMap.has(cid)) {
-                                convMap.set(cid, {
-                                    type:            'lawyer',
-                                    id:              cid,
-                                    title:           m.topic || (m.message_text ? m.message_text.substring(0, 60) : 'Konsultasi Advokat'),
-                                    date:            new Date(m.created_at || m.inserted_at),
-                                    lawyer:          'Advokat',
-                                    specialization:  'Hukum Umum',
-                                    lawyer_id:       m.lawyer_id,
-                                    handling_status: 'menunggu',
-                                });
+                    // Fetch nama advokat dari profiles
+                    const lawyerIds = [...new Set(
+                        [...convMap.values()].map(c => c.rawLawyerId).filter(Boolean)
+                    )];
+
+                    if (lawyerIds.length > 0) {
+                        const { data: lawyerProfiles } = await window.supabase
+                            .from('profiles')
+                            .select('id, full_name, specialization')
+                            .in('id', lawyerIds);
+
+                        const profileMap = {};
+                        (lawyerProfiles || []).forEach(p => { profileMap[p.id] = p; });
+
+                        convMap.forEach(c => {
+                            const p = profileMap[c.rawLawyerId];
+                            if (p) {
+                                c.lawyer         = p.full_name    || 'Advokat';
+                                c.specialization = p.specialization || 'Hukum Umum';
+                            } else {
+                                c.lawyer = 'Advokat';
                             }
                         });
-                        convMap.forEach(c => allCases.push(c));
                     }
+
+                    convMap.forEach(c => allCases.push(c));
                 }
 
                 // Sort terbaru dulu
@@ -363,6 +351,22 @@
             }
 
             emptyState.style.display = 'none';
+            // Update empty state content sesuai filter aktif
+            const emptyConfigs = {
+                semua:            { icon:'fa-folder-open',  title:'Belum Ada Riwayat',          desc:'Mulai konsultasi untuk melihat arsip kasus kamu.',    cta:'konsultasi.html',   ctaLabel:'Mulai Konsultasi AI' },
+                ai:               { icon:'fa-robot',        title:'Belum Ada Konsultasi AI',     desc:'Kirim kasus ke AI untuk memulai analisis hukum.',     cta:'konsultasi.html',   ctaLabel:'Mulai Konsultasi AI' },
+                lawyer:           { icon:'fa-user-tie',     title:'Belum Ada Chat Advokat',      desc:'Hubungi advokat berlisensi untuk konsultasi langsung.',cta:'mitra.html',        ctaLabel:'Cari Advokat' },
+                sedang_ditangani: { icon:'fa-scale-balanced',title:'Tidak Ada Kasus Ditangani', desc:'Kasus akan muncul saat advokat mulai menangani.',      cta:'arsip-kasus.html',  ctaLabel:'Lihat Semua Kasus' },
+            };
+            const ec = emptyConfigs[activeFilter] || emptyConfigs.semua;
+            const ei = document.getElementById('empty-icon');
+            const et = document.getElementById('empty-title');
+            const ed = document.getElementById('empty-desc');
+            const ectl = document.getElementById('empty-cta');
+            if (ei) ei.className = `fas ${ec.icon}`;
+            if (et) et.textContent = ec.title;
+            if (ed) ed.textContent = ec.desc;
+            if (ectl) { ectl.href = ec.cta; ectl.textContent = ec.ctaLabel; }
             container.innerHTML = '';
 
             filtered.forEach((c, i) => {
