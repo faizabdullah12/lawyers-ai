@@ -2,145 +2,277 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Konsultasi AI — Lawyers AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
-    <script src="push-init.js"></script>
     <link rel="stylesheet" href="shared.css">
     <script src="shared-sidebar.js" defer></script>
     <script src="shared-modal.js"></script>
 
     <style>
-        body { display: flex; min-height: 100vh; }
-        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+        /* ══ RESET KRITIS — override shared.css ══ */
+        * { box-sizing: border-box; }
 
+        html, body {
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        body {
+            display: flex !important;
+            overflow: hidden !important; /* sidebar tidak geser */
+        }
+
+        /*
+         * STRATEGI MOBILE:
+         *   .main-scroll = satu-satunya scroll container.
+         *   Semua konten (chat + panel) tersusun vertikal di dalamnya.
+         *   Pengguna scroll .main-scroll untuk lihat panel bawah.
+         *
+         * STRATEGI DESKTOP (≥1024px):
+         *   .main-scroll = overflow hidden.
+         *   Tiap kolom punya scroll sendiri.
+         */
+
+        .main-scroll {
+            flex: 1 !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            /* MOBILE: main-scroll yang scroll */
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            height: 100% !important;
+        }
+
+        @media (min-width: 1024px) {
+            .main-scroll {
+                overflow: hidden !important; /* desktop: kolom scroll sendiri */
+            }
+        }
+
+        /* ── WRAPPER ── */
         .konsultasi-wrap {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 72px 20px 0;
+            padding: 68px 14px 40px;
+            gap: 16px;
+            /* TIDAK overflow hidden di mobile */
         }
-        @media(min-width:1024px) {
-            .konsultasi-wrap { padding-top: 36px; flex-direction: row; gap: 20px; }
+
+        @media (min-width: 1024px) {
+            .konsultasi-wrap {
+                flex-direction: row;
+                padding: 36px 24px 0;
+                gap: 20px;
+                overflow: hidden;
+                min-height: 0;
+                flex: 1;
+            }
         }
 
         /* ── CHAT COLUMN ── */
         .chat-col {
-            flex: 1;
             display: flex;
             flex-direction: column;
-            min-height: 0;
-            overflow: hidden;
-            padding-bottom: 16px;
         }
 
+        @media (min-width: 1024px) {
+            .chat-col {
+                flex: 1;
+                min-height: 0;
+                overflow: hidden;
+                padding-bottom: 10px;
+            }
+        }
+
+        /* ── CHAT WINDOW ── */
         .chat-window {
-            flex: 1;
             overflow-y: auto;
-            padding-right: 4px;
+            overflow-x: hidden;
+            padding: 4px 4px 8px 2px;
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            /* Mobile: dibatasi agar panel bawah terlihat */
+            max-height: 58vh;
+            min-height: 200px;
         }
-        .chat-window::-webkit-scrollbar { width: 5px; }
+
+        @media (min-width: 1024px) {
+            .chat-window {
+                flex: 1;
+                min-height: 0;
+                max-height: none;
+            }
+        }
+
+        .chat-window::-webkit-scrollbar { width: 4px; }
         .chat-window::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        /* ── CHAT HEADER ── */
+        .chat-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            padding-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .chat-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        /* ── INPUT BAR ── */
+        .input-bar-wrap {
+            flex-shrink: 0;
+            padding: 10px 0 4px;
+            background: var(--bg);
+        }
+
+        .input-bar {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 8px 8px 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            min-height: 50px;
+        }
+
+        .input-bar:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+        }
+
+        body.light .input-bar { background: #FFFFFF; }
+
+        .input-bar input {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-weight: 600;
+            color: var(--text-1);
+            font-family: inherit;
+            font-size: max(16px, 13px);
+        }
+
+        @media (min-width: 480px) { .input-bar input { font-size: 13px; } }
+
+        .input-bar input::placeholder { color: var(--text-4); }
+
+        .btn-send {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            font-size: 10px;
+            border-radius: 14px;
+            white-space: nowrap;
+        }
 
         /* ── BUBBLES ── */
         .message-ai {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 24px 24px 24px 6px;
-            padding: 22px;
-            margin-bottom: 14px;
+            border-radius: 20px 20px 20px 6px;
+            padding: 18px;
+            margin-bottom: 12px;
             line-height: 1.65;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
-        body.light .message-ai {
-            background: #FFFFFF;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
+
+        body.light .message-ai { background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
 
         .message-user {
-            background: var(--accent);
+            background: linear-gradient(135deg, #2563EB, #3B82F6);
             color: white;
-            border-radius: 24px 24px 6px 24px;
-            padding: 16px 20px;
-            margin-bottom: 14px;
+            border-radius: 20px 20px 6px 20px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
             margin-left: auto;
             line-height: 1.65;
-            max-width: 78%;
-            box-shadow: 0 8px 24px rgba(59,130,246,0.25);
+            max-width: 82%;
+            box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
-
-        /* ── INPUT BAR ── */
-        .input-bar {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 28px;
-            padding: 10px 10px 10px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 12px 0 0;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .input-bar:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        body.light .input-bar { background: #FFFFFF; }
-
-        .input-bar input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-1);
-            font-family: inherit;
-        }
-        .input-bar input::placeholder { color: var(--text-4); }
 
         /* ── RIGHT PANEL ── */
         .right-col {
-            width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            padding-bottom: 20px;
+            gap: 12px;
+            width: 100%;
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
         }
-        @media(min-width:1024px) {
-            .right-col { width: 320px; flex-shrink: 0; overflow-y: auto; }
+
+        @media (min-width: 1024px) {
+            .right-col {
+                width: 320px;
+                flex-shrink: 0;
+                overflow-y: auto;
+                min-height: 0;
+                padding: 0 0 24px;
+            }
         }
 
         .panel-box {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 22px;
+            border-radius: 20px;
+            padding: 18px;
         }
-        body.light .panel-box {
-            background: #FFFFFF;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-        }
+
+        body.light .panel-box { background: #FFFFFF; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
 
         .panel-box-dark {
             background: #0F172A;
             border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 24px;
-            padding: 22px;
+            border-radius: 20px;
+            padding: 18px;
+        }
+
+        #pasal-box {
+            max-height: 220px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
 
         .ai-label { font-size: 9px; font-weight: 800; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.12em; }
         .ai-title { font-size: 14px; font-weight: 900; font-style: italic; color: var(--text-1); }
-        .ai-body  { font-size: 13px; color: var(--text-2); line-height: 1.7; }
+        .ai-body  { font-size: 13px; color: var(--text-2); line-height: 1.7; margin: 0; }
 
         .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5,end) infinite; }
-        @keyframes dots { 0%,20%{color:rgba(0,0,0,0)} 40%{color:white} 60%{text-shadow:.25em 0 0 white} 80%,100%{text-shadow:.25em 0 0 white,.5em 0 0 white} }
+
+        @keyframes dots {
+            0%,20%{ color:rgba(0,0,0,0) }
+            40%{ color:white }
+            60%{ text-shadow:.25em 0 0 white }
+            80%,100%{ text-shadow:.25em 0 0 white,.5em 0 0 white }
+        }
 
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     </style>
@@ -150,20 +282,22 @@
     <div class="main-scroll">
         <div class="konsultasi-wrap">
 
-            <!-- ── LEFT: CHAT COLUMN ── -->
+            <!-- ══ KIRI: CHAT COLUMN ══ -->
             <div class="chat-col">
 
                 <!-- Header -->
-                <header style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-top:4px;flex-shrink:0;" class="fade-up">
+                <header class="chat-header fade-up">
                     <div>
                         <p style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Konsultasi</p>
-                        <h2 style="font-size:26px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;">Legal AI <span style="color:#60A5FA;">Workspace</span></h2>
-                        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+                        <h2 style="font-size:22px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;">
+                            Legal AI <span style="color:#60A5FA;">Workspace</span>
+                        </h2>
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:5px;">
                             <span style="width:7px;height:7px;background:#10B981;border-radius:50%;display:inline-block;animation:pulse 2s infinite;"></span>
                             <span style="font-size:9px;font-weight:800;color:#10B981;text-transform:uppercase;letter-spacing:0.12em;">AI Online</span>
                         </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-top:4px;">
+                    <div class="chat-header-actions">
                         <button onclick="clearHistory()" title="Hapus riwayat chat"
                             style="width:34px;height:34px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text-3);font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;"
                             onmouseover="this.style.borderColor='#F87171';this.style.color='#F87171'"
@@ -178,31 +312,33 @@
                     </div>
                 </header>
 
-                <!-- Chat Window -->
+                <!-- Chat Window — ini yang scroll -->
                 <div class="chat-window" id="chat-box">
                     <!-- history diload oleh loadHistory() -->
                 </div>
 
-                <!-- Input Bar -->
-                <div class="input-bar" style="flex-shrink:0;">
-                    <i class="fas fa-pen-to-square" style="color:var(--text-4);font-size:13px;flex-shrink:0;"></i>
-                    <input type="text" id="user-input"
-                        placeholder="Tulis kronologi kasus di sini..."
-                        onkeydown="if(event.key==='Enter') sendMessage()">
-                    <button type="button" onclick="sendMessage()" id="btn-analisis"
-                        class="btn-primary" style="flex-shrink:0;padding:10px 18px;font-size:10px;">
-                        <span id="btn-text">Analisis</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
+                <!-- Input Bar — selalu di bawah, tidak ikut scroll -->
+                <div class="input-bar-wrap">
+                    <div class="input-bar">
+                        <i class="fas fa-pen-to-square" style="color:var(--text-4);font-size:13px;flex-shrink:0;"></i>
+                        <input type="text" id="user-input"
+                            placeholder="Tulis kronologi kasus di sini..."
+                            onkeydown="if(event.key==='Enter') sendMessage()">
+                        <button type="button" onclick="sendMessage()" id="btn-analisis"
+                            class="btn-primary btn-send">
+                            <span id="btn-text">Analisis</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
 
             </div><!-- /chat-col -->
 
-            <!-- ── RIGHT PANEL ── -->
+            <!-- ══ KANAN: PANEL ══ -->
             <div class="right-col fade-up" style="animation-delay:0.1s;">
 
                 <div class="panel-box">
-                    <p style="font-size:9px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">⚖️ Analisis Dasar Hukum</p>
+                    <p style="font-size:9px;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">⚖️ Analisis Dasar Hukum</p>
                     <div id="pasal-box">
                         <div style="padding:16px;background:rgba(59,130,246,0.05);border:1px dashed rgba(59,130,246,0.2);border-radius:16px;">
                             <p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Status: Menunggu</p>
@@ -226,12 +362,9 @@
     </div><!-- /main-scroll -->
 
     <script>
-        // Ambil API key dari config.js jika tersedia, fallback ke key lokal
-        function getProxyEndpoint() {
-            return '/api/ai-proxy';
-        }
-
-        // Model fallback chain — dicoba satu per satu jika 429/error
+        // ══════════════════════════════════════════
+        // MODEL FALLBACK CHAIN
+        // ══════════════════════════════════════════
         const MODEL_CHAIN = [
             'deepseek/deepseek-r1:free',
             'deepseek/deepseek-chat-v3-0324:free',
@@ -287,7 +420,6 @@
                     if (tmp.firstElementChild) chatBox.appendChild(tmp.firstElementChild);
                 });
 
-                // Badge riwayat
                 const badge = document.createElement('div');
                 badge.id = 'history-badge';
                 badge.style.cssText = 'text-align:center;padding:6px 0 10px;';
@@ -299,7 +431,10 @@
                 if (welcome) welcome.after(badge); else chatBox.prepend(badge);
 
                 chatBox.scrollTop = chatBox.scrollHeight;
-            } catch(e) { console.warn('Load history failed:', e); chatHistory = []; }
+            } catch(e) {
+                console.warn('Load history failed:', e);
+                chatHistory = [];
+            }
         }
 
         function restorePasalBox() {
@@ -315,12 +450,12 @@
         }
 
         function buildPasalHTML(a) {
-            return `<div style="padding:16px;background:linear-gradient(135deg,#2563EB,#1d4ed8);border-radius:18px;">
+            return `<div style="padding:16px;background:linear-gradient(135deg,#2563EB,#1d4ed8);border-radius:16px;">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <i class="fas fa-gavel" style="color:rgba(255,255,255,0.8);font-size:11px;"></i>
-                    <p style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:0.1em;margin:0;">${escapeHtml(a.pasal)}</p>
+                    <i class="fas fa-gavel" style="color:rgba(255,255,255,0.8);font-size:11px;flex-shrink:0;"></i>
+                    <p style="font-size:9px;font-weight:800;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:0.1em;margin:0;word-break:break-word;">${escapeHtml(a.pasal)}</p>
                 </div>
-                <p style="font-size:12px;color:#fff;font-style:italic;line-height:1.65;margin-bottom:10px;">"${escapeHtml(a.isi_pasal)}"</p>
+                <p style="font-size:12px;color:#fff;font-style:italic;line-height:1.65;margin-bottom:10px;word-break:break-word;">"${escapeHtml(a.isi_pasal)}"</p>
                 <div style="padding-top:10px;border-top:1px solid rgba(255,255,255,0.2);">
                     <p style="font-size:9px;color:rgba(255,255,255,0.6);text-transform:uppercase;font-weight:800;letter-spacing:0.1em;margin-bottom:4px;">Kategori</p>
                     <p style="font-size:12px;color:#fff;font-weight:700;margin:0;">${escapeHtml(a.kategori || 'Hukum Umum')}</p>
@@ -337,6 +472,7 @@
                 cancelText: 'Batal'
             });
             if (!ok) return;
+
             localStorage.removeItem(HISTORY_KEY);
             localStorage.removeItem(ANALYSIS_KEY);
             chatHistory = [];
@@ -347,6 +483,7 @@
                     <p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Status: Menunggu</p>
                     <p style="font-size:11px;color:var(--text-3);font-style:italic;line-height:1.6;">Analisis pasal hukum akan muncul di sini setelah Anda mengirim kasus.</p>
                 </div>`;
+
             const pdfBtn = document.getElementById('btn-pdf');
             if (pdfBtn) {
                 pdfBtn.disabled = true;
@@ -356,7 +493,6 @@
             if (window.showLALToast) showLALToast('success', 'Riwayat Dihapus', 'Chat baru siap dimulai.');
         }
 
-        // Append ke DOM + simpan ke history array
         function appendToChat(html, role) {
             const chatBox = document.getElementById('chat-box');
             const tmp = document.createElement('div');
@@ -367,6 +503,7 @@
             chatHistory.push({ role, html, ts: Date.now() });
             saveHistory();
         }
+
         async function fetchWithFallback(prompt) {
             let lastError = null;
             for (const model of MODEL_CHAIN) {
@@ -374,9 +511,7 @@
                     console.log(`🤖 Mencoba model: ${model}`);
                     const res = await fetch('/api/ai-proxy', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             model,
                             messages: [{ role: 'user', content: prompt }],
@@ -384,31 +519,33 @@
                             max_tokens: 3000
                         })
                     });
+
                     if (res.status === 429 || res.status === 503 || res.status === 404) {
                         console.warn(`⚠️ ${model} tidak tersedia (${res.status}), mencoba model berikutnya...`);
                         lastError = new Error(`Model ${model} tidak tersedia (${res.status})`);
                         continue;
                     }
+
                     if (!res.ok) {
                         const errTxt = await res.text();
-                        throw new Error(`API Error ${res.status}: ${errTxt.substring(0,120)}`);
+                        throw new Error(`API Error ${res.status}: ${errTxt.substring(0, 120)}`);
                     }
+
                     const data = await res.json();
                     console.log(`✅ Berhasil dengan model: ${model}`);
                     return data;
                 } catch(e) {
                     lastError = e;
-                    if (e.message.includes('429') || e.message.includes('503') || e.message.includes('404') || e.message.includes('rate') || e.message.includes('penuh') || e.message.includes('tersedia')) {
-                        continue; // coba model berikutnya
-                    }
-                    throw e; // error lain langsung lempar
+                    const isRetryable = e.message.includes('429') || e.message.includes('503') || e.message.includes('404')
+                        || e.message.includes('rate') || e.message.includes('penuh') || e.message.includes('tersedia');
+                    if (isRetryable) continue;
+                    throw e;
                 }
             }
             throw new Error(`Semua model AI sedang overload. Coba lagi dalam beberapa menit.\n(${lastError?.message || 'Rate limit'})`);
         }
 
         async function sendMessage() {
-            // Cek profil lengkap sebelum bisa chat
             if (!_profileComplete) {
                 const allowed = await guardProfile();
                 if (!allowed) return;
@@ -417,8 +554,8 @@
             const input   = document.getElementById('user-input');
             const msg     = input.value.trim();
             if (!msg || msg.length < 5) {
-                if (window.showLALToast) showLALToast('warning','Terlalu Pendek','Minimal 5 karakter.');
-                else laiAlert({ type:'warning', title:'Pesan Terlalu Pendek', message:'Minimal 5 karakter ya. Ceritakan kasusnya lebih detail.' });
+                if (window.showLALToast) showLALToast('warning', 'Terlalu Pendek', 'Minimal 5 karakter.');
+                else laiAlert({ type: 'warning', title: 'Pesan Terlalu Pendek', message: 'Minimal 5 karakter ya. Ceritakan kasusnya lebih detail.' });
                 return;
             }
 
@@ -426,8 +563,10 @@
             const btn     = document.getElementById('btn-analisis');
             const btnText = document.getElementById('btn-text');
 
-            btn.disabled = true; input.disabled = true;
-            btnText.className = 'loading-dots'; btnText.textContent = 'Menganalisis';
+            btn.disabled = true;
+            input.disabled = true;
+            btnText.className = 'loading-dots';
+            btnText.textContent = 'Menganalisis';
 
             const userHtml = `<div class="message-user"><p style="font-size:13px;margin:0;">${escapeHtml(msg)}</p></div>`;
             appendToChat(userHtml, 'user');
@@ -450,7 +589,7 @@ Pesan user: ${msg}`;
 
                 const data = await fetchWithFallback(fullPrompt);
                 let raw = data.choices[0].message.content;
-                let jsonStr = raw.trim().replace(/```json\s*/g,'').replace(/```\s*/g,'');
+                let jsonStr = raw.trim().replace(/```json\s*/g, '').replace(/```\s*/g, '');
                 const js = jsonStr.indexOf('{'), je = jsonStr.lastIndexOf('}') + 1;
                 if (js === -1 || je === 0) throw new Error('Format respons AI tidak valid');
                 const parsed = JSON.parse(jsonStr.substring(js, je));
@@ -469,7 +608,7 @@ Pesan user: ${msg}`;
                 } else {
                     if (!parsed.summary || !parsed.pasal) throw new Error('Data analisis tidak lengkap');
                     currentAnalysis = parsed;
-                    saveHistory(); // simpan analysis terbaru
+                    saveHistory();
 
                     const legalHtml = `
                         <div class="message-ai">
@@ -479,7 +618,7 @@ Pesan user: ${msg}`;
                                 </div>
                                 <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">Analisis Hukum</p>
                             </div>
-                            <p class="ai-body" style="margin-bottom:${parsed.saran?'12px':'0'};">${escapeHtml(parsed.summary)}</p>
+                            <p class="ai-body" style="margin-bottom:${parsed.saran ? '12px' : '0'};">${escapeHtml(parsed.summary)}</p>
                             ${parsed.saran ? `
                                 <div style="padding-top:12px;border-top:1px solid var(--border);">
                                     <p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">💡 Saran Tindakan</p>
@@ -487,6 +626,9 @@ Pesan user: ${msg}`;
                                 </div>` : ''}
                         </div>`;
                     appendToChat(legalHtml, 'ai');
+
+                    // Simpan ke Supabase
+                    saveToSupabase(msg, parsed);
 
                     document.getElementById('pasal-box').innerHTML = buildPasalHTML(parsed);
 
@@ -500,7 +642,9 @@ Pesan user: ${msg}`;
 
             } catch (err) {
                 console.error('❌ Error:', err);
-                const is429 = err.message.includes('429') || err.message.includes('overload') || err.message.includes('rate') || err.message.includes('penuh');
+                const is429 = err.message.includes('429') || err.message.includes('overload')
+                    || err.message.includes('rate') || err.message.includes('penuh');
+
                 appendToChat(`
                     <div class="message-ai" style="border-color:rgba(239,68,68,0.3);">
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -530,8 +674,10 @@ Pesan user: ${msg}`;
                         `}
                     </div>`, 'error');
             } finally {
-                btn.disabled = false; input.disabled = false;
-                btnText.className = ''; btnText.textContent = 'Analisis';
+                btn.disabled = false;
+                input.disabled = false;
+                btnText.className = '';
+                btnText.textContent = 'Analisis';
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
         }
@@ -540,6 +686,7 @@ Pesan user: ${msg}`;
             const chatBox = document.getElementById('chat-box');
             const old = document.getElementById('advocate-rec');
             if (old) old.remove();
+
             const el = document.createElement('div');
             el.id = 'advocate-rec';
             el.className = 'message-ai';
@@ -570,32 +717,32 @@ Pesan user: ${msg}`;
 
         function generatePDF() {
             if (!currentAnalysis) {
-                if (window.showLALToast) showLALToast('warning','Belum Ada Analisis','Kirim kasus terlebih dahulu.');
-                else laiAlert({ type:'warning', title:'Belum Ada Analisis', message:'Kirim kasus hukummu terlebih dahulu agar AI bisa menganalisis dan membuat draf somasi.' });
+                if (window.showLALToast) showLALToast('warning', 'Belum Ada Analisis', 'Kirim kasus terlebih dahulu.');
+                else laiAlert({ type: 'warning', title: 'Belum Ada Analisis', message: 'Kirim kasus hukummu terlebih dahulu agar AI bisa menganalisis dan membuat draf somasi.' });
                 return;
             }
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-                const pw  = doc.internal.pageSize.getWidth();   // 210
-                const ph  = doc.internal.pageSize.getHeight();  // 297
+                const pw  = doc.internal.pageSize.getWidth();
+                const ph  = doc.internal.pageSize.getHeight();
                 const ml  = 25, mr = 25, mt = 20;
-                const cw  = pw - ml - mr; // 160mm
+                const cw  = pw - ml - mr;
                 let y     = mt;
 
                 const tanggal = new Date().toLocaleDateString('id-ID', {
                     day: 'numeric', month: 'long', year: 'numeric'
                 });
-                const nomorSurat = `${String(Math.floor(Math.random()*900)+100)}/SOMASI/LAI/${new Date().getFullYear()}`;
+                const nomorSurat = `${String(Math.floor(Math.random() * 900) + 100)}/SOMASI/LAI/${new Date().getFullYear()}`;
 
-                // ── Helpers ──
                 const checkPage = (need = 10) => {
                     if (y + need > ph - 20) { doc.addPage(); y = mt; }
                 };
+
                 const writeText = (text, x, fontSize, style, color, maxWidth) => {
                     doc.setFontSize(fontSize);
                     doc.setFont('helvetica', style || 'normal');
-                    doc.setTextColor(...(color || [30,30,30]));
+                    doc.setTextColor(...(color || [30, 30, 30]));
                     if (maxWidth) {
                         const lines = doc.splitTextToSize(text, maxWidth);
                         doc.text(lines, x, y);
@@ -605,102 +752,84 @@ Pesan user: ${msg}`;
                         return 1;
                     }
                 };
-                const hline = (x1, x2, lw = 0.3, color = [30,30,30]) => {
+
+                const hline = (x1, x2, lw = 0.3, color = [30, 30, 30]) => {
                     doc.setLineWidth(lw);
                     doc.setDrawColor(...color);
                     doc.line(x1, y, x2, y);
                 };
 
-                // ══════════════════════════════════════════
                 // KOP SURAT
-                // ══════════════════════════════════════════
-                // Garis atas tebal
                 doc.setLineWidth(1.2);
-                doc.setDrawColor(37,99,235);
+                doc.setDrawColor(37, 99, 235);
                 doc.line(ml, y, pw - mr, y);
                 y += 6;
 
-                writeText('LAWYERS AI', ml, 18, 'bold', [37,99,235]);
+                writeText('LAWYERS AI', ml, 18, 'bold', [37, 99, 235]);
                 y += 7;
-                writeText('Konsultan & Asisten Hukum Digital', ml, 9, 'normal', [80,80,80]);
+                writeText('Konsultan & Asisten Hukum Digital', ml, 9, 'normal', [80, 80, 80]);
                 y += 5;
-                writeText('Jl. Hukum Digital No. 1, Jakarta Pusat 10110  |  www.lawyers-ai.id  |  info@lawyers-ai.id', ml, 8, 'normal', [120,120,120]);
+                writeText('Jl. Hukum Digital No. 1, Jakarta Pusat 10110  |  www.lawyers-ai.id  |  info@lawyers-ai.id', ml, 8, 'normal', [120, 120, 120]);
                 y += 4;
 
-                // Garis bawah kop
                 doc.setLineWidth(0.3);
-                doc.setDrawColor(37,99,235);
+                doc.setDrawColor(37, 99, 235);
                 doc.line(ml, y, pw - mr, y);
                 y += 8;
 
-                // ══════════════════════════════════════════
                 // IDENTITAS SURAT
-                // ══════════════════════════════════════════
-                // Nomor & tanggal — 2 kolom
-                doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+                doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
                 const col2 = ml + 85;
                 doc.text(`Nomor     : ${nomorSurat}`, ml, y);
                 doc.text(`Jakarta, ${tanggal}`, col2, y); y += 6;
                 doc.text(`Lampiran  : -`, ml, y); y += 6;
                 doc.text(`Hal       : `, ml, y);
-                doc.setFont('helvetica','bold');
+                doc.setFont('helvetica', 'bold');
                 doc.text('SOMASI (TEGURAN HUKUM)', ml + 22, y);
-                doc.setFont('helvetica','normal');
+                doc.setFont('helvetica', 'normal');
                 y += 10;
 
-                // ── Kepada ──
                 doc.text('Kepada Yth.', ml, y); y += 6;
-                doc.setFont('helvetica','bold');
+                doc.setFont('helvetica', 'bold');
                 doc.text('[NAMA PIHAK YANG DISOMASI]', ml, y); y += 6;
-                doc.setFont('helvetica','normal');
+                doc.setFont('helvetica', 'normal');
                 doc.text('[Jabatan / Instansi]', ml, y); y += 6;
                 doc.text('[Alamat Lengkap]', ml, y); y += 6;
                 doc.text('di —', ml, y); y += 6;
-                doc.setFont('helvetica','bold');
+                doc.setFont('helvetica', 'bold');
                 doc.text('Tempat', ml, y);
-                doc.setFont('helvetica','normal');
+                doc.setFont('helvetica', 'normal');
                 y += 10;
 
-                // Garis pemisah tipis
-                hline(ml, pw - mr, 0.2, [200,200,200]); y += 8;
+                hline(ml, pw - mr, 0.2, [200, 200, 200]); y += 8;
 
-                // ══════════════════════════════════════════
                 // PEMBUKAAN
-                // ══════════════════════════════════════════
                 const pembukaan = `Dengan hormat,\n\nYang bertanda tangan di bawah ini, kami dari Lawyers AI, selaku kuasa hukum dan/atau pihak yang berkepentingan, dengan ini menyampaikan SOMASI (Surat Teguran Hukum) kepada Saudara/i sebagaimana tersebut di atas, berkenaan dengan hal-hal sebagai berikut:`;
-                doc.setFontSize(11); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+                doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
                 const pembukaanLines = doc.splitTextToSize(pembukaan, cw);
                 checkPage(pembukaanLines.length * 6 + 10);
                 doc.text(pembukaanLines, ml, y);
                 y += pembukaanLines.length * 6 + 8;
 
-                // ══════════════════════════════════════════
-                // BAGIAN I — DUDUK PERMASALAHAN
-                // ══════════════════════════════════════════
+                // BAGIAN I
                 checkPage(20);
-                doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
+                doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(37, 99, 235);
                 doc.text('I.  DUDUK PERMASALAHAN', ml, y); y += 7;
-
-                doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30); doc.setFontSize(11);
                 const summaryLines = doc.splitTextToSize(currentAnalysis.summary || '-', cw);
                 checkPage(summaryLines.length * 6 + 6);
                 doc.text(summaryLines, ml, y);
                 y += summaryLines.length * 6 + 8;
 
-                // ══════════════════════════════════════════
-                // BAGIAN II — DASAR HUKUM
-                // ══════════════════════════════════════════
+                // BAGIAN II
                 checkPage(30);
-                doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
+                doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(37, 99, 235);
                 doc.text('II.  DASAR HUKUM', ml, y); y += 7;
-
-                doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30); doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30); doc.setFontSize(11);
                 doc.text(currentAnalysis.pasal || '-', ml, y); y += 6;
-
-                doc.setFont('helvetica','italic'); doc.setTextColor(60,60,60); doc.setFontSize(10);
+                doc.setFont('helvetica', 'italic'); doc.setTextColor(60, 60, 60); doc.setFontSize(10);
                 const pasalText = `"${currentAnalysis.isi_pasal || '-'}"`;
                 const pasalLines = doc.splitTextToSize(pasalText, cw - 8);
-                // Box abu tipis untuk kutipan pasal
                 checkPage(pasalLines.length * 5.5 + 12);
                 doc.setFillColor(245, 247, 250);
                 doc.setDrawColor(200, 200, 200);
@@ -709,109 +838,88 @@ Pesan user: ${msg}`;
                 doc.text(pasalLines, ml + 4, y + 2);
                 y += pasalLines.length * 5.5 + 10;
 
-                // Kategori
-                doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30); doc.setFontSize(11);
                 doc.text(`Kategori Hukum  :  `, ml, y);
-                doc.setFont('helvetica','bold');
+                doc.setFont('helvetica', 'bold');
                 doc.text(currentAnalysis.kategori || 'Hukum Umum', ml + 38, y);
-                doc.setFont('helvetica','normal');
+                doc.setFont('helvetica', 'normal');
                 y += 10;
 
-                // ══════════════════════════════════════════
-                // BAGIAN III — TUNTUTAN / SOMASI
-                // ══════════════════════════════════════════
+                // BAGIAN III
                 checkPage(40);
-                doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
+                doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(37, 99, 235);
                 doc.text('III.  TUNTUTAN DAN PERMINTAAN', ml, y); y += 7;
-
-                doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30); doc.setFontSize(11);
                 const tuntutanIntro = 'Berdasarkan uraian di atas, kami dengan ini menuntut dan meminta kepada Saudara/i untuk:';
                 const tIntroLines = doc.splitTextToSize(tuntutanIntro, cw);
                 doc.text(tIntroLines, ml, y);
                 y += tIntroLines.length * 6 + 4;
 
-                // Tuntutan dari saran AI, dipecah jadi poin-poin
                 const saranRaw = currentAnalysis.saran || 'Segera menyelesaikan permasalahan ini secara hukum.';
                 const saranPoin = saranRaw.split(/[.;]\s+/).filter(s => s.trim().length > 10);
                 saranPoin.forEach((poin, i) => {
                     checkPage(12);
-                    const poinText = `${i+1}.  ${poin.trim()}${poin.trim().endsWith('.') ? '' : '.'}`;
+                    const poinText = `${i + 1}.  ${poin.trim()}${poin.trim().endsWith('.') ? '' : '.'}`;
                     const poinLines = doc.splitTextToSize(poinText, cw - 8);
                     doc.text(poinLines, ml + 4, y);
                     y += poinLines.length * 6 + 3;
                 });
                 y += 4;
 
-                // Deadline
                 checkPage(20);
                 doc.setFillColor(254, 242, 242);
                 doc.setDrawColor(220, 80, 80);
                 doc.setLineWidth(0.3);
                 doc.roundedRect(ml, y - 3, cw, 16, 2, 2, 'FD');
-                doc.setFont('helvetica','bold'); doc.setTextColor(180,30,30); doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold'); doc.setTextColor(180, 30, 30); doc.setFontSize(10);
                 doc.text('⚠  BATAS WAKTU PEMENUHAN  :', ml + 4, y + 3);
-                doc.setFont('helvetica','normal'); doc.setTextColor(100,20,20);
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 20, 20);
                 doc.text('Selambat-lambatnya 14 (empat belas) hari kalender sejak diterimanya surat ini.', ml + 4, y + 9);
                 y += 22;
 
-                // ══════════════════════════════════════════
-                // BAGIAN IV — PENUTUP
-                // ══════════════════════════════════════════
+                // BAGIAN IV
                 checkPage(40);
-                doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
+                doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(37, 99, 235);
                 doc.text('IV.  PENUTUP', ml, y); y += 7;
-
-                doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
+                doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30); doc.setFontSize(11);
                 const penutup = `Apabila dalam batas waktu yang telah ditentukan Saudara/i tidak memenuhi tuntutan di atas, maka kami akan mengambil langkah-langkah hukum lebih lanjut, termasuk namun tidak terbatas pada gugatan perdata dan/atau laporan pidana kepada pihak berwajib sesuai ketentuan perundang-undangan yang berlaku di Negara Kesatuan Republik Indonesia.\n\nDemikian surat somasi ini kami sampaikan dengan sebenar-benarnya. Atas perhatian dan kerja sama Saudara/i, kami ucapkan terima kasih.`;
                 const penutupLines = doc.splitTextToSize(penutup, cw);
                 checkPage(penutupLines.length * 6 + 6);
                 doc.text(penutupLines, ml, y);
                 y += penutupLines.length * 6 + 12;
 
-                // ══════════════════════════════════════════
                 // TANDA TANGAN
-                // ══════════════════════════════════════════
                 checkPage(50);
-                // 2 blok TTD — Pembuat & Penerima
                 const ttdX1 = ml;
                 const ttdX2 = ml + 95;
-
-                doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+                doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
                 doc.text(`Jakarta, ${tanggal}`, ttdX1, y);
                 doc.text('Hormat kami,', ttdX1, y + 6);
                 doc.text('Yang Menerima,', ttdX2, y + 6);
-
-                y += 30; // ruang TTD
-                // Garis TTD
-                doc.setLineWidth(0.3); doc.setDrawColor(30,30,30);
+                y += 30;
+                doc.setLineWidth(0.3); doc.setDrawColor(30, 30, 30);
                 doc.line(ttdX1, y, ttdX1 + 70, y);
                 doc.line(ttdX2, y, ttdX2 + 70, y);
                 y += 5;
-
-                doc.setFont('helvetica','bold'); doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
                 doc.text('[NAMA PEMBUAT SOMASI]', ttdX1, y);
                 doc.text('[NAMA PENERIMA]', ttdX2, y); y += 5;
-                doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(80, 80, 80);
                 doc.text('Penggugat / Pelapor', ttdX1, y);
                 doc.text('Tergugat / Terlapor', ttdX2, y);
                 y += 14;
-
-                // ── Materai placeholder ──
-                doc.setDrawColor(100,100,100); doc.setLineWidth(0.3);
+                doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.3);
                 doc.rect(ttdX1 + 15, y - 38, 28, 20);
-                doc.setFontSize(7); doc.setTextColor(130,130,130); doc.setFont('helvetica','italic');
+                doc.setFontSize(7); doc.setTextColor(130, 130, 130); doc.setFont('helvetica', 'italic');
                 doc.text('Materai\nRp 10.000', ttdX1 + 22, y - 31);
 
-                // ══════════════════════════════════════════
                 // FOOTER SEMUA HALAMAN
-                // ══════════════════════════════════════════
                 const pc = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pc; i++) {
                     doc.setPage(i);
-                    // Garis footer
-                    doc.setLineWidth(0.3); doc.setDrawColor(37,99,235);
+                    doc.setLineWidth(0.3); doc.setDrawColor(37, 99, 235);
                     doc.line(ml, ph - 14, pw - mr, ph - 14);
-                    doc.setFontSize(7.5); doc.setFont('helvetica','italic'); doc.setTextColor(120,120,120);
+                    doc.setFontSize(7.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(120, 120, 120);
                     doc.text(
                         `Lawyers AI  |  Dokumen ini dibuat secara otomatis dan bersifat draf. Harap dikonsultasikan dengan advokat berlisensi.  |  Hal. ${i}/${pc}`,
                         pw / 2, ph - 9, { align: 'center' }
@@ -823,19 +931,56 @@ Pesan user: ${msg}`;
 
             } catch(e) {
                 console.error('PDF error:', e);
-                if (window.showLALToast) showLALToast('error','Gagal Buat PDF', e.message);
-                else laiAlert({ type:'danger', title:'Gagal Membuat PDF', message:`Terjadi kesalahan: ${e.message}` });
+                if (window.showLALToast) showLALToast('error', 'Gagal Buat PDF', e.message);
+                else laiAlert({ type: 'danger', title: 'Gagal Membuat PDF', message: `Terjadi kesalahan: ${e.message}` });
             }
         }
 
         function escapeHtml(t) {
-            const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
         }
 
-        window.sendMessage   = sendMessage;
-        window.generatePDF   = generatePDF;
 
-        // ── AUTO-TRIGGER DARI KATEGORI BERANDA ──
+        // ══════════════════════════════════════════
+        // SIMPAN KE SUPABASE — dipanggil setelah AI analisis
+        // ══════════════════════════════════════════
+        async function saveToSupabase(msg, parsed) {
+            try {
+                if (!window.supabase) return;
+                const { data: { session } } = await window.supabase.auth.getSession();
+                if (!session) return;
+
+                const { error } = await window.supabase
+                    .from('riwayat_konsultasi')
+                    .insert({
+                        user_id:        session.user.id,
+                        query:          msg,
+                        response:       parsed.summary  || '',
+                        hasil_analisis: parsed.summary  || '',
+                        category:       parsed.kategori || 'Umum',
+                        topik_kasus:    parsed.kategori || 'Umum',
+                        pasal_terkait:  parsed.pasal    || '',
+                        kronologi:      msg,
+                    });
+
+                if (error) {
+                    console.warn('Gagal simpan ke Supabase:', error.message);
+                } else {
+                    console.log('✅ Konsultasi tersimpan ke Supabase');
+                }
+            } catch(e) {
+                console.warn('saveToSupabase error:', e);
+            }
+        }
+
+        window.sendMessage  = sendMessage;
+        window.generatePDF  = generatePDF;
+
+        // ══════════════════════════════════════════
+        // AUTO-TRIGGER DARI KATEGORI BERANDA
+        // ══════════════════════════════════════════
         const CATEGORY_MAP = {
             'pidana':     'Halo! Saya ingin konsultasi mengenai masalah hukum pidana. Tolong jelaskan secara umum apa saja yang termasuk tindak pidana di Indonesia, hak-hak tersangka/terdakwa, dan langkah hukum yang bisa diambil jika menjadi korban tindak pidana.',
             'perdata':    'Halo! Saya ingin konsultasi mengenai masalah hukum perdata. Tolong jelaskan apa itu hukum perdata di Indonesia, contoh kasusnya, dan langkah hukum yang bisa diambil jika ada pihak yang melanggar hak perdata saya.',
@@ -851,7 +996,9 @@ Pesan user: ${msg}`;
             'konsumen':   'Halo! Saya ingin konsultasi mengenai hukum perlindungan konsumen. Tolong jelaskan hak konsumen, kewajiban pelaku usaha, lembaga perlindungan, dan cara menuntut ganti rugi.',
         };
 
-        // ── PROFILE GUARD ──
+        // ══════════════════════════════════════════
+        // PROFILE GUARD
+        // ══════════════════════════════════════════
         let _currentUser = null;
         let _profileComplete = false;
 
@@ -876,7 +1023,6 @@ Pesan user: ${msg}`;
                 _profileComplete = true;
                 return [];
             } catch(e) {
-                // Jika supabase error (misal offline), biarkan tetap bisa chat
                 _profileComplete = true;
                 return [];
             }
@@ -886,7 +1032,7 @@ Pesan user: ${msg}`;
             const missing = await checkProfileComplete();
             if (!missing || missing.length === 0) return true;
 
-            const labels = missing.map(f => `<strong>${FIELD_LABELS[f]||f}</strong>`).join(' dan ');
+            const labels = missing.map(f => `<strong>${FIELD_LABELS[f] || f}</strong>`).join(' dan ');
             const ok = await laiConfirm({
                 type: 'warning',
                 title: 'Lengkapi Profil Dulu',
@@ -898,14 +1044,14 @@ Pesan user: ${msg}`;
             return false;
         }
 
+        // ══════════════════════════════════════════
+        // INIT
+        // ══════════════════════════════════════════
         window.addEventListener('DOMContentLoaded', async () => {
-            // Load history tersimpan
             loadHistory();
 
-            // Cek profil di background
             const missing = await checkProfileComplete();
             if (missing && missing.length > 0) {
-                // Tampilkan banner peringatan di atas chat
                 const chatBox = document.getElementById('chat-box');
                 const banner = document.createElement('div');
                 banner.id = 'profile-incomplete-banner';
@@ -914,7 +1060,7 @@ Pesan user: ${msg}`;
                         <i class="fas fa-circle-exclamation" style="color:#FBBF24;font-size:16px;flex-shrink:0;"></i>
                         <div style="flex:1;min-width:0;">
                             <p style="font-size:12px;font-weight:700;color:#FDE68A;margin:0 0 2px;">Profil Belum Lengkap</p>
-                            <p style="font-size:11px;color:#92400E;color:#D97706;margin:0;">${missing.map(f=>FIELD_LABELS[f]||f).join(' & ')} belum diisi. <a href="profile.html" style="color:#FBBF24;font-weight:700;text-decoration:underline;">Lengkapi sekarang →</a></p>
+                            <p style="font-size:11px;color:#D97706;margin:0;">${missing.map(f => FIELD_LABELS[f] || f).join(' & ')} belum diisi. <a href="profile.html" style="color:#FBBF24;font-weight:700;text-decoration:underline;">Lengkapi sekarang →</a></p>
                         </div>
                         <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#92400E;cursor:pointer;font-size:14px;flex-shrink:0;padding:0;"><i class="fas fa-xmark"></i></button>
                     </div>`;
