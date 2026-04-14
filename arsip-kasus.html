@@ -253,66 +253,74 @@
                 }
 
                 // 2. Percakapan advokat dari messages
-                // Ambil semua pesan yang melibatkan user ini (sebagai sender ATAU receiver)
-                // karena bisa jadi user = receiver saat advokat yang mulai duluan
+                // Strategi: ambil semua partner chat user ini,
+                // lalu cek siapa di antara mereka yang terdaftar di mitra_ahli (advokat)
+
+                // Step A: ambil semua pesan yang melibatkan user
                 const { data: msgs, error: msgError } = await window.supabase
                     .from('messages')
-                    .select('id, conversation_id, message_text, topic, inserted_at, created_at, lawyer_id, sender_id, receiver_id')
+                    .select('id, conversation_id, message_text, topic, inserted_at, created_at, sender_id, receiver_id, lawyer_id')
                     .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
-                    .not('lawyer_id', 'is', null)
                     .order('created_at', { ascending: false });
 
                 if (msgError) console.warn('Messages error:', msgError.message);
 
                 if (msgs && msgs.length > 0) {
+                    // Step B: kumpulkan semua partner (pihak lain selain user)
                     const convMap = new Map();
                     msgs.forEach(m => {
                         const cid = m.conversation_id || m.id;
                         if (!convMap.has(cid)) {
-                            // Tentukan siapa advokat: bisa dari lawyer_id, sender, atau receiver
-                            const lawyerId = m.lawyer_id
-                                || (m.sender_id !== currentUser.id ? m.sender_id : m.receiver_id);
-
+                            const partnerId = m.sender_id === currentUser.id
+                                ? m.receiver_id
+                                : m.sender_id;
                             convMap.set(cid, {
                                 type:            'lawyer',
                                 id:              cid,
-                                rawLawyerId:     lawyerId,
-                                title:           m.topic || (m.message_text ? m.message_text.substring(0, 60) : 'Konsultasi Advokat'),
+                                partnerId:       partnerId,
+                                lawyer_id:       m.lawyer_id || partnerId,
+                                title:           m.topic || (m.message_text ? m.message_text.substring(0,60) : 'Konsultasi Advokat'),
                                 date:            new Date(m.created_at || m.inserted_at),
-                                lawyer:          'Memuat...',
+                                lawyer:          'Advokat',
                                 specialization:  'Hukum Umum',
-                                lawyer_id:       lawyerId,
                                 handling_status: 'menunggu',
                             });
                         }
                     });
 
-                    // Fetch nama advokat dari profiles
-                    const lawyerIds = [...new Set(
-                        [...convMap.values()].map(c => c.rawLawyerId).filter(Boolean)
+                    // Step C: ambil semua partner ID yang unik
+                    const partnerIds = [...new Set(
+                        [...convMap.values()].map(c => c.partnerId).filter(Boolean)
                     )];
 
-                    if (lawyerIds.length > 0) {
-                        const { data: lawyerProfiles } = await window.supabase
-                            .from('profiles')
-                            .select('id, full_name, specialization')
-                            .in('id', lawyerIds);
+                    // Step D: cek siapa yang terdaftar sebagai mitra_ahli (advokat)
+                    const { data: mitraData } = await window.supabase
+                        .from('mitra_ahli')
+                        .select('user_id, nama_lengkap, spesialisasi')
+                        .in('user_id', partnerIds);
 
-                        const profileMap = {};
-                        (lawyerProfiles || []).forEach(p => { profileMap[p.id] = p; });
+                    const mitraMap = {};
+                    (mitraData || []).forEach(m => { mitraMap[m.user_id] = m; });
 
-                        convMap.forEach(c => {
-                            const p = profileMap[c.rawLawyerId];
-                            if (p) {
-                                c.lawyer         = p.full_name    || 'Advokat';
-                                c.specialization = p.specialization || 'Hukum Umum';
-                            } else {
-                                c.lawyer = 'Advokat';
-                            }
-                        });
-                    }
+                    // Step E: ambil nama dari profiles untuk semua partner
+                    const { data: profileData } = await window.supabase
+                        .from('profiles')
+                        .select('id, full_name, specialization')
+                        .in('id', partnerIds);
 
-                    convMap.forEach(c => allCases.push(c));
+                    const profileMap = {};
+                    (profileData || []).forEach(p => { profileMap[p.id] = p; });
+
+                    // Step F: prioritaskan yang terdaftar di mitra_ahli,
+                    // tapi SELALU tampilkan semua percakapan di tab advokat
+                    [...convMap.values()].forEach(c => {
+                        const mitra   = mitraMap[c.partnerId];
+                        const profile = profileMap[c.partnerId];
+                        c.lawyer         = mitra?.nama_lengkap  || profile?.full_name     || 'Advokat';
+                        c.specialization = mitra?.spesialisasi  || profile?.specialization || 'Hukum Umum';
+                        c.is_verified_lawyer = !!mitra;
+                        allCases.push(c);
+                    });
                 }
 
                 // Sort terbaru dulu
@@ -344,29 +352,30 @@
             else if (activeFilter === 'lawyer')       filtered = allCases.filter(c => c.type === 'lawyer');
             else if (activeFilter === 'sedang_ditangani') filtered = allCases.filter(c => c.handling_status === 'sedang_ditangani');
 
+            // Update empty state content sesuai filter aktif (selalu update dulu)
+            const emptyConfigs = {
+                semua:            { icon:'fa-folder-open',   title:'Belum Ada Riwayat',           desc:'Mulai konsultasi untuk melihat arsip kasus kamu.',     cta:'konsultasi.html', ctaLabel:'Mulai Konsultasi AI' },
+                ai:               { icon:'fa-robot',         title:'Belum Ada Konsultasi AI',      desc:'Kirim kasus ke AI untuk memulai analisis hukum.',      cta:'konsultasi.html', ctaLabel:'Mulai Konsultasi AI' },
+                lawyer:           { icon:'fa-user-tie',      title:'Belum Ada Chat Advokat',       desc:'Hubungi advokat berlisensi untuk konsultasi langsung.',cta:'mitra.html',      ctaLabel:'Cari Advokat' },
+                sedang_ditangani: { icon:'fa-scale-balanced',title:'Tidak Ada Kasus Ditangani',    desc:'Kasus akan muncul saat advokat mulai menangani.',      cta:'arsip-kasus.html',ctaLabel:'Lihat Semua Kasus' },
+            };
+            const ec   = emptyConfigs[activeFilter] || emptyConfigs.semua;
+            const ei   = document.getElementById('empty-icon');
+            const et   = document.getElementById('empty-title');
+            const ed   = document.getElementById('empty-desc');
+            const ectl = document.getElementById('empty-cta');
+            if (ei)   ei.className    = `fas ${ec.icon}`;
+            if (et)   et.textContent  = ec.title;
+            if (ed)   ed.textContent  = ec.desc;
+            if (ectl) { ectl.href = ec.cta; ectl.textContent = ec.ctaLabel; }
+
             if (filtered.length === 0) {
-                container.innerHTML  = '';
+                container.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
 
             emptyState.style.display = 'none';
-            // Update empty state content sesuai filter aktif
-            const emptyConfigs = {
-                semua:            { icon:'fa-folder-open',  title:'Belum Ada Riwayat',          desc:'Mulai konsultasi untuk melihat arsip kasus kamu.',    cta:'konsultasi.html',   ctaLabel:'Mulai Konsultasi AI' },
-                ai:               { icon:'fa-robot',        title:'Belum Ada Konsultasi AI',     desc:'Kirim kasus ke AI untuk memulai analisis hukum.',     cta:'konsultasi.html',   ctaLabel:'Mulai Konsultasi AI' },
-                lawyer:           { icon:'fa-user-tie',     title:'Belum Ada Chat Advokat',      desc:'Hubungi advokat berlisensi untuk konsultasi langsung.',cta:'mitra.html',        ctaLabel:'Cari Advokat' },
-                sedang_ditangani: { icon:'fa-scale-balanced',title:'Tidak Ada Kasus Ditangani', desc:'Kasus akan muncul saat advokat mulai menangani.',      cta:'arsip-kasus.html',  ctaLabel:'Lihat Semua Kasus' },
-            };
-            const ec = emptyConfigs[activeFilter] || emptyConfigs.semua;
-            const ei = document.getElementById('empty-icon');
-            const et = document.getElementById('empty-title');
-            const ed = document.getElementById('empty-desc');
-            const ectl = document.getElementById('empty-cta');
-            if (ei) ei.className = `fas ${ec.icon}`;
-            if (et) et.textContent = ec.title;
-            if (ed) ed.textContent = ec.desc;
-            if (ectl) { ectl.href = ec.cta; ectl.textContent = ec.ctaLabel; }
             container.innerHTML = '';
 
             filtered.forEach((c, i) => {
