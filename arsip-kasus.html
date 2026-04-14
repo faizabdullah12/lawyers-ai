@@ -253,29 +253,78 @@
                 }
 
                 // 2. Pesan advokat dari messages
+                // Kolom asli: sender_id, receiver_id, lawyer_id, message_text,
+                //             conversation_id, topic, inserted_at, created_at
                 const { data: msgs, error: msgError } = await window.supabase
                     .from('messages')
-                    .select('*, lawyer:lawyer_id(nama_lengkap, spesialisasi)')
+                    .select(`
+                        id, conversation_id, message_text, topic,
+                        inserted_at, created_at,
+                        lawyer_id, receiver_id,
+                        lawyer_profile:profiles!receiver_id ( full_name, specialization )
+                    `)
                     .eq('sender_id', currentUser.id)
+                    .not('lawyer_id', 'is', null)
                     .order('created_at', { ascending: false });
 
-                if (!msgError && msgs) {
+                if (!msgError && msgs && msgs.length > 0) {
                     const convMap = new Map();
                     msgs.forEach(m => {
                         const cid = m.conversation_id || m.id;
                         if (!convMap.has(cid)) {
+                            // Cari nama advokat dari profiles via receiver_id
+                            const lawyerName = m.lawyer_profile?.full_name
+                                || m.lawyer_profile?.nama_lengkap
+                                || 'Advokat';
+                            const lawyerSpec = m.lawyer_profile?.specialization
+                                || m.lawyer_profile?.spesialisasi
+                                || 'Hukum Umum';
+                            const judul = m.topic
+                                || (m.message_text ? m.message_text.substring(0, 60) : null)
+                                || 'Konsultasi Advokat';
+
                             convMap.set(cid, {
-                                type:           'lawyer',
-                                id:             cid,
-                                title:          m.message_text ? m.message_text.substring(0, 60) + '...' : 'Konsultasi Advokat',
-                                date:           new Date(m.created_at),
-                                lawyer:         m.lawyer?.nama_lengkap || 'Advokat',
-                                specialization: m.lawyer?.spesialisasi || 'Umum',
+                                type:            'lawyer',
+                                id:              cid,
+                                title:           judul,
+                                date:            new Date(m.created_at || m.inserted_at),
+                                lawyer:          lawyerName,
+                                specialization:  lawyerSpec,
+                                lawyer_id:       m.lawyer_id,
                                 handling_status: 'menunggu',
                             });
                         }
                     });
                     convMap.forEach(c => allCases.push(c));
+                } else if (msgError) {
+                    console.warn('Messages query error:', msgError.message);
+                    // Fallback: coba tanpa join profiles
+                    const { data: msgs2 } = await window.supabase
+                        .from('messages')
+                        .select('id, conversation_id, message_text, topic, inserted_at, created_at, lawyer_id, receiver_id')
+                        .eq('sender_id', currentUser.id)
+                        .not('lawyer_id', 'is', null)
+                        .order('created_at', { ascending: false });
+
+                    if (msgs2 && msgs2.length > 0) {
+                        const convMap = new Map();
+                        msgs2.forEach(m => {
+                            const cid = m.conversation_id || m.id;
+                            if (!convMap.has(cid)) {
+                                convMap.set(cid, {
+                                    type:            'lawyer',
+                                    id:              cid,
+                                    title:           m.topic || (m.message_text ? m.message_text.substring(0, 60) : 'Konsultasi Advokat'),
+                                    date:            new Date(m.created_at || m.inserted_at),
+                                    lawyer:          'Advokat',
+                                    specialization:  'Hukum Umum',
+                                    lawyer_id:       m.lawyer_id,
+                                    handling_status: 'menunggu',
+                                });
+                            }
+                        });
+                        convMap.forEach(c => allCases.push(c));
+                    }
                 }
 
                 // Sort terbaru dulu
@@ -422,7 +471,7 @@
         function subscribeRealtimeStatus() {
             if (!window.supabase || !currentUser) return;
             window.supabase
-                .channel('arsip-cases-' + currentUser.id)
+                .channel('arsip-realtime-' + currentUser.id)
                 .on('postgres_changes', {
                     event:  'UPDATE',
                     schema: 'public',
@@ -430,20 +479,27 @@
                     filter: `user_id=eq.${currentUser.id}`,
                 }, (payload) => {
                     const updated = payload.new;
-                    // Update data lokal
                     const idx = allCases.findIndex(c => c.id === updated.id);
                     if (idx !== -1) {
-                        allCases[idx].handling_status   = updated.handling_status;
-                        allCases[idx].lawyer_name       = updated.lawyer_name || null;
+                        allCases[idx].handling_status    = updated.handling_status    || 'menunggu';
+                        allCases[idx].lawyer_name        = updated.lawyer_name        || null;
                         allCases[idx].assigned_lawyer_id = updated.assigned_lawyer_id || null;
                     }
-                    // Re-render
                     renderCases();
-                    // Toast notifikasi
                     const cfg = STATUS_CFG[updated.handling_status];
                     if (cfg && window.showLALToast) {
                         showLALToast('info', 'Status Kasus Diperbarui', `Kasus Anda kini: ${cfg.label}`);
                     }
+                })
+                // Juga listen pesan baru dari advokat
+                .on('postgres_changes', {
+                    event:  'INSERT',
+                    schema: 'public',
+                    table:  'messages',
+                    filter: `receiver_id=eq.${currentUser.id}`,
+                }, () => {
+                    // Reload untuk tampilkan pesan baru di tab Advokat
+                    loadCaseHistory();
                 })
                 .subscribe();
         }
