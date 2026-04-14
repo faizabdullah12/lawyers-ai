@@ -209,26 +209,47 @@
             try {
                 allCases = [];
 
-                // 1. Konsultasi AI dari riwayat_konsultasi
-                const { data: aiData, error: aiError } = await window.supabase
+                // 1. Konsultasi AI
+                // Kolom: query, response/hasil_analisis, category/topik_kasus, pasal_terkait
+                let { data: aiData, error: aiError } = await window.supabase
                     .from('riwayat_konsultasi')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
 
-                if (!aiError && aiData) {
-                    aiData.forEach(c => allCases.push({
-                        type:           'ai',
-                        id:             c.id,
-                        title:          c.query ? c.query.substring(0, 60) + (c.query.length > 60 ? '...' : '') : 'Konsultasi AI',
-                        category:       c.category || 'Umum',
-                        date:           new Date(c.created_at),
-                        content:        c.response || '',
-                        handling_status: c.handling_status || 'menunggu',
-                        assigned_lawyer_id: c.assigned_lawyer_id || null,
-                        lawyer_name:    c.lawyer_name || null,
-                        raw:            c,
-                    }));
+                if (aiError) console.warn('riwayat error:', aiError.message);
+
+                // FALLBACK: jika kosong, ambil semua (RLS akan filter otomatis)
+                if (!aiError && (!aiData || aiData.length === 0)) {
+                    console.log('Filter user_id kosong, mencoba tanpa filter...');
+                    const fallback = await window.supabase
+                        .from('riwayat_konsultasi')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                        .limit(100);
+                    if (!fallback.error) aiData = fallback.data || [];
+                    console.log('Fallback result:', aiData.length, 'rows');
+                }
+
+                if (aiData && aiData.length > 0) {
+                    aiData.forEach(c => {
+                        const rawTitle   = c.query || c.topik_kasus || c.kronologi || 'Konsultasi AI';
+                        const rawContent = c.response || c.hasil_analisis || '';
+                        const rawCat     = c.category || c.topik_kasus || 'Umum';
+                        allCases.push({
+                            type:               'ai',
+                            id:                 c.id,
+                            title:              rawTitle.substring(0, 60) + (rawTitle.length > 60 ? '...' : ''),
+                            category:           rawCat,
+                            date:               new Date(c.created_at),
+                            content:            rawContent,
+                            pasal:              c.pasal_terkait || '',
+                            handling_status:    c.handling_status || 'menunggu',
+                            assigned_lawyer_id: c.assigned_lawyer_id || null,
+                            lawyer_name:        c.lawyer_name || null,
+                            raw:                c,
+                        });
+                    });
                 }
 
                 // 2. Pesan advokat dari messages
@@ -471,13 +492,23 @@
                                 </div>` : ''}
                                 <div class="detail-block">
                                     <p style="font-size:9px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;">Pertanyaan Anda</p>
-                                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${escHtml(data.query || '-')}</p>
+                                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${escHtml(data.query || data.topik_kasus || data.kronologi || '-')}</p>
                                 </div>
+                                ${data.kronologi && data.query ? `
+                                <div class="detail-block">
+                                    <p style="font-size:9px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;">Kronologi</p>
+                                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(data.kronologi)}</p>
+                                </div>` : ''}
                                 <div class="detail-block">
                                     <p style="font-size:9px;font-weight:700;color:#34D399;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;">Analisis AI</p>
-                                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(data.response || '-')}</p>
+                                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(data.response || data.hasil_analisis || '-')}</p>
                                 </div>
-                                ${data.category ? `<span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:4px 12px;border-radius:20px;text-transform:uppercase;">${escHtml(data.category)}</span>` : ''}
+                                ${data.pasal_terkait ? `
+                                <div class="detail-block">
+                                    <p style="font-size:9px;font-weight:700;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px;">Pasal Terkait</p>
+                                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${escHtml(data.pasal_terkait)}</p>
+                                </div>` : ''}
+                                ${data.category || data.topik_kasus ? `<span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:4px 12px;border-radius:20px;text-transform:uppercase;">${escHtml(data.category || data.topik_kasus)}</span>` : ''}
                             </div>
                         </div>`;
                     document.body.appendChild(modal);
@@ -555,7 +586,7 @@
                 y += 6;
                 doc.setFontSize(11); doc.setFont('helvetica', 'normal');
                 doc.setTextColor(30, 41, 59);
-                const qLines = doc.splitTextToSize(data.query || '-', TW);
+                const qLines = doc.splitTextToSize(data.query || data.topik_kasus || data.kronologi || '-', TW);
                 doc.text(qLines, M, y);
                 y += qLines.length * 6 + 10;
 
@@ -568,7 +599,7 @@
                 y += 6;
                 doc.setFontSize(10); doc.setFont('helvetica', 'normal');
                 doc.setTextColor(30, 41, 59);
-                const aLines = doc.splitTextToSize(data.response || '-', TW);
+                const aLines = doc.splitTextToSize(data.response || data.hasil_analisis || '-', TW);
                 aLines.forEach(line => {
                     if (y > 270) { doc.addPage(); y = 20; }
                     doc.text(line, M, y);
