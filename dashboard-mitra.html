@@ -12,49 +12,143 @@
     <script src="push-init.js"></script>
     <script src="shared-modal.js"></script>
     <link rel="stylesheet" href="shared.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
 
     <style>
-    /* ══════════════════════════════════════════════
-       LAYOUT
-    ══════════════════════════════════════════════ */
+    :root {
+        --bg-base: #060A12;
+        --bg-sidebar: #0C1220;
+        --bg-card: #111827;
+        --bg-input: #1A2235;
+        --bg-hover: #1E2940;
+        --border: rgba(255,255,255,0.06);
+        --border-hover: rgba(255,255,255,0.12);
+        --text-1: #F1F5F9;
+        --text-2: #94A3B8;
+        --text-3: #475569;
+        --text-4: #2D3748;
+        --accent: #3B82F6;
+        --accent-dark: #2563EB;
+        --emerald: #10B981;
+        --gold: #F59E0B;
+        --shadow: rgba(0,0,0,0.3);
+        --sidebar-w: 240px;
+        --radius: 16px;
+    }
+    body.light {
+        --bg-base: #EEF2F7;
+        --bg-sidebar: #FFFFFF;
+        --bg-card: #FFFFFF;
+        --bg-input: #F1F5F9;
+        --bg-hover: #E2E8F0;
+        --border: rgba(0,0,0,0.07);
+        --border-hover: rgba(0,0,0,0.14);
+        --text-1: #0F172A;
+        --text-2: #334155;
+        --text-3: #64748B;
+        --text-4: #CBD5E1;
+        --shadow: rgba(0,0,0,0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html { height: 100%; }
+    body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: var(--bg-base);
+        color: var(--text-1);
+        margin: 0; padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        transition: background 0.3s, color 0.3s;
+    }
+
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+
+    /* ══ SIDEBAR ══ */
+    #sidebar {
+        width: var(--sidebar-w);
+        flex-shrink: 0;
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        z-index: 200;
+        transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+    @media (max-width: 1024px) {
+        #sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: none; }
+        #sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+    }
+    .sidebar-logo { padding: 20px 18px 14px; border-bottom: 1px solid var(--border); }
+    .sidebar-logo h1 { font-size: 20px; font-weight: 900; font-style: italic; color: var(--text-1); margin: 0; letter-spacing: -0.5px; }
+    .sidebar-logo h1 span { color: var(--accent); }
+    .sidebar-online { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+    .sidebar-online-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); animation: pulseDot 2s infinite; }
+    @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+    .sidebar-online-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
+    .sidebar-nav { flex: 1; padding: 12px 10px; }
+    .nav-link {
+        display: flex; align-items: center; gap: 9px;
+        padding: 10px 10px; border-radius: 12px;
+        font-size: 12.5px; font-weight: 600; color: var(--text-2);
+        text-decoration: none; transition: all 0.15s; cursor: pointer;
+        min-height: 42px; margin-bottom: 2px;
+    }
+    .nav-link:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
+    .nav-link.active { background: rgba(59,130,246,0.12); color: #60A5FA; }
+    .nav-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+    .nav-link.active .nav-icon { background: rgba(59,130,246,0.2); }
+    body.light .nav-link:hover { background: rgba(0,0,0,0.04); }
+    body.light .nav-link.active { background: rgba(59,130,246,0.1); color: #2563EB; }
+    body.light .nav-icon { background: rgba(0,0,0,0.05); }
+
+    .sidebar-profile {
+        margin: 8px 10px 12px;
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border);
+    }
+    body.light .sidebar-profile { background: rgba(0,0,0,0.03); }
+    .profile-av { width: 38px; height: 38px; border-radius: 11px; object-fit: cover; border: 1.5px solid var(--border); flex-shrink: 0; }
+    .rt-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); animation: aiPulse 2.5s infinite; flex-shrink: 0; }
+    @keyframes aiPulse { 0%,100%{box-shadow:0 0 0 2px rgba(16,185,129,0.3)} 50%{box-shadow:0 0 0 4px rgba(16,185,129,0.1)} }
+
+    /* ══ APP ══ */
     #adv-app {
-        position: fixed;
-        top: 0; bottom: 0; right: 0;
-        left: var(--sidebar-w, 260px);
+        flex: 1;
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        background: var(--bg-base);
-        z-index: 1;
+        min-width: 0;
     }
-    @media (max-width: 1024px) { #adv-app { left: 0; } }
 
     /* ══ TOPBAR ══ */
     #topbar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 16px;
-        height: 56px;
+        padding: 0 18px;
+        height: 54px;
         border-bottom: 1px solid var(--border);
         background: var(--bg-sidebar);
         flex-shrink: 0;
         gap: 12px;
     }
     body.light #topbar { background: #FFFFFF; }
-    @media (max-width: 1024px) {
-        #topbar { padding-left: 72px; }
-        .topbar-tabs .tab-btn .label { display: none; }
-        #rt-status { display: none; }
-    }
+    @media (max-width: 1024px) { #topbar { padding-left: 58px; } }
 
-    .topbar-tabs { display: flex; gap: 4px; }
+    .topbar-tabs { display: flex; gap: 3px; }
     .tab-btn {
         display: flex; align-items: center; gap: 6px;
-        padding: 6px 12px; border-radius: 10px;
-        font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-        color: var(--text-3); background: none; border: none; cursor: pointer;
-        height: 36px;
+        padding: 6px 14px; border-radius: 10px;
+        font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+        color: var(--text-3); background: none; border: none; cursor: pointer; font-family: inherit;
+        height: 34px; transition: all 0.15s;
     }
     .tab-btn:hover { background: var(--bg-input); color: var(--text-2); }
     .tab-btn.active { background: rgba(59,130,246,0.12); color: var(--accent); }
@@ -65,6 +159,10 @@
         display: none; align-items: center; justify-content: center;
     }
     .tab-badge.show { display: flex; }
+    @media (max-width: 768px) {
+        .tab-btn .tab-label { display: none; }
+        .tab-btn { padding: 6px 10px; }
+    }
 
     /* ══ PANELS ══ */
     .panel { display: none; flex: 1; overflow: hidden; min-height: 0; }
@@ -75,7 +173,7 @@
 
     /* ══ CONV SIDEBAR ══ */
     #conv-sidebar {
-        width: 300px; flex-shrink: 0;
+        width: 290px; flex-shrink: 0;
         border-right: 1px solid var(--border);
         display: flex; flex-direction: column;
         background: var(--bg-sidebar); overflow: hidden;
@@ -88,87 +186,92 @@
         }
         #conv-sidebar.mobile-hidden { transform: translateX(-100%); pointer-events: none; }
     }
-
-    .conv-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .conv-search { position: relative; margin-top: 10px; }
+    .conv-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .conv-search { position: relative; margin-top: 9px; }
     .conv-search input {
-        width: 100%; padding: 8px 12px 8px 32px;
+        width: 100%; padding: 8px 12px 8px 30px;
         background: var(--bg-input); border: 1px solid var(--border);
         border-radius: 10px; font-size: 12px; font-weight: 500;
-        color: var(--text-1); font-family: inherit; outline: none;
+        color: var(--text-1); font-family: inherit; outline: none; transition: border-color 0.2s;
     }
     .conv-search input:focus { border-color: var(--accent); }
     .conv-search input::placeholder { color: var(--text-3); }
     .conv-search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 10px; }
-    .conv-filter { display: flex; gap: 5px; margin-top: 10px; }
+    .conv-filter { display: flex; gap: 5px; margin-top: 8px; }
     .conv-filter-btn {
         flex: 1; padding: 5px 8px; border-radius: 8px;
         font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
-        background: var(--bg-input); border: 1px solid var(--border); color: var(--text-3); cursor: pointer;
+        background: var(--bg-input); border: 1px solid var(--border); color: var(--text-3); cursor: pointer; font-family: inherit;
     }
     .conv-filter-btn.active { background: rgba(59,130,246,0.12); color: var(--accent); border-color: rgba(59,130,246,0.25); }
     .conv-list { flex: 1; overflow-y: auto; }
     .conv-item {
         display: flex; align-items: center; gap: 11px;
-        padding: 13px 18px; cursor: pointer;
+        padding: 12px 16px; cursor: pointer;
         border-bottom: 1px solid var(--border); position: relative;
+        transition: background 0.12s;
     }
     .conv-item:hover { background: var(--bg-input); }
     .conv-item.active { background: rgba(59,130,246,0.07); }
     .conv-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0; }
     .conv-avatar { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1.5px solid var(--border); }
-    .conv-unread-dot { position: absolute; top: 13px; right: 18px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg-sidebar); }
-    body.light .conv-unread-dot { border-color: #fff; }
     .unread-badge { min-width: 18px; height: 18px; padding: 0 4px; background: var(--accent); color: #fff; border-radius: 9px; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
     /* ══ CHAT AREA ══ */
-    #chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; background: var(--bg-base); }
+    #chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
     #chat-view { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
-    #chat-empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; opacity: 0.35; padding: 40px; text-align: center; }
+    #chat-empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 40px; text-align: center; }
 
-    #chat-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-sidebar); flex-shrink: 0; }
+    #chat-top {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 16px; border-bottom: 1px solid var(--border);
+        background: var(--bg-sidebar); flex-shrink: 0;
+    }
     body.light #chat-top { background: #FFFFFF; }
     .chat-adv-avatar { width: 38px; height: 38px; border-radius: 11px; object-fit: cover; border: 1.5px solid var(--border); }
-
-    .online-ring { position: relative; }
+    .online-ring { position: relative; flex-shrink: 0; }
     .online-ring::after {
         content: ''; position: absolute; bottom: -2px; right: -2px;
         width: 10px; height: 10px; border-radius: 50%;
         background: var(--text-3); border: 2px solid var(--bg-sidebar);
-        transition: background 0.4s ease;
+        transition: background 0.4s;
     }
-    .online-ring.status-online::after { background: #10B981 !important; animation: clientPulse 2.5s infinite; }
-    .online-ring.status-away::after { background: #F59E0B !important; animation: none; }
-    .online-ring.status-offline::after { background: var(--text-3) !important; animation: none; }
-    @keyframes clientPulse { 0%,100% { box-shadow: 0 0 0 2px rgba(16,185,129,0.2); } 50% { box-shadow: 0 0 0 4px rgba(16,185,129,0.08); } }
+    .online-ring.status-online::after { background: var(--emerald) !important; animation: clientPulse 2.5s infinite; }
+    .online-ring.status-away::after { background: var(--gold) !important; }
+    @keyframes clientPulse { 0%,100%{box-shadow:0 0 0 2px rgba(16,185,129,0.2)} 50%{box-shadow:0 0 0 4px rgba(16,185,129,0.08)} }
 
-    #chat-box { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+    #chat-box {
+        flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+        padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0;
+    }
+    body.light #chat-box { background: #EEF2F7; }
 
     .date-sep { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; }
     .date-sep::before, .date-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .date-sep span { font-size: 9.5px; font-weight: 600; color: var(--text-3); }
+    .date-sep span { font-size: 9.5px; font-weight: 600; color: var(--text-3); padding: 3px 10px; background: var(--bg-input); border-radius: 20px; border: 1px solid var(--border); }
 
     .msg-row { display: flex; align-items: flex-end; gap: 8px; }
     .msg-row.me { justify-content: flex-end; }
     .msg-av { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
     .msg-av-init { width: 26px; height: 26px; border-radius: 8px; background: var(--accent-dark); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .msg-av-space { width: 26px; flex-shrink: 0; }
 
     .msg-bubble-box { max-width: 72%; min-width: 0; }
-    @media (max-width: 1024px) { .msg-bubble-box { max-width: 82%; } }
-    .msg-bubble { padding: 10px 14px; font-size: 14px; line-height: 1.6; word-break: break-word; border-radius: 14px; }
+    @media (max-width: 768px) { .msg-bubble-box { max-width: 84%; } }
+    .msg-bubble { padding: 10px 14px; font-size: 14px; line-height: 1.6; word-break: break-word; }
     .msg-bubble p { margin: 0; }
-    .bubble-in { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px 14px 14px 3px; color: var(--text-1); }
+    .bubble-in { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px 16px 16px 3px; color: var(--text-1); }
     body.light .bubble-in { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
-    .bubble-out { background: linear-gradient(135deg, #2563EB, #1D4ED8); border-radius: 14px 14px 3px 14px; color: #fff; }
+    .bubble-out { background: linear-gradient(135deg, #2563EB, #1D4ED8); border-radius: 16px 16px 3px 16px; color: #fff; }
     .msg-meta { display: flex; align-items: center; gap: 4px; margin-top: 3px; padding: 0 4px; font-size: 9.5px; color: var(--text-3); font-weight: 500; opacity: 0; transition: opacity 0.2s; }
     .msg-row:hover .msg-meta { opacity: 1; }
 
     #typing-indicator-row { display: none; align-items: flex-end; gap: 8px; padding: 0 16px 10px; }
-    .typing-dots { display: flex; gap: 3px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px 14px 14px 3px; padding: 10px 14px; }
+    .typing-dots { display: flex; gap: 3px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px 16px 16px 3px; padding: 10px 14px; }
     .t-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-3); animation: tdot 1.4s ease-in-out infinite; }
     .t-dot:nth-child(2) { animation-delay: 0.15s; }
     .t-dot:nth-child(3) { animation-delay: 0.3s; }
-    @keyframes tdot { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-5px); opacity: 1; } }
+    @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-5px);opacity:1} }
 
     #chat-input-area {
         flex-shrink: 0;
@@ -182,51 +285,48 @@
     #msg-textarea {
         flex: 1; min-width: 0;
         background: var(--bg-input); border: 1.5px solid var(--border);
-        border-radius: 12px; padding: 10px 14px;
-        font-size: 16px; font-weight: 500; color: var(--text-1);
+        border-radius: 14px; padding: 10px 14px;
+        font-size: 14px; font-weight: 500; color: var(--text-1);
         font-family: inherit; outline: none; resize: none;
         height: 44px; max-height: 120px; overflow-y: auto; line-height: 1.5;
+        transition: border-color 0.2s;
     }
     #msg-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
     #msg-textarea::placeholder { color: var(--text-3); }
     body.light #msg-textarea { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
-    .send-btn { width: 44px; height: 44px; border-radius: 11px; background: var(--accent-dark); color: #fff; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .send-btn:hover { background: #1D4ED8; }
-    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .send-btn { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-dark); color: #fff; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .send-btn:hover { background: #1D4ED8; transform: scale(1.05); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    /* ══════════════════════════════════════════════
-       PANEL KASUS — BARU
-    ══════════════════════════════════════════════ */
+    /* ══ KASUS PANEL ══ */
     .kasus-inner { max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; }
-    @media (max-width: 1024px) { .kasus-inner { padding: 20px 16px 80px; } }
+    @media (max-width: 768px) { .kasus-inner { padding: 16px 14px 80px; } }
 
-    /* Stats row */
-    .kasus-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .kasus-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
     @media (max-width: 768px) { .kasus-stats { grid-template-columns: repeat(2, 1fr); } }
+
     .stat-card {
-        background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
-        padding: 16px 18px; position: relative; overflow: hidden;
-        transition: transform 0.2s, border-color 0.2s;
+        background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 16px 18px; position: relative; overflow: hidden; transition: transform 0.2s, border-color 0.2s;
+        cursor: default;
     }
-    .stat-card:hover { transform: translateY(-2px); }
-    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 16px 16px 0 0; }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--border-hover); }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
     .stat-card.s-total::before { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
     .stat-card.s-menunggu::before { background: linear-gradient(90deg, #64748B, #94A3B8); }
     .stat-card.s-ditangani::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
     .stat-card.s-selesai::before { background: linear-gradient(90deg, #10B981, #34D399); }
-    .stat-number { font-size: 28px; font-weight: 900; font-style: italic; color: var(--text-1); line-height: 1; margin-bottom: 4px; }
+    body.light .stat-card { background: #FFFFFF; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .stat-number { font-size: 30px; font-weight: 900; font-style: italic; color: var(--text-1); line-height: 1; margin-bottom: 4px; }
     .stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
 
-    /* Filter strip */
-    .kasus-filter-strip {
-        display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
-    }
+    .kasus-filter-strip { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
     .kf-btn {
-        display: flex; align-items: center; gap: 6px;
-        padding: 7px 14px; border-radius: 20px;
+        display: flex; align-items: center; gap: 5px;
+        padding: 6px 14px; border-radius: 20px;
         font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
         background: var(--bg-input); border: 1px solid var(--border); color: var(--text-3);
-        cursor: pointer; transition: all 0.2s; font-family: inherit;
+        cursor: pointer; transition: all 0.15s; font-family: inherit;
     }
     .kf-btn:hover { border-color: rgba(59,130,246,0.3); color: var(--text-2); }
     .kf-btn.active { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.3); color: #60A5FA; }
@@ -236,22 +336,19 @@
     .kf-btn.f-ditutup.active { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: #F87171; }
     .kf-count { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--bg-base); font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
 
-    /* Search in kasus */
-    .kasus-search { position: relative; flex: 1; min-width: 180px; max-width: 320px; margin-left: auto; }
-    .kasus-search input { width: 100%; padding: 8px 12px 8px 32px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 500; color: var(--text-1); font-family: inherit; outline: none; }
+    .kasus-search { position: relative; flex: 1; min-width: 160px; max-width: 300px; margin-left: auto; }
+    .kasus-search input { width: 100%; padding: 7px 12px 7px 30px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 500; color: var(--text-1); font-family: inherit; outline: none; transition: border-color 0.2s; }
     .kasus-search input:focus { border-color: var(--accent); }
     .kasus-search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 10px; }
 
-    /* Kasus cards grid */
-    #kasus-grid { display: flex; flex-direction: column; gap: 10px; }
-
+    /* ── Kasus Card ── */
     .kasus-card {
         background: var(--bg-card); border: 1px solid var(--border);
-        border-radius: 18px; padding: 18px 20px;
+        border-radius: 20px; padding: 18px 20px;
         transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
         position: relative; overflow: hidden;
     }
-    .kasus-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 18px 0 0 18px; }
+    .kasus-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 20px 0 0 20px; }
     .kasus-card.k-menunggu::before { background: #64748B; }
     .kasus-card.k-sedang_ditangani::before { background: #F59E0B; }
     .kasus-card.k-selesai::before { background: #10B981; }
@@ -259,142 +356,198 @@
     .kasus-card:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: 0 6px 20px var(--shadow); }
     body.light .kasus-card { background: #FFFFFF; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
 
-    /* Status badge in kasus */
     .ks-badge {
         display: inline-flex; align-items: center; gap: 5px;
         padding: 3px 10px; border-radius: 20px;
-        font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
-        white-space: nowrap;
+        font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap;
     }
     .ks-badge.b-menunggu { background: rgba(100,116,139,0.12); color: #94A3B8; border: 1px solid rgba(100,116,139,0.2); }
     .ks-badge.b-sedang_ditangani { background: rgba(245,158,11,0.12); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); animation: pulseBadge 2s ease-in-out infinite; }
     .ks-badge.b-selesai { background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
     .ks-badge.b-ditutup { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
-    @keyframes pulseBadge { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+    @keyframes pulseBadge { 0%,100%{opacity:1} 50%{opacity:0.55} }
 
-    /* Action buttons */
     .kasus-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
     .kbtn {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 7px 14px; border-radius: 10px;
-        font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
-        border: none; cursor: pointer; font-family: inherit;
-        transition: all 0.15s;
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 7px 13px; border-radius: 10px;
+        font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+        border: none; cursor: pointer; font-family: inherit; transition: all 0.15s;
     }
     .kbtn-tangani { background: rgba(245,158,11,0.12); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
-    .kbtn-tangani:hover { background: rgba(245,158,11,0.2); }
+    .kbtn-tangani:hover { background: rgba(245,158,11,0.22); }
     .kbtn-selesai { background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-    .kbtn-selesai:hover { background: rgba(16,185,129,0.2); }
+    .kbtn-selesai:hover { background: rgba(16,185,129,0.22); }
     .kbtn-tutup { background: rgba(239,68,68,0.08); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
-    .kbtn-tutup:hover { background: rgba(239,68,68,0.14); }
+    .kbtn-tutup:hover { background: rgba(239,68,68,0.16); }
     .kbtn-detail { background: rgba(59,130,246,0.1); color: #60A5FA; border: 1px solid rgba(59,130,246,0.2); }
-    .kbtn-detail:hover { background: rgba(59,130,246,0.18); }
+    .kbtn-detail:hover { background: rgba(59,130,246,0.2); }
     .kbtn-chat { background: rgba(99,102,241,0.1); color: #818CF8; border: 1px solid rgba(99,102,241,0.2); }
-    .kbtn-chat:hover { background: rgba(99,102,241,0.18); }
+    .kbtn-chat:hover { background: rgba(99,102,241,0.2); }
     .kbtn-reset { background: rgba(100,116,139,0.1); color: #94A3B8; border: 1px solid rgba(100,116,139,0.2); }
     .kbtn-reset:hover { background: rgba(100,116,139,0.18); }
     .kbtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* Client info row */
-    .client-info-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .client-info-row { display: flex; align-items: center; gap: 10px; }
     .client-mini-av { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; border: 1.5px solid var(--border); flex-shrink: 0; }
 
-    /* ══ DETAIL MODAL ══ */
-    .k-modal-overlay { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    /* ── Self-case warning ── */
+    .self-case-warn {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px; border-radius: 10px;
+        background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.18);
+        font-size: 11px; font-weight: 600; color: #F87171;
+    }
+
+    /* ── Detail Modal ── */
+    .k-modal-overlay { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
     .k-modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); }
     .k-modal-box {
         position: relative; z-index: 1;
         background: var(--bg-sidebar); border: 1px solid var(--border);
         border-radius: 24px; width: 100%; max-width: 680px;
-        max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;
+        max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+        animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
     }
-    body.light .k-modal-box { background: #FFFFFF; }
+    @keyframes modalIn { from{transform:translateY(30px) scale(0.95);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+    body.light .k-modal-box { background: #FFFFFF; box-shadow: 0 24px 80px rgba(0,0,0,0.15); }
     .k-modal-head { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .k-modal-body { overflow-y: auto; padding: 20px 22px; flex: 1; }
-    .k-modal-footer { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap; }
-    .detail-block { background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+    .k-modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap; align-items: center; }
+    .detail-block { background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 10px; }
     body.light .detail-block { background: #F8FAFC; }
     .detail-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 8px; }
-
-    /* Catatan advokat */
-    .catatan-area { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; resize: vertical; min-height: 80px; line-height: 1.6; margin-top: 6px; }
+    .catatan-area { width: 100%; padding: 11px 13px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 11px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; resize: vertical; min-height: 80px; line-height: 1.6; margin-top: 6px; transition: border-color 0.2s; }
     .catatan-area:focus { border-color: var(--accent); }
     body.light .catatan-area { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
 
-    /* Loading skeleton */
-    .skel { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-input) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: skelPulse 1.5s ease-in-out infinite; border-radius: 10px; }
-    @keyframes skelPulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* ── Skeleton ── */
+    .skel { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-input) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: skelPulse 1.4s ease-in-out infinite; border-radius: 10px; }
+    @keyframes skelPulse { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* Empty kasus */
-    .kasus-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px 20px; text-align: center; opacity: 0.5; }
+    .kasus-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px 20px; text-align: center; opacity: 0.45; }
 
     /* ══ PROFIL ══ */
     .profil-inner { max-width: 820px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; }
-    @media (max-width: 1024px) { .profil-inner { padding: 20px 16px 80px; } }
-    .profil-banner { width: 100%; height: 160px; border-radius: 20px; background: linear-gradient(135deg, #0B1628, #1E3A6E, #2563EB); position: relative; margin-bottom: 72px; }
-    .profil-banner::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 70% 50%, rgba(99,102,241,0.3), transparent 60%); }
-    @media (max-width: 1024px) { .profil-banner { height: 120px; margin-bottom: 58px; } }
+    @media (max-width: 768px) { .profil-inner { padding: 16px 14px 80px; } }
+    .profil-banner { width: 100%; height: 160px; border-radius: 20px; background: linear-gradient(135deg, #0B1628, #1E3A6E, #2563EB); position: relative; overflow: visible; margin-bottom: 72px; flex-shrink: 0; }
+    .profil-banner::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 70% 50%, rgba(99,102,241,0.35), transparent 55%); border-radius: inherit; }
+    @media (max-width: 768px) { .profil-banner { height: 120px; margin-bottom: 58px; } }
     .profil-avatar-zone { position: absolute; bottom: -46px; left: 28px; }
     .profil-avatar { width: 90px; height: 90px; border-radius: 22px; object-fit: cover; border: 3px solid var(--bg-base); box-shadow: 0 10px 32px rgba(0,0,0,0.5); display: block; }
     body.light .profil-avatar { border-color: #EEF2F7; }
-    .profil-avatar-upload { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--accent-dark); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; color: #fff; border: 2px solid var(--bg-base); }
+    .profil-avatar-upload { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--accent-dark); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; color: #fff; border: 2px solid var(--bg-base); transition: background 0.15s; }
+    .profil-avatar-upload:hover { background: #1D4ED8; }
     body.light .profil-avatar-upload { border-color: #EEF2F7; }
-    .profil-badge-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
     .badge-verified { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(16,185,129,0.12); color: #34D399; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
     .badge-spec { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(59,130,246,0.1); color: #60A5FA; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 1024px) { .form-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); }
-    .form-select { width: 100%; padding: 13px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-1); outline: none; appearance: none; cursor: pointer; }
+    .field {
+        padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border);
+        border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500;
+        color: var(--text-1); outline: none; transition: border-color 0.2s;
+        width: 100%;
+    }
+    .field:focus { border-color: var(--accent); background: var(--bg-hover); }
+    body.light .field { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
+    body.light .field:focus { border-color: #3B82F6; background: #FAFAFA; }
+    .form-select { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-1); outline: none; appearance: none; cursor: pointer; transition: border-color 0.2s; }
     .form-select:focus { border-color: var(--accent); }
     body.light .form-select { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
-    .form-textarea { width: 100%; padding: 13px 16px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; resize: vertical; min-height: 90px; line-height: 1.6; }
+    .form-textarea { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; resize: vertical; min-height: 90px; line-height: 1.6; transition: border-color 0.2s; }
     .form-textarea:focus { border-color: var(--accent); }
     body.light .form-textarea { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
-    .section-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
-    .section-heading { font-size: 13px; font-weight: 800; font-style: italic; color: var(--text-1); margin: 0 0 16px; }
+    .section-heading { font-size: 13px; font-weight: 800; font-style: italic; color: var(--text-1); margin: 0 0 14px; }
     .section-heading span { color: var(--accent); }
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
     .avail-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; }
+    body.light .avail-toggle-row { background: #FFFFFF; }
     .avail-toggle { width: 44px; height: 24px; border-radius: 12px; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3); cursor: pointer; position: relative; flex-shrink: 0; }
     .avail-toggle.off { background: var(--bg-input); border-color: var(--border); }
     .avail-toggle-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #10B981; transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
     .avail-toggle.off .avail-toggle-knob { transform: translateX(20px); background: var(--text-3); }
-    .save-bar { position: sticky; bottom: 0; padding: 16px 0; background: var(--bg-base); margin-top: 28px; border-top: 1px solid var(--border); }
+    .save-bar { position: sticky; bottom: 0; padding: 16px 0; background: var(--bg-base); margin-top: 24px; border-top: 1px solid var(--border); }
     body.light .save-bar { background: #EEF2F7; }
 
     /* ══ MISC ══ */
-    #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg-base, #060A12); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.4s; }
+    #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg-base); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: opacity 0.4s; }
     body.light #load-overlay { background: #F0F4F8; }
     .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: loaderSpin 0.8s linear infinite; }
     @keyframes loaderSpin { to { transform: rotate(360deg); } }
-    .rt-dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981; animation: aiPulse 2.5s infinite; flex-shrink: 0; }
-    @keyframes bellShake { 0%,100% { transform: rotate(0); } 15% { transform: rotate(12deg); } 30% { transform: rotate(-10deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-6deg); } 75% { transform: rotate(4deg); } }
+
+    #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; display: none; backdrop-filter: blur(4px); }
+    #sidebar-overlay.show { display: block; }
+
+    #menu-btn {
+        position: fixed; top: 10px; left: 12px; z-index: 150;
+        width: 34px; height: 34px; border-radius: 9px;
+        background: var(--bg-card); border: 1px solid var(--border);
+        display: none; align-items: center; justify-content: center;
+        cursor: pointer; color: var(--text-2); font-size: 13px;
+    }
+    @media (max-width: 1024px) { #menu-btn { display: flex; } }
+
+    /* Toast */
+    #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+    .toast { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; font-size: 12.5px; font-weight: 600; color: var(--text-1); white-space: nowrap; box-shadow: 0 8px 28px rgba(0,0,0,0.4); animation: toastIn 0.28s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; }
+    @keyframes toastIn { from{opacity:0;transform:translateY(10px) scale(0.94)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .toast.hide { animation: toastOut 0.22s ease forwards; }
+    @keyframes toastOut { to{opacity:0;transform:translateY(-8px) scale(0.95)} }
+
+    /* Theme toggle */
+    .theme-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); cursor: pointer; position: relative; flex-shrink: 0; }
+    body.light .theme-toggle { background: #BFDBFE !important; border-color: #93C5FD !important; }
+    .theme-toggle .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #64748B; transition: all 0.35s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; justify-content: center; font-size: 9px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    body.light .theme-toggle .knob { transform: translateX(20px) !important; background: #F59E0B !important; }
+
+    /* Bell */
+    @keyframes bellShake { 0%,100%{transform:rotate(0)} 15%{transform:rotate(12deg)} 30%{transform:rotate(-10deg)} 45%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 75%{transform:rotate(4deg)} }
     .bell-shake { animation: bellShake 0.7s; }
 
-    /* Toast notif update status */
-    .status-toast {
-        position: fixed; bottom: 24px; right: 24px; z-index: 500;
-        display: flex; align-items: center; gap: 12px;
-        background: var(--bg-sidebar); border: 1px solid var(--border);
-        border-radius: 16px; padding: 14px 18px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-        animation: toastIn 0.3s ease forwards;
-        max-width: 320px;
-    }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    /* Empty state prettier */
+    .empty-icon { width: 60px; height: 60px; border-radius: 18px; background: var(--bg-input); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-3); }
+
+    /* Fade animations */
+    .fade-up { animation: fadeUp 0.5s ease forwards; opacity: 0; }
+    .fade-up-1 { animation-delay: 0.06s; }
+    .fade-up-2 { animation-delay: 0.12s; }
+    .fade-up-3 { animation-delay: 0.18s; }
+    .fade-up-4 { animation-delay: 0.24s; }
+    .fade-up-5 { animation-delay: 0.3s; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Quick reply bar */
+    #adv-qr-bar { gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
+    #adv-qr-bar::-webkit-scrollbar { display: none; }
+    .qr-chip { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); cursor: pointer; white-space: nowrap; transition: all 0.15s; min-height: 32px; display: flex; align-items: center; }
+    .qr-chip:hover { color: #60A5FA; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
+
+    /* Btn styles */
+    .btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 11px 18px; border-radius: 12px; background: var(--accent-dark); color: #fff; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 10px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); }
     </style>
 </head>
 <body>
 
-<!-- Load overlay -->
+<div id="toast-container"></div>
+
 <div id="load-overlay">
-    <div class="spin"></div>
-    <span style="font-size:10px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3)">Memuat Dashboard...</span>
+    <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);display:flex;align-items:center;justify-content:center;font-size:22px;font-style:italic;font-weight:800;color:#fff;letter-spacing:-1px">L</div>
+    <div class="spin" style="margin-top:4px;"></div>
+    <span style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-3)">Memuat Dashboard...</span>
 </div>
 
-<!-- ══════════════ SIDEBAR ══════════════ -->
-<aside id="sidebar" class="hide-scrollbar">
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+<button id="menu-btn" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside id="sidebar">
     <div class="sidebar-logo">
         <h1>Lawyers<span>AI</span></h1>
         <div class="sidebar-online">
@@ -410,11 +563,11 @@
             <span class="nav-icon"><i class="fas fa-scale-balanced"></i></span>Advokat Panel
         </a>
     </nav>
-    <div style="margin:8px 12px 8px;padding:14px;border-radius:16px;background:var(--bg-card);border:1px solid var(--border);">
+    <div class="sidebar-profile">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
             <div style="position:relative;flex-shrink:0;">
                 <img id="side-avatar" src="https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA&bold=true"
-                     style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border);" alt="Foto">
+                     class="profile-av" alt="Foto">
                 <span class="rt-dot" style="position:absolute;bottom:-2px;right:-2px;border:2px solid var(--bg-sidebar);"></span>
             </div>
             <div style="overflow:hidden;flex:1;">
@@ -423,43 +576,40 @@
             </div>
         </div>
         <div style="display:flex;gap:6px;">
-            <button onclick="handleLogout()" class="btn-ghost" style="flex:1;padding:9px 12px;font-size:10px;justify-content:center;">
+            <button onclick="handleLogout()" class="btn-ghost" style="flex:1;padding:8px 10px;font-size:10px;justify-content:center;">
                 <i class="fas fa-right-from-bracket"></i> Logout
             </button>
-            <button onclick="window.toggleTheme?.()" class="theme-toggle" style="flex-shrink:0;align-self:center;"><div class="knob">🌙</div></button>
+            <button onclick="window.toggleTheme?.()" class="theme-toggle"><div class="knob">🌙</div></button>
         </div>
     </div>
 </aside>
 
-<div id="overlay" onclick="closeSidebar()"></div>
-<button id="menuBtn" onclick="toggleSidebar()"><i class="fas fa-bars" style="font-size:14px;"></i></button>
-
-<!-- ══════════════ APP ══════════════ -->
+<!-- ══════════ APP ══════════ -->
 <div id="adv-app">
 
-    <!-- Top bar -->
+    <!-- Topbar -->
     <div id="topbar">
         <div class="topbar-tabs">
             <button class="tab-btn active" onclick="switchTab('inbox', this)" id="tab-inbox">
                 <i class="fas fa-inbox"></i>
-                <span class="label">Inbox</span>
+                <span class="tab-label">Inbox</span>
                 <span class="tab-badge" id="inbox-badge">0</span>
             </button>
             <button class="tab-btn" onclick="switchTab('kasus', this)" id="tab-kasus">
                 <i class="fas fa-scale-balanced"></i>
-                <span class="label">Kasus</span>
+                <span class="tab-label">Kasus</span>
                 <span class="tab-badge" id="kasus-badge">0</span>
             </button>
             <button class="tab-btn" onclick="switchTab('profil', this)" id="tab-profil">
                 <i class="fas fa-id-card"></i>
-                <span class="label">Profil</span>
+                <span class="tab-label">Profil</span>
             </button>
         </div>
-        <div style="display:flex;align-items:center;gap:7px;">
+        <div style="display:flex;align-items:center;gap:8px;">
             <span class="rt-dot"></span>
-            <span style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);" id="rt-status">Realtime</span>
-            <div style="width:1px;height:16px;background:var(--border);margin:0 4px;"></div>
-            <button id="notif-bell" style="position:relative;width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;">
+            <span id="rt-status" style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);">Realtime</span>
+            <div style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+            <button id="notif-bell" style="position:relative;width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;">
                 <i class="fas fa-bell"></i>
                 <span id="bell-badge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#EF4444;border-radius:50%;font-size:7px;font-weight:900;color:#fff;align-items:center;justify-content:center;border:2px solid var(--bg-sidebar);">0</span>
             </button>
@@ -475,7 +625,7 @@
                         <p style="font-size:15px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Konsultasi</p>
                         <p id="conv-count" style="font-size:10px;color:var(--text-3);margin-top:2px;font-weight:600;">0 percakapan</p>
                     </div>
-                    <button onclick="loadConvList()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;" title="Refresh">
+                    <button onclick="loadConvList()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;" title="Refresh">
                         <i class="fas fa-rotate-right" id="refresh-icon"></i>
                     </button>
                 </div>
@@ -488,7 +638,7 @@
                     <button class="conv-filter-btn" onclick="setFilter('unread',this)">Belum Dibaca</button>
                 </div>
             </div>
-            <div class="conv-list hide-scrollbar" id="conv-list">
+            <div class="conv-list" id="conv-list">
                 <div style="display:flex;align-items:center;justify-content:center;padding:50px 20px;opacity:0.5;">
                     <div class="spin" style="width:24px;height:24px;border-width:2px;"></div>
                 </div>
@@ -497,46 +647,46 @@
 
         <div id="chat-area">
             <div id="chat-empty-state">
-                <div style="width:56px;height:56px;border-radius:16px;background:var(--bg-card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text-3);">
-                    <i class="fas fa-comments"></i>
-                </div>
+                <div class="empty-icon"><i class="fas fa-comments"></i></div>
                 <div>
-                    <p style="font-size:14px;font-weight:800;font-style:italic;color:var(--text-2);margin:0 0 6px;">Pilih Percakapan</p>
-                    <p style="font-size:11px;color:var(--text-3);font-weight:500;margin:0;">Klik nama klien di sebelah kiri untuk memulai membalas konsultasi.</p>
+                    <p style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);margin:0 0 6px;">Pilih Percakapan</p>
+                    <p style="font-size:12px;color:var(--text-3);font-weight:500;margin:0;">Klik nama klien di sebelah kiri untuk membalas konsultasi.</p>
                 </div>
             </div>
 
-            <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+            <div id="chat-view">
                 <div id="chat-top">
-                    <div style="display:flex;align-items:center;gap:11px;">
-                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;">
+                    <div style="display:flex;align-items:center;gap:11px;flex:1;min-width:0;">
+                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;flex-shrink:0;">
                             <i class="fas fa-chevron-left"></i>
                         </button>
                         <div class="online-ring status-offline" id="client-avatar-ring" style="flex-shrink:0;">
                             <img id="active-client-av" src="" class="chat-adv-avatar" alt="Klien">
                         </div>
-                        <div>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <span id="active-client-name" style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);">Klien</span>
-                            </div>
+                        <div style="min-width:0;flex:1;">
+                            <span id="active-client-name" style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">Klien</span>
                             <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
                                 <span id="client-online-status" style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">● Offline</span>
                                 <span id="typing-label" style="display:none;font-size:10px;font-weight:600;color:var(--accent);">• mengetik...</span>
                             </div>
                         </div>
                     </div>
-                    <button onclick="clearChatConfirm()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;" title="Hapus riwayat" onmouseover="this.style.color='#F87171'" onmouseout="this.style.color='var(--text-3)'">
+                    <button onclick="clearChatConfirm()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;flex-shrink:0;" title="Hapus riwayat" onmouseover="this.style.color='#F87171'" onmouseout="this.style.color='var(--text-3)'">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
 
-                <div id="chat-box" class="hide-scrollbar"></div>
+                <div id="chat-box"></div>
 
                 <div id="typing-indicator-row">
                     <img id="typing-av" src="" class="msg-av" alt="">
                     <div class="typing-dots">
                         <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
                     </div>
+                </div>
+
+                <div id="adv-qr-bar" style="display:none;padding:8px 14px;border-top:1px solid var(--border);background:var(--bg-sidebar);flex-shrink:0;">
+                    <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);flex-shrink:0;white-space:nowrap;">Template:</span>
                 </div>
 
                 <div id="chat-input-area">
@@ -556,60 +706,39 @@
     <!-- ══ PANEL: KASUS ══ -->
     <div class="panel" id="panel-kasus">
         <div class="kasus-inner">
-
-            <!-- Header -->
-            <header style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;" class="fade-up">
+            <header style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;" class="fade-up">
                 <div>
-                    <p style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Manajemen</p>
+                    <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Manajemen</p>
                     <h2 style="font-size:24px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;">Kasus <span style="color:#F59E0B;">Masuk</span></h2>
-                    <p style="font-size:10px;color:var(--text-3);font-weight:600;margin-top:6px;text-transform:uppercase;letter-spacing:0.12em;">Semua kasus konsultasi AI dari klien</p>
+                    <p style="font-size:10px;color:var(--text-3);font-weight:600;margin-top:5px;text-transform:uppercase;letter-spacing:0.12em;">Semua kasus konsultasi AI dari klien</p>
                 </div>
-                <button onclick="loadAllKasus()" style="display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:12px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;">
+                <button onclick="loadAllKasus()" class="btn-ghost" style="gap:6px;">
                     <i class="fas fa-rotate-right" id="kasus-refresh-icon"></i> Refresh
                 </button>
             </header>
 
-            <!-- Stat Cards -->
             <div class="kasus-stats fade-up" style="animation-delay:0.05s;" id="kasus-stats">
-                <div class="stat-card s-total">
-                    <div class="stat-number" id="stat-total">—</div>
-                    <div class="stat-label">Total Kasus</div>
-                </div>
-                <div class="stat-card s-menunggu">
-                    <div class="stat-number" id="stat-menunggu">—</div>
-                    <div class="stat-label">Menunggu</div>
-                </div>
-                <div class="stat-card s-ditangani">
-                    <div class="stat-number" id="stat-ditangani">—</div>
-                    <div class="stat-label">Ditangani Saya</div>
-                </div>
-                <div class="stat-card s-selesai">
-                    <div class="stat-number" id="stat-selesai">—</div>
-                    <div class="stat-label">Selesai</div>
-                </div>
+                <div class="stat-card s-total"><div class="stat-number" id="stat-total">—</div><div class="stat-label">Total Kasus</div></div>
+                <div class="stat-card s-menunggu"><div class="stat-number" id="stat-menunggu">—</div><div class="stat-label">Menunggu</div></div>
+                <div class="stat-card s-ditangani"><div class="stat-number" id="stat-ditangani">—</div><div class="stat-label">Ditangani Saya</div></div>
+                <div class="stat-card s-selesai"><div class="stat-number" id="stat-selesai">—</div><div class="stat-label">Selesai</div></div>
             </div>
 
-            <!-- Filter + Search -->
-            <div class="kasus-filter-strip fade-up" style="animation-delay:0.1s;" id="kasus-filter-strip">
+            <div class="kasus-filter-strip fade-up" style="animation-delay:0.1s;">
                 <button class="kf-btn active" onclick="setKasusFilter('semua', this)">
-                    <i class="fas fa-layer-group" style="font-size:9px;"></i> Semua
-                    <span class="kf-count" id="kf-c-semua">0</span>
+                    <i class="fas fa-layer-group" style="font-size:9px;"></i> Semua <span class="kf-count" id="kf-c-semua">0</span>
                 </button>
                 <button class="kf-btn f-menunggu" onclick="setKasusFilter('menunggu', this)">
-                    <i class="fas fa-clock" style="font-size:9px;"></i> Menunggu
-                    <span class="kf-count" id="kf-c-menunggu">0</span>
+                    <i class="fas fa-clock" style="font-size:9px;"></i> Menunggu <span class="kf-count" id="kf-c-menunggu">0</span>
                 </button>
                 <button class="kf-btn f-sedang" onclick="setKasusFilter('sedang_ditangani', this)">
-                    <i class="fas fa-scale-balanced" style="font-size:9px;"></i> Ditangani Saya
-                    <span class="kf-count" id="kf-c-sedang">0</span>
+                    <i class="fas fa-scale-balanced" style="font-size:9px;"></i> Ditangani Saya <span class="kf-count" id="kf-c-sedang">0</span>
                 </button>
                 <button class="kf-btn f-selesai" onclick="setKasusFilter('selesai', this)">
-                    <i class="fas fa-check-circle" style="font-size:9px;"></i> Selesai
-                    <span class="kf-count" id="kf-c-selesai">0</span>
+                    <i class="fas fa-check-circle" style="font-size:9px;"></i> Selesai <span class="kf-count" id="kf-c-selesai">0</span>
                 </button>
                 <button class="kf-btn f-ditutup" onclick="setKasusFilter('ditutup', this)">
-                    <i class="fas fa-lock" style="font-size:9px;"></i> Ditutup
-                    <span class="kf-count" id="kf-c-ditutup">0</span>
+                    <i class="fas fa-lock" style="font-size:9px;"></i> Ditutup <span class="kf-count" id="kf-c-ditutup">0</span>
                 </button>
                 <div class="kasus-search">
                     <i class="fas fa-search"></i>
@@ -617,21 +746,12 @@
                 </div>
             </div>
 
-            <!-- Kasus Grid -->
             <div id="kasus-grid" class="fade-up" style="animation-delay:0.15s;">
-                <!-- Skeleton loading -->
-                <div id="kasus-skeleton">
-                    ${[1,2,3].map(() => `
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin-bottom:10px;">
-                        <div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div>
-                        <div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div>
-                        <div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div>
-                        <div class="skel" style="height:10px;width:70%;"></div>
-                    </div>`).join('')}
+                <div id="kasus-skeleton" style="display:flex;flex-direction:column;gap:10px;">
+                    ${[1,2,3].map(() => `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>`).join('')}
                 </div>
                 <div id="kasus-list-content" style="display:none;"></div>
             </div>
-
         </div>
     </div>
 
@@ -647,9 +767,9 @@
                     </label>
                 </div>
             </div>
-            <div class="fade-up fade-up-1" style="margin-bottom:24px;">
+            <div class="fade-up fade-up-1" style="margin-bottom:22px;">
                 <h2 id="profil-nama-display" style="font-size:22px;font-weight:900;font-style:italic;color:var(--text-1);margin:0 0 10px;">Memuat...</h2>
-                <div class="profil-badge-row">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     <span class="badge-verified"><i class="fas fa-circle-check"></i> Terverifikasi</span>
                     <span class="badge-spec" id="profil-spec-badge">Hukum Umum</span>
                 </div>
@@ -701,7 +821,7 @@
                         <p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0 0 3px;" id="avail-label">Menerima Klien Baru</p>
                         <p style="font-size:11px;font-weight:500;color:var(--text-3);margin:0;" id="avail-sub">Profil Anda terlihat di direktori mitra</p>
                     </div>
-                    <div class="avail-toggle" id="avail-toggle" onclick="showLALToast('warning','Segera Hadir','Fitur ketersediaan sedang dikembangkan.')">
+                    <div class="avail-toggle" id="avail-toggle" onclick="toast('Fitur segera hadir','info')">
                         <div class="avail-toggle-knob"></div>
                     </div>
                 </div>
@@ -709,14 +829,14 @@
             <div class="save-bar fade-up">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <button class="btn-primary" onclick="saveProfile()" id="save-btn" style="flex:1;justify-content:center;"><i class="fas fa-floppy-disk"></i> Simpan Perubahan</button>
-                    <button class="btn-ghost" onclick="loadProfile()" style="padding:12px 20px;"><i class="fas fa-rotate-left"></i> Reset</button>
+                    <button class="btn-ghost" onclick="loadProfile()" style="padding:11px 18px;"><i class="fas fa-rotate-left"></i> Reset</button>
                 </div>
                 <p id="save-hint" style="font-size:10px;font-weight:500;color:var(--text-3);margin:10px 0 0;text-align:center;"></p>
             </div>
         </div>
     </div>
 
-</div><!-- #adv-app -->
+</div>
 
 <script>
 // ══════════════════════════════════════════════
@@ -725,503 +845,568 @@
 let currentMitra = null;
 let allConvs = [];
 let allKasus = [];
-let filteredKasus = [];
 let kasusFilterMode = 'semua';
 let selectedConvId = null;
 let selectedClientId = null;
 let selectedClientName = '';
 let selectedClientAv = '';
 let filterMode = 'all';
-let rtChannel = null;
-let rtKasusChannel = null;
-let rtClientOnlineChannel = null;
-let typingTimer = null;
-let typingDebounce = null;
-let isAvailable = true;
-let totalUnread = 0;
+let rtChannel = null, rtKasusChannel = null, rtClientOnlineChannel = null;
+let typingTimer = null, typingDebounce = null;
+let isAvailable = true, totalUnread = 0;
 let clientStatusInterval = null;
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
 
 // ══════════════════════════════════════════════
-// STATUS CONFIG
+// HELPERS
 // ══════════════════════════════════════════════
-const STATUS_CFG = {
-    menunggu:         { label: 'Menunggu',         icon: 'fa-clock',          cls: 'b-menunggu',         color: '#94A3B8' },
-    sedang_ditangani: { label: 'Sedang Ditangani', icon: 'fa-scale-balanced', cls: 'b-sedang_ditangani', color: '#FBBF24' },
-    selesai:          { label: 'Selesai',           icon: 'fa-check-circle',   cls: 'b-selesai',          color: '#34D399' },
-    ditutup:          { label: 'Ditutup',           icon: 'fa-lock',           cls: 'b-ditutup',          color: '#F87171' },
-};
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s) { return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+function fmtTime(iso) {
+    if(!iso) return '';
+    const d=new Date(iso), now=new Date(), df=now-d;
+    if(df<60000) return 'Baru'; if(df<3600000) return Math.floor(df/60000)+'m';
+    if(df<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    if(df<604800000) return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
+    return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+}
+function avatarFb(name){ return `https://ui-avatars.com/api/?name=${encodeURIComponent(name||'K')}&background=1E3A5F&color=60A5FA&bold=true`; }
+function clientAvatarFb(name){ return `https://ui-avatars.com/api/?name=${encodeURIComponent(name||'K')}&background=EFF6FF&color=2563EB&bold=true`; }
 
-function renderKsBadge(status) {
-    const c = STATUS_CFG[status] || STATUS_CFG.menunggu;
-    return `<span class="ks-badge ${c.cls}">
-        <i class="fas ${c.icon}" style="font-size:8px;"></i> ${c.label}
-    </span>`;
+function toast(msg, type='info') {
+    const icons={info:'#60A5FA',error:'#F87171',warn:'#FBBF24',success:'#34D399'};
+    const imap={info:'fa-info-circle',error:'fa-times-circle',warn:'fa-exclamation-circle',success:'fa-check-circle'};
+    const el=document.createElement('div'); el.className='toast';
+    el.innerHTML=`<i class="fas ${imap[type]||imap.info}" style="color:${icons[type]||icons.info};margin-right:7px"></i>${escHtml(msg)}`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(()=>{el.classList.add('hide');setTimeout(()=>el.remove(),250);},3500);
+}
+
+// STATUS CONFIG
+const STATUS_CFG = {
+    menunggu:         { label:'Menunggu',         icon:'fa-clock',          cls:'b-menunggu' },
+    sedang_ditangani: { label:'Sedang Ditangani', icon:'fa-scale-balanced', cls:'b-sedang_ditangani' },
+    selesai:          { label:'Selesai',           icon:'fa-check-circle',   cls:'b-selesai' },
+    ditutup:          { label:'Ditutup',           icon:'fa-lock',           cls:'b-ditutup' },
+};
+function renderKsBadge(status){
+    const c=STATUS_CFG[status]||STATUS_CFG.menunggu;
+    return `<span class="ks-badge ${c.cls}"><i class="fas ${c.icon}" style="font-size:8px;"></i> ${c.label}</span>`;
 }
 
 // ══════════════════════════════════════════════
 // LAST SEEN
 // ══════════════════════════════════════════════
-let _lsDebounce = null;
-async function updateAdvLastSeen() {
-    if (!currentMitra) return;
-    try { await window.supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentMitra.user_id); } catch(e) {}
+let _lsDebounce=null;
+async function updateAdvLastSeen(){
+    if(!currentMitra) return;
+    try{await window.supabase.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',currentMitra.user_id);}catch(e){}
 }
-function debounceLastSeen() { clearTimeout(_lsDebounce); _lsDebounce = setTimeout(updateAdvLastSeen, 5000); }
-function startLastSeenUpdater() {
+function debounceLastSeen(){clearTimeout(_lsDebounce);_lsDebounce=setTimeout(updateAdvLastSeen,5000);}
+function startLastSeenUpdater(){
     updateAdvLastSeen();
-    setInterval(updateAdvLastSeen, 20000);
-    ['mousemove','keydown','click','touchstart'].forEach(ev => document.addEventListener(ev, debounceLastSeen, { passive: true }));
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) updateAdvLastSeen(); });
+    setInterval(updateAdvLastSeen,20000);
+    ['mousemove','keydown','click','touchstart'].forEach(ev=>document.addEventListener(ev,debounceLastSeen,{passive:true}));
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateAdvLastSeen();});
 }
 
 // ══════════════════════════════════════════════
 // CLIENT ONLINE STATUS
 // ══════════════════════════════════════════════
-function applyClientStatus(lastSeen) {
-    const el = document.getElementById('client-online-status');
-    const ring = document.getElementById('client-avatar-ring');
-    if (!el || !ring) return;
-    if (!lastSeen) { el.textContent = '● Offline'; el.style.color = 'var(--text-3)'; ring.className = 'online-ring status-offline'; return; }
-    const diff = Date.now() - new Date(lastSeen).getTime();
-    if (diff < 3 * 60 * 1000) { el.textContent = '● Online & Aktif'; el.style.color = '#10B981'; ring.className = 'online-ring status-online'; }
-    else if (diff < 30 * 60 * 1000) { el.textContent = `● Aktif ${Math.floor(diff/60000)}m lalu`; el.style.color = '#F59E0B'; ring.className = 'online-ring status-away'; }
-    else { el.textContent = '● Offline'; el.style.color = 'var(--text-3)'; ring.className = 'online-ring status-offline'; }
+function applyClientStatus(lastSeen){
+    const el=document.getElementById('client-online-status');
+    const ring=document.getElementById('client-avatar-ring');
+    if(!el||!ring) return;
+    if(!lastSeen){el.textContent='● Offline';el.style.color='var(--text-3)';ring.className='online-ring status-offline';return;}
+    const diff=Date.now()-new Date(lastSeen).getTime();
+    if(diff<3*60000){el.textContent='● Online & Aktif';el.style.color='#10B981';ring.className='online-ring status-online';}
+    else if(diff<30*60000){el.textContent=`● Aktif ${Math.floor(diff/60000)}m lalu`;el.style.color='#F59E0B';ring.className='online-ring status-away';}
+    else{el.textContent='● Offline';el.style.color='var(--text-3)';ring.className='online-ring status-offline';}
 }
-
-async function checkClientOnlineStatus(clientId) {
-    if (!clientId) return;
-    try { const { data } = await window.supabase.from('profiles').select('last_seen').eq('id', clientId).maybeSingle(); applyClientStatus(data?.last_seen || null); } catch(e) {}
+async function checkClientOnlineStatus(clientId){
+    if(!clientId) return;
+    try{const{data}=await window.supabase.from('profiles').select('last_seen').eq('id',clientId).maybeSingle();applyClientStatus(data?.last_seen||null);}catch(e){}
 }
-
-function subscribeClientOnlineRealtime(clientId) {
-    if (rtClientOnlineChannel) { window.supabase.removeChannel(rtClientOnlineChannel); rtClientOnlineChannel = null; }
-    if (!clientId) return;
-    rtClientOnlineChannel = window.supabase.channel('client-online-' + clientId)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${clientId}` },
-            (payload) => { applyClientStatus(payload.new?.last_seen || null); })
+function subscribeClientOnlineRealtime(clientId){
+    if(rtClientOnlineChannel){window.supabase.removeChannel(rtClientOnlineChannel);rtClientOnlineChannel=null;}
+    if(!clientId) return;
+    rtClientOnlineChannel=window.supabase.channel('client-online-'+clientId)
+        .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:`id=eq.${clientId}`},(payload)=>{applyClientStatus(payload.new?.last_seen||null);})
         .subscribe();
 }
 
 // ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
-async function init() {
-    const { data: { session } } = await window.supabase.auth.getSession();
-    if (!session) { location.href = 'login.html'; return; }
+async function init(){
+    const{data:{session}}=await window.supabase.auth.getSession();
+    if(!session){location.href='login.html';return;}
 
-    const { data: mitra, error } = await window.supabase.from('mitra_ahli').select('*').eq('user_id', session.user.id).single();
-    if (error || !mitra) { await laiAlert?.({ type: 'warning', title: 'Akses Ditolak', message: 'Akun Anda bukan mitra advokat terverifikasi.' }); location.href = 'index.html'; return; }
-    if (mitra.status_verifikasi !== 'verified') { await laiAlert?.({ type: 'warning', title: 'Belum Terverifikasi', message: 'Akun mitra Anda masih dalam proses verifikasi admin.' }); location.href = 'index.html'; return; }
+    const{data:mitra,error}=await window.supabase.from('mitra_ahli').select('*').eq('user_id',session.user.id).single();
+    if(error||!mitra){
+        alert('Akun Anda bukan mitra advokat terverifikasi.');location.href='index.html';return;
+    }
+    if(mitra.status_verifikasi!=='verified'){
+        alert('Akun mitra Anda masih dalam proses verifikasi admin.');location.href='index.html';return;
+    }
 
-    currentMitra = mitra;
-    isAvailable = true;
+    currentMitra=mitra;
+    isAvailable=true;
     updateSidebarUI();
     updateAvailUI();
     startLastSeenUpdater();
+    setupQuickReplies();
 
-    await Promise.all([loadConvList(), loadAllKasus()]);
+    await Promise.all([loadConvList(),loadAllKasus()]);
     subscribeRealtime();
     subscribeKasusRealtime();
 
-    document.getElementById('load-overlay').style.display = 'none';
+    document.getElementById('load-overlay').style.opacity='0';
+    setTimeout(()=>document.getElementById('load-overlay').style.display='none',400);
 }
 
-function updateSidebarUI() {
-    const av = currentMitra.foto_profil_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentMitra.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
-    const sa = document.getElementById('side-avatar'); if (sa) sa.src = av;
-    const sn = document.getElementById('side-name'); if (sn) sn.textContent = currentMitra.nama_lengkap || 'Advokat';
-    const ss = document.getElementById('side-spec'); if (ss) ss.textContent = currentMitra.spesialisasi || 'Advokat';
+function updateSidebarUI(){
+    const av=currentMitra.foto_profil_url||avatarFb(currentMitra.nama_lengkap);
+    const sa=document.getElementById('side-avatar');if(sa)sa.src=av;
+    const sn=document.getElementById('side-name');if(sn)sn.textContent=currentMitra.nama_lengkap||'Advokat';
+    const ss=document.getElementById('side-spec');if(ss)ss.textContent=currentMitra.spesialisasi||'Advokat';
 }
+
+// ══════════════════════════════════════════════
+// SIDEBAR MOBILE
+// ══════════════════════════════════════════════
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('show');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');}
 
 // ══════════════════════════════════════════════
 // TAB SWITCH
 // ══════════════════════════════════════════════
-function switchTab(tab, btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+function switchTab(tab,btn){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById('panel-' + tab).classList.add('active');
-    if (tab === 'profil') loadProfile();
-    if (tab === 'kasus') loadAllKasus();
+    document.getElementById('panel-'+tab).classList.add('active');
+    if(tab==='profil') loadProfile();
+    if(tab==='kasus') loadAllKasus();
+    closeSidebar();
 }
 
 // ══════════════════════════════════════════════
 // INBOX — LOAD CONVERSATIONS
 // ══════════════════════════════════════════════
-async function loadConvList() {
-    const icon = document.getElementById('refresh-icon');
-    icon.style.animation = 'spin 0.8s linear infinite';
+async function loadConvList(){
+    const icon=document.getElementById('refresh-icon');
+    icon.style.animation='loaderSpin 0.8s linear infinite';
 
-    const [byLawyer, bySender, byReceiver] = await Promise.all([
-        window.supabase.from('messages').select('*').eq('lawyer_id', currentMitra.id).order('created_at', { ascending: false }),
-        window.supabase.from('messages').select('*').eq('sender_id', currentMitra.user_id).order('created_at', { ascending: false }),
-        window.supabase.from('messages').select('*').eq('receiver_id', currentMitra.user_id).order('created_at', { ascending: false })
+    // ── BUG FIX: Hanya ambil pesan dari/ke currentMitra.user_id
+    // Exclude pesan di mana sender dan receiver adalah diri sendiri
+    const[byLawyer,bySender,byReceiver]=await Promise.all([
+        window.supabase.from('messages').select('*').eq('lawyer_id',currentMitra.id).neq('sender_id',currentMitra.user_id).order('created_at',{ascending:false}),
+        window.supabase.from('messages').select('*').eq('sender_id',currentMitra.user_id).neq('receiver_id',currentMitra.user_id).order('created_at',{ascending:false}),
+        window.supabase.from('messages').select('*').eq('receiver_id',currentMitra.user_id).neq('sender_id',currentMitra.user_id).order('created_at',{ascending:false})
     ]);
 
-    icon.style.animation = '';
+    icon.style.animation='';
 
-    const allRaw = [...(byLawyer.data || []), ...(bySender.data || []), ...(byReceiver.data || [])];
-    const seenIds = new Set();
-    const messages = allRaw.filter(m => { if (seenIds.has(m.id)) return false; seenIds.add(m.id); return true; })
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const allRaw=[...(byLawyer.data||[]),...(bySender.data||[]),...(byReceiver.data||[])];
+    const seenIds=new Set();
+    const messages=allRaw.filter(m=>{if(seenIds.has(m.id))return false;seenIds.add(m.id);return true;})
+        .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
 
-    if (!messages.length) { renderEmptyConvList(); document.getElementById('conv-count').textContent = '0 percakapan'; return; }
+    if(!messages.length){renderEmptyConvList();document.getElementById('conv-count').textContent='0 percakapan';return;}
 
-    const convMap = new Map();
-    for (const m of messages) { if (!convMap.has(m.conversation_id)) convMap.set(m.conversation_id, m); }
-    const uniqueConvs = [...convMap.values()];
+    const convMap=new Map();
+    for(const m of messages){if(!convMap.has(m.conversation_id))convMap.set(m.conversation_id,m);}
+    const uniqueConvs=[...convMap.values()];
 
-    const clientIds = [...new Set(uniqueConvs.map(m => {
-        const otherId = m.sender_id === currentMitra.user_id ? m.receiver_id : m.sender_id;
+    // ── BUG FIX: Filter klient yang bukan diri sendiri
+    const clientIds=[...new Set(uniqueConvs.map(m=>{
+        const otherId=m.sender_id===currentMitra.user_id?m.receiver_id:m.sender_id;
         return otherId;
-    }).filter(id => id && id !== currentMitra.user_id))];
+    }).filter(id=>id&&id!==currentMitra.user_id))];
 
-    if (!clientIds.length) { renderEmptyConvList(); document.getElementById('conv-count').textContent = '0 percakapan'; return; }
+    if(!clientIds.length){renderEmptyConvList();document.getElementById('conv-count').textContent='0 percakapan';return;}
 
-    const [{ data: profiles }, { data: unreadRows }] = await Promise.all([
-        window.supabase.from('profiles').select('id, full_name, avatar_url').in('id', clientIds),
-        window.supabase.from('messages').select('conversation_id').eq('receiver_id', currentMitra.user_id).eq('is_read', false)
+    const[{data:profiles},{data:unreadRows}]=await Promise.all([
+        window.supabase.from('profiles').select('id,full_name,avatar_url').in('id',clientIds),
+        window.supabase.from('messages').select('conversation_id').eq('receiver_id',currentMitra.user_id).eq('is_read',false)
     ]);
 
-    const profMap = {}; (profiles || []).forEach(p => { profMap[p.id] = p; });
-    const unreadMap = {}; (unreadRows || []).forEach(r => { unreadMap[r.conversation_id] = (unreadMap[r.conversation_id] || 0) + 1; });
+    const profMap={};(profiles||[]).forEach(p=>{profMap[p.id]=p;});
+    const unreadMap={};(unreadRows||[]).forEach(r=>{unreadMap[r.conversation_id]=(unreadMap[r.conversation_id]||0)+1;});
 
-    allConvs = uniqueConvs.map(msg => {
-        const isMe = msg.sender_id === currentMitra.user_id;
-        const cid = isMe ? msg.receiver_id : msg.sender_id;
-        const prof = profMap[cid];
-        const name = prof?.full_name || 'Klien';
-        const av = prof?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=EFF6FF&color=2563EB&bold=true`;
-        return { convId: msg.conversation_id, clientId: cid, clientName: name, clientAv: av, lastMsg: msg.message_text || '', lastTime: msg.created_at, isMe, unread: unreadMap[msg.conversation_id] || 0 };
-    });
+    allConvs=uniqueConvs.map(msg=>{
+        const isMe=msg.sender_id===currentMitra.user_id;
+        const cid=isMe?msg.receiver_id:msg.sender_id;
+        if(cid===currentMitra.user_id) return null; // ── BUG FIX: Skip self
+        const prof=profMap[cid];
+        const name=prof?.full_name||'Klien';
+        const av=prof?.avatar_url||clientAvatarFb(name);
+        return{convId:msg.conversation_id,clientId:cid,clientName:name,clientAv:av,lastMsg:msg.message_text||'',lastTime:msg.created_at,isMe,unread:unreadMap[msg.conversation_id]||0};
+    }).filter(Boolean); // ── Remove nulls
 
-    totalUnread = allConvs.reduce((s, c) => s + c.unread, 0);
+    totalUnread=allConvs.reduce((s,c)=>s+c.unread,0);
     updateUnreadBadges();
-    document.getElementById('conv-count').textContent = `${allConvs.length} percakapan`;
-    renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
+    document.getElementById('conv-count').textContent=`${allConvs.length} percakapan`;
+    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
 }
 
-function renderEmptyConvList(errMsg) {
-    document.getElementById('conv-list').innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 24px;gap:12px;opacity:0.4;text-align:center;">
-            <i class="fas fa-${errMsg ? 'wifi-slash' : 'inbox'}" style="font-size:28px;color:var(--text-3);"></i>
-            <p style="font-size:12px;font-weight:700;color:var(--text-2);margin:0;">${errMsg || 'Belum ada konsultasi masuk'}</p>
-            ${errMsg ? `<button onclick="loadConvList()" class="btn-ghost" style="padding:8px 16px;font-size:10px;">Coba Lagi</button>` : ''}
+function renderEmptyConvList(errMsg){
+    document.getElementById('conv-list').innerHTML=`
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 24px;gap:12px;text-align:center;opacity:0.4;">
+            <div class="empty-icon"><i class="fas fa-${errMsg?'wifi-slash':'inbox'}"></i></div>
+            <p style="font-size:12px;font-weight:700;color:var(--text-2);margin:0;">${errMsg||'Belum ada konsultasi masuk'}</p>
+            ${errMsg?`<button onclick="loadConvList()" class="btn-ghost" style="font-size:10px;">Coba Lagi</button>`:''}
         </div>`;
 }
 
-function renderConvList(convs) {
-    if (!convs.length) { renderEmptyConvList(); return; }
-    document.getElementById('conv-list').innerHTML = convs.map(cv => `
-        <div class="conv-item ${cv.convId === selectedConvId ? 'active' : ''}"
+function renderConvList(convs){
+    if(!convs.length){renderEmptyConvList();return;}
+    document.getElementById('conv-list').innerHTML=convs.map(cv=>`
+        <div class="conv-item ${cv.convId===selectedConvId?'active':''}"
              onclick="openConv('${esc(cv.convId)}','${esc(cv.clientId)}','${esc(cv.clientName)}','${esc(cv.clientAv)}')">
             <div style="position:relative;flex-shrink:0;">
-                <img src="${cv.clientAv}" class="conv-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(cv.clientName)}&background=EFF6FF&color=2563EB&bold=true'" alt="${esc(cv.clientName)}">
-                ${cv.unread > 0 ? `<span class="conv-unread-dot"></span>` : ''}
+                <img src="${escHtml(cv.clientAv)}" class="conv-avatar"
+                     onerror="this.src='${clientAvatarFb(cv.clientName)}'" alt="${escHtml(cv.clientName)}">
+                ${cv.unread>0?`<span style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:var(--accent);border-radius:50%;border:2px solid var(--bg-sidebar);"></span>`:''}
             </div>
             <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
-                    <span style="font-size:13px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cv.clientName)}</span>
+                    <span style="font-size:13px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(cv.clientName)}</span>
                     <span style="font-size:9.5px;color:var(--text-3);flex-shrink:0;font-weight:500;">${fmtTime(cv.lastTime)}</span>
                 </div>
-                <p style="font-size:11.5px;color:${cv.unread > 0 ? 'var(--text-2)' : 'var(--text-3)'};font-weight:${cv.unread > 0 ? 600 : 400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:3px 0 0;">
-                    ${cv.isMe ? '<span style="color:var(--accent);font-weight:700;">Anda: </span>' : ''}${esc(cv.lastMsg.slice(0, 55))}
+                <p style="font-size:11.5px;color:${cv.unread>0?'var(--text-2)':'var(--text-3)'};font-weight:${cv.unread>0?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:3px 0 0;">
+                    ${cv.isMe?'<span style="color:var(--accent);font-weight:700;">Anda: </span>':''}${escHtml(cv.lastMsg.slice(0,55))}
                 </p>
             </div>
-            ${cv.unread > 0 ? `<span class="unread-badge">${cv.unread > 9 ? '9+' : cv.unread}</span>` : ''}
+            ${cv.unread>0?`<span class="unread-badge">${cv.unread>9?'9+':cv.unread}</span>`:''}
         </div>`).join('');
 }
 
-function filterConvs(q) {
-    const ql = q.toLowerCase();
-    const base = filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs;
-    renderConvList(ql ? base.filter(c => c.clientName.toLowerCase().includes(ql) || c.lastMsg.toLowerCase().includes(ql)) : base);
+function filterConvs(q){
+    const ql=q.toLowerCase();
+    const base=filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs;
+    renderConvList(ql?base.filter(c=>c.clientName.toLowerCase().includes(ql)||c.lastMsg.toLowerCase().includes(ql)):base);
 }
 
-function setFilter(mode, btn) {
-    filterMode = mode;
-    document.querySelectorAll('.conv-filter-btn').forEach(b => b.classList.remove('active'));
+function setFilter(mode,btn){
+    filterMode=mode;
+    document.querySelectorAll('.conv-filter-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    renderConvList(mode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
+    renderConvList(mode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
 }
 
-function updateUnreadBadges() {
-    const badge = document.getElementById('inbox-badge');
-    const bellBadge = document.getElementById('bell-badge');
-    if (totalUnread > 0) {
-        badge.textContent = totalUnread > 9 ? '9+' : totalUnread; badge.classList.add('show');
-        bellBadge.textContent = totalUnread > 9 ? '9+' : totalUnread; bellBadge.style.display = 'flex';
-    } else { badge.classList.remove('show'); bellBadge.style.display = 'none'; }
+function updateUnreadBadges(){
+    const badge=document.getElementById('inbox-badge');
+    const bellBadge=document.getElementById('bell-badge');
+    if(totalUnread>0){badge.textContent=totalUnread>9?'9+':totalUnread;badge.classList.add('show');bellBadge.textContent=totalUnread>9?'9+':totalUnread;bellBadge.style.display='flex';}
+    else{badge.classList.remove('show');bellBadge.style.display='none';}
 }
 
 // ══════════════════════════════════════════════
 // OPEN CONVERSATION
 // ══════════════════════════════════════════════
-async function openConv(convId, clientId, clientName, clientAv) {
-    selectedConvId = convId; selectedClientId = clientId; selectedClientName = clientName; selectedClientAv = clientAv;
-    document.getElementById('active-client-name').textContent = clientName;
-    const avEl = document.getElementById('active-client-av'); avEl.src = clientAv;
-    avEl.onerror = () => { avEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(clientName)}&background=EFF6FF&color=2563EB&bold=true`; };
-    document.getElementById('typing-av').src = clientAv;
-    document.getElementById('chat-empty-state').style.display = 'none';
-    const cv = document.getElementById('chat-view'); cv.style.display = 'flex';
-    if (window.innerWidth <= 1024) { document.getElementById('conv-sidebar').classList.add('mobile-hidden'); document.getElementById('back-btn').style.display = 'flex'; }
-    renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
+async function openConv(convId,clientId,clientName,clientAv){
+    // ── BUG FIX: Jangan buka chat dengan diri sendiri
+    if(clientId===currentMitra.user_id){toast('Tidak bisa membuka chat dengan diri sendiri','warn');return;}
+
+    selectedConvId=convId;selectedClientId=clientId;selectedClientName=clientName;selectedClientAv=clientAv;
+    document.getElementById('active-client-name').textContent=clientName;
+    const avEl=document.getElementById('active-client-av');
+    avEl.src=clientAv;avEl.onerror=()=>{avEl.src=clientAvatarFb(clientName);};
+    document.getElementById('typing-av').src=clientAv;
+    document.getElementById('chat-empty-state').style.display='none';
+    const cv=document.getElementById('chat-view');cv.style.display='flex';
+    if(window.innerWidth<=1024){document.getElementById('conv-sidebar').classList.add('mobile-hidden');document.getElementById('back-btn').style.display='flex';}
+    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
     await loadMessages();
     clearInterval(clientStatusInterval);
     subscribeClientOnlineRealtime(clientId);
     await checkClientOnlineStatus(clientId);
-    clientStatusInterval = setInterval(() => checkClientOnlineStatus(clientId), 15000);
-    await window.supabase.from('messages').update({ is_read: true }).eq('conversation_id', selectedConvId).eq('receiver_id', currentMitra.user_id);
-    const conv = allConvs.find(c => c.convId === convId);
-    if (conv) { totalUnread = Math.max(0, totalUnread - conv.unread); conv.unread = 0; updateUnreadBadges(); renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs); }
+    clientStatusInterval=setInterval(()=>checkClientOnlineStatus(clientId),15000);
+    await window.supabase.from('messages').update({is_read:true}).eq('conversation_id',selectedConvId).eq('receiver_id',currentMitra.user_id);
+    const conv=allConvs.find(c=>c.convId===convId);
+    if(conv){totalUnread=Math.max(0,totalUnread-conv.unread);conv.unread=0;updateUnreadBadges();renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);}
 }
 
-function backToConvList() { document.getElementById('conv-sidebar').classList.remove('mobile-hidden'); document.getElementById('back-btn').style.display = 'none'; }
+function backToConvList(){document.getElementById('conv-sidebar').classList.remove('mobile-hidden');document.getElementById('back-btn').style.display='none';}
 
 // ══════════════════════════════════════════════
 // LOAD MESSAGES
 // ══════════════════════════════════════════════
-async function loadMessages() {
-    if (!selectedConvId) return;
-    let { data: msgs } = await window.supabase.from('messages').select('*').eq('conversation_id', selectedConvId).order('created_at', { ascending: true });
-    if ((!msgs || !msgs.length) && selectedClientId) {
-        const { data: fallback } = await window.supabase.from('messages').select('*')
+async function loadMessages(){
+    if(!selectedConvId) return;
+    let{data:msgs}=await window.supabase.from('messages').select('*').eq('conversation_id',selectedConvId).order('created_at',{ascending:true});
+    if((!msgs||!msgs.length)&&selectedClientId){
+        const{data:fallback}=await window.supabase.from('messages').select('*')
             .or(`and(sender_id.eq.${currentMitra.user_id},receiver_id.eq.${selectedClientId}),and(sender_id.eq.${selectedClientId},receiver_id.eq.${currentMitra.user_id})`)
-            .order('created_at', { ascending: true });
-        msgs = fallback;
+            .order('created_at',{ascending:true});
+        msgs=fallback;
     }
-    const box = document.getElementById('chat-box'); box.innerHTML = '';
-    if (!msgs?.length) { box.innerHTML = `<div style="margin:auto;text-align:center;opacity:0.3;padding:40px;"><i class="fas fa-comment-dots" style="font-size:28px;color:var(--text-3);display:block;margin-bottom:12px;"></i><p style="font-size:12px;font-weight:600;color:var(--text-2);">Belum ada pesan</p></div>`; return; }
-    const myAv = currentMitra.foto_profil_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentMitra.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
-    const myInit = (currentMitra.nama_lengkap || 'A')[0].toUpperCase();
-    let lastDate = '';
-    msgs.forEach(m => {
-        const isMe = m.sender_id === currentMitra.user_id;
-        const d = new Date(m.created_at);
-        const dateStr = d.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-        if (dateStr !== lastDate) { lastDate = dateStr; const sep = document.createElement('div'); sep.className = 'date-sep'; sep.innerHTML = `<span>${dateStr}</span>`; box.appendChild(sep); }
-        const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const txt = escHtml(m.message_text || '').replace(/\n/g, '<br>');
-        const row = document.createElement('div'); row.className = `msg-row ${isMe ? 'me' : 'them'}`;
-        if (!isMe) { const img = document.createElement('img'); img.src = selectedClientAv; img.className = 'msg-av'; img.alt = selectedClientName; img.onerror = () => { img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedClientName)}&background=EFF6FF&color=2563EB&bold=true`; }; row.appendChild(img); }
-        const wrap = document.createElement('div'); wrap.className = 'msg-bubble-box';
-        const bubble = document.createElement('div'); bubble.className = `msg-bubble ${isMe ? 'bubble-out' : 'bubble-in'}`; bubble.innerHTML = `<p>${txt}</p>`;
-        const meta = document.createElement('div'); meta.className = 'msg-meta'; meta.style.justifyContent = isMe ? 'flex-end' : 'flex-start';
-        meta.innerHTML = `<span>${time}</span>${isMe ? (m.is_read ? '<i class="fas fa-check-double" style="font-size:9px;color:#60A5FA;"></i>' : '<i class="fas fa-check" style="font-size:9px;color:var(--text-3);"></i>') : ''}`;
-        wrap.appendChild(bubble); wrap.appendChild(meta); row.appendChild(wrap);
-        if (isMe) { const img = document.createElement('img'); img.src = myAv; img.className = 'msg-av'; img.alt = currentMitra.nama_lengkap; img.onerror = () => { img.onerror = null; const init = document.createElement('div'); init.className = 'msg-av-init'; init.textContent = myInit; img.replaceWith(init); }; row.appendChild(img); }
+    // ── BUG FIX: Filter pesan self-to-self
+    msgs=(msgs||[]).filter(m=>m.sender_id!==m.receiver_id);
+
+    const box=document.getElementById('chat-box');box.innerHTML='';
+    if(!msgs.length){box.innerHTML=`<div style="margin:auto;text-align:center;opacity:0.3;padding:40px;"><i class="fas fa-comment-dots" style="font-size:28px;color:var(--text-3);display:block;margin-bottom:12px;"></i><p style="font-size:12px;font-weight:600;color:var(--text-2);">Belum ada pesan</p></div>`;return;}
+
+    const myAv=currentMitra.foto_profil_url||avatarFb(currentMitra.nama_lengkap);
+    const myInit=(currentMitra.nama_lengkap||'A')[0].toUpperCase();
+    let lastDate='',prevSender='';
+
+    msgs.forEach(m=>{
+        const isMe=m.sender_id===currentMitra.user_id;
+        const d=new Date(m.created_at);
+        const dateStr=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        if(dateStr!==lastDate){lastDate=dateStr;const sep=document.createElement('div');sep.className='date-sep';sep.innerHTML=`<span>${dateStr}</span>`;box.appendChild(sep);}
+        const time=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+        const txt=escHtml(m.message_text||'').replace(/\n/g,'<br>');
+        const sameAsPrev=prevSender===m.sender_id;prevSender=m.sender_id;
+        const showAvatar=!sameAsPrev;
+        const row=document.createElement('div');row.className=`msg-row ${isMe?'me':'them'}`;
+
+        const avatarSide=(av,name,isInit)=>{
+            if(!showAvatar){const sp=document.createElement('div');sp.className='msg-av-space';return sp;}
+            if(isInit){const d=document.createElement('div');d.className='msg-av-init';d.textContent=myInit;return d;}
+            const img=document.createElement('img');img.src=av;img.className='msg-av';img.alt=name;img.onerror=()=>{img.onerror=null;const d=document.createElement('div');d.className='msg-av-init';d.textContent=name[0]?.toUpperCase()||'?';img.replaceWith(d);};return img;
+        };
+
+        if(!isMe){
+            const img=document.createElement('img');img.src=selectedClientAv;img.className='msg-av';img.alt=selectedClientName;
+            img.onerror=()=>{img.src=clientAvatarFb(selectedClientName);};
+            if(showAvatar)row.appendChild(img);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}
+        }
+        const wrap=document.createElement('div');wrap.className='msg-bubble-box';
+        const bubble=document.createElement('div');bubble.className=`msg-bubble ${isMe?'bubble-out':'bubble-in'}`;bubble.innerHTML=`<p>${txt}</p>`;
+        const meta=document.createElement('div');meta.className='msg-meta';meta.style.justifyContent=isMe?'flex-end':'flex-start';
+        meta.innerHTML=`<span>${time}</span>${isMe?(m.is_read?'<i class="fas fa-check-double" style="font-size:9px;color:rgba(255,255,255,0.7);"></i>':'<i class="fas fa-check" style="font-size:9px;opacity:0.5;"></i>'):''}`;
+        wrap.appendChild(bubble);wrap.appendChild(meta);row.appendChild(wrap);
+        if(isMe){
+            const myImg=document.createElement('img');myImg.src=myAv;myImg.className='msg-av';myImg.alt=currentMitra.nama_lengkap;
+            myImg.onerror=()=>{myImg.onerror=null;const d=document.createElement('div');d.className='msg-av-init';d.textContent=myInit;myImg.replaceWith(d);};
+            if(showAvatar)row.appendChild(myImg);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}
+        }
         box.appendChild(row);
     });
-    box.scrollTop = box.scrollHeight;
+    box.scrollTop=box.scrollHeight;
 }
 
 // ══════════════════════════════════════════════
 // SEND MESSAGE
 // ══════════════════════════════════════════════
-async function sendMessage() {
-    const inp = document.getElementById('msg-textarea');
-    const text = inp.value.trim();
-    if (!text || !selectedConvId) return;
-    const btn = document.getElementById('send-btn'); btn.disabled = true; inp.value = ''; inp.style.height = 'auto';
-    try {
-        const { error } = await window.supabase.from('messages').insert([{ sender_id: currentMitra.user_id, receiver_id: selectedClientId, lawyer_id: currentMitra.id, conversation_id: selectedConvId, message_text: text, is_read: false }]);
-        if (error) throw error;
+async function sendMessage(){
+    const inp=document.getElementById('msg-textarea');
+    const text=inp.value.trim();
+    if(!text||!selectedConvId) return;
+    // ── BUG FIX: Jangan kirim ke diri sendiri
+    if(selectedClientId===currentMitra.user_id){toast('Tidak bisa mengirim pesan ke diri sendiri','warn');return;}
+    const btn=document.getElementById('send-btn');btn.disabled=true;inp.value='';inp.style.height='auto';
+    try{
+        const{error}=await window.supabase.from('messages').insert([{sender_id:currentMitra.user_id,receiver_id:selectedClientId,lawyer_id:currentMitra.id,conversation_id:selectedConvId,message_text:text,is_read:false}]);
+        if(error) throw error;
         await loadMessages();
-        const conv = allConvs.find(c => c.convId === selectedConvId);
-        if (conv) { conv.lastMsg = text; conv.isMe = true; conv.lastTime = new Date().toISOString(); }
-        renderConvList(filterMode === 'unread' ? allConvs.filter(c => c.unread > 0) : allConvs);
-    } catch(e) { showLALToast?.('error', 'Gagal Kirim', e.message); }
-    finally { btn.disabled = false; inp.focus(); }
+        const conv=allConvs.find(c=>c.convId===selectedConvId);
+        if(conv){conv.lastMsg=text;conv.isMe=true;conv.lastTime=new Date().toISOString();}
+        renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
+    }catch(e){toast('Gagal kirim: '+e.message,'error');}
+    finally{btn.disabled=false;inp.focus();}
 }
 
-function handleMsgKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
-function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
-function notifyTyping() {
-    if (!selectedConvId || !rtChannel) return;
+function handleMsgKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+
+function notifyTyping(){
+    if(!selectedConvId||!rtChannel) return;
     clearTimeout(typingDebounce);
-    typingDebounce = setTimeout(() => { rtChannel.send({ type: 'broadcast', event: 'typing', payload: { from: currentMitra.user_id } }); }, 350);
+    typingDebounce=setTimeout(()=>{rtChannel.send({type:'broadcast',event:'typing',payload:{from:currentMitra.user_id}});},350);
 }
 
-async function clearChatConfirm() {
-    if (!selectedConvId) return;
-    const ok = await laiConfirm?.({ type: 'danger', title: 'Hapus Riwayat Chat', message: `Semua pesan dengan <strong>${escHtml(selectedClientName)}</strong> akan dihapus permanen.`, confirmText: 'Ya, Hapus', cancelText: 'Batal' }) ?? confirm('Yakin hapus?');
-    if (!ok) return;
-    await window.supabase.from('messages').delete().eq('conversation_id', selectedConvId);
-    await loadMessages(); await loadConvList();
-    showLALToast?.('success', 'Dihapus', 'Riwayat chat berhasil dihapus.');
+async function clearChatConfirm(){
+    if(!selectedConvId) return;
+    if(!confirm(`Hapus semua pesan dengan ${selectedClientName}?`)) return;
+    await window.supabase.from('messages').delete().eq('conversation_id',selectedConvId);
+    await loadMessages();await loadConvList();
+    toast('Riwayat chat dihapus','info');
+}
+
+// ══════════════════════════════════════════════
+// QUICK REPLIES
+// ══════════════════════════════════════════════
+const ADV_QUICK_REPLIES=['Baik, saya pahami masalah Anda.','Silakan kirim dokumen pendukung.','Kasus Anda termasuk kategori pidana.','Kami bisa jadwalkan konsultasi lanjutan.','Saya akan pelajari lebih lanjut.','Ada pertanyaan tambahan?'];
+
+function setupQuickReplies(){
+    const qrBar=document.getElementById('adv-qr-bar');
+    ADV_QUICK_REPLIES.forEach(r=>{
+        const chip=document.createElement('div');chip.className='qr-chip';chip.textContent=r;
+        chip.onclick=()=>{const ta=document.getElementById('msg-textarea');if(ta){ta.value=r;ta.focus();autoResize(ta);qrBar.style.display='none';}};
+        qrBar.appendChild(chip);
+    });
+    const textarea=document.getElementById('msg-textarea');
+    if(textarea){
+        textarea.addEventListener('focus',()=>{if(!textarea.value.trim())qrBar.style.display='flex';});
+        textarea.addEventListener('input',()=>{qrBar.style.display=textarea.value.trim()?'none':'flex';});
+    }
 }
 
 // ══════════════════════════════════════════════
 // PANEL KASUS — LOAD ALL
 // ══════════════════════════════════════════════
-async function loadAllKasus() {
-    const icon = document.getElementById('kasus-refresh-icon');
-    if (icon) icon.style.animation = 'spin 0.8s linear infinite';
-    document.getElementById('kasus-skeleton').style.display = 'block';
-    document.getElementById('kasus-list-content').style.display = 'none';
+async function loadAllKasus(){
+    const icon=document.getElementById('kasus-refresh-icon');
+    if(icon) icon.style.animation='loaderSpin 0.8s linear infinite';
+    document.getElementById('kasus-skeleton').style.display='flex';
+    document.getElementById('kasus-list-content').style.display='none';
 
-    try {
-        // Ambil semua kasus dari semua user (advokat bisa lihat semua)
-        const { data: kasusData, error } = await window.supabase
+    try{
+        // ── BUG FIX: Exclude kasus dari akun advokat sendiri (self-generated)
+        const{data:kasusData,error}=await window.supabase
             .from('riwayat_konsultasi')
             .select('*')
-            .order('created_at', { ascending: false });
+            .neq('user_id',currentMitra.user_id) // ← FIX UTAMA: filter kasus milik diri sendiri
+            .order('created_at',{ascending:false});
 
-        if (error) throw error;
+        if(error) throw error;
 
-        // Ambil profil klien
-        const userIds = [...new Set((kasusData || []).map(k => k.user_id).filter(Boolean))];
-        let profMap = {};
-        if (userIds.length > 0) {
-            const { data: profiles } = await window.supabase.from('profiles').select('id, full_name, avatar_url').in('id', userIds);
-            (profiles || []).forEach(p => { profMap[p.id] = p; });
+        const userIds=[...new Set((kasusData||[]).map(k=>k.user_id).filter(Boolean))];
+        let profMap={};
+        if(userIds.length>0){
+            const{data:profiles}=await window.supabase.from('profiles').select('id,full_name,avatar_url').in('id',userIds);
+            (profiles||[]).forEach(p=>{profMap[p.id]=p;});
         }
 
-        allKasus = (kasusData || []).map(k => ({
+        allKasus=(kasusData||[]).map(k=>({
             ...k,
-            clientName: profMap[k.user_id]?.full_name || 'Klien',
-            clientAv: profMap[k.user_id]?.avatar_url || `https://ui-avatars.com/api/?name=K&background=EFF6FF&color=2563EB&bold=true`,
+            clientName:profMap[k.user_id]?.full_name||'Klien',
+            clientAv:profMap[k.user_id]?.avatar_url||clientAvatarFb(profMap[k.user_id]?.full_name||'K'),
         }));
 
-        updateKasusStats();
-        updateKasusFilterCounts();
-        renderKasusList();
-
-    } catch(err) {
-        document.getElementById('kasus-list-content').innerHTML = `<div class="kasus-empty"><i class="fas fa-exclamation-circle" style="font-size:32px;color:#F87171;"></i><p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0;">Gagal memuat kasus</p><p style="font-size:11px;color:var(--text-3);margin:0;">${escHtml(err.message)}</p><button onclick="loadAllKasus()" class="btn-primary" style="margin-top:8px;">Coba Lagi</button></div>`;
-        document.getElementById('kasus-list-content').style.display = 'block';
-    } finally {
-        document.getElementById('kasus-skeleton').style.display = 'none';
-        document.getElementById('kasus-list-content').style.display = 'block';
-        if (icon) icon.style.animation = '';
+        updateKasusStats();updateKasusFilterCounts();renderKasusList();
+    }catch(err){
+        document.getElementById('kasus-list-content').innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-exclamation-circle" style="color:#F87171;"></i></div><p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0;">Gagal memuat kasus</p><p style="font-size:11px;color:var(--text-3);margin:0;">${escHtml(err.message)}</p><button onclick="loadAllKasus()" class="btn-primary" style="margin-top:8px;">Coba Lagi</button></div>`;
+        document.getElementById('kasus-list-content').style.display='block';
+    }finally{
+        document.getElementById('kasus-skeleton').style.display='none';
+        document.getElementById('kasus-list-content').style.display='block';
+        if(icon) icon.style.animation='';
     }
 }
 
-function updateKasusStats() {
-    document.getElementById('stat-total').textContent = allKasus.length;
-    document.getElementById('stat-menunggu').textContent = allKasus.filter(k => k.handling_status === 'menunggu' || !k.handling_status).length;
-    document.getElementById('stat-ditangani').textContent = allKasus.filter(k => k.handling_status === 'sedang_ditangani' && k.assigned_lawyer_id === currentMitra.id).length;
-    document.getElementById('stat-selesai').textContent = allKasus.filter(k => k.handling_status === 'selesai').length;
+function updateKasusStats(){
+    document.getElementById('stat-total').textContent=allKasus.length;
+    document.getElementById('stat-menunggu').textContent=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
+    document.getElementById('stat-ditangani').textContent=allKasus.filter(k=>k.handling_status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id).length;
+    document.getElementById('stat-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai').length;
 
-    // Update tab badge — kasus menunggu
-    const menungguCount = allKasus.filter(k => !k.handling_status || k.handling_status === 'menunggu').length;
-    const kasusBadge = document.getElementById('kasus-badge');
-    if (menungguCount > 0) { kasusBadge.textContent = menungguCount > 9 ? '9+' : menungguCount; kasusBadge.classList.add('show'); }
-    else { kasusBadge.classList.remove('show'); }
+    const menungguCount=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
+    const kasusBadge=document.getElementById('kasus-badge');
+    if(menungguCount>0){kasusBadge.textContent=menungguCount>9?'9+':menungguCount;kasusBadge.classList.add('show');}
+    else{kasusBadge.classList.remove('show');}
 }
 
-function updateKasusFilterCounts() {
-    document.getElementById('kf-c-semua').textContent = allKasus.length;
-    document.getElementById('kf-c-menunggu').textContent = allKasus.filter(k => !k.handling_status || k.handling_status === 'menunggu').length;
-    document.getElementById('kf-c-sedang').textContent = allKasus.filter(k => k.handling_status === 'sedang_ditangani').length;
-    document.getElementById('kf-c-selesai').textContent = allKasus.filter(k => k.handling_status === 'selesai').length;
-    document.getElementById('kf-c-ditutup').textContent = allKasus.filter(k => k.handling_status === 'ditutup').length;
+function updateKasusFilterCounts(){
+    document.getElementById('kf-c-semua').textContent=allKasus.length;
+    document.getElementById('kf-c-menunggu').textContent=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
+    document.getElementById('kf-c-sedang').textContent=allKasus.filter(k=>k.handling_status==='sedang_ditangani').length;
+    document.getElementById('kf-c-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai').length;
+    document.getElementById('kf-c-ditutup').textContent=allKasus.filter(k=>k.handling_status==='ditutup').length;
 }
 
-function setKasusFilter(mode, btn) {
-    kasusFilterMode = mode;
-    document.querySelectorAll('.kf-btn').forEach(b => b.classList.remove('active'));
+function setKasusFilter(mode,btn){
+    kasusFilterMode=mode;
+    document.querySelectorAll('.kf-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    const q = document.getElementById('kasus-search-input').value;
-    renderKasusList(q);
+    renderKasusList(document.getElementById('kasus-search-input').value);
 }
 
-function filterKasus(q) { renderKasusList(q); }
+function filterKasus(q){renderKasusList(q);}
 
-function renderKasusList(searchQ = '') {
-    const ql = searchQ.toLowerCase();
-    let filtered = allKasus;
+function renderKasusList(searchQ=''){
+    const ql=searchQ.toLowerCase();
+    let filtered=allKasus;
 
-    if (kasusFilterMode !== 'semua') {
-        filtered = allKasus.filter(k => {
-            const status = k.handling_status || 'menunggu';
-            return status === kasusFilterMode;
+    if(kasusFilterMode!=='semua'){
+        filtered=allKasus.filter(k=>{
+            const status=k.handling_status||'menunggu';
+            // ── FIX: "Ditangani Saya" hanya tampilkan kasus yang ditangani advokat ini
+            if(kasusFilterMode==='sedang_ditangani'){
+                return status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id;
+            }
+            return status===kasusFilterMode;
         });
     }
 
-    if (ql) {
-        filtered = filtered.filter(k =>
-            (k.query || '').toLowerCase().includes(ql) ||
-            (k.topik_kasus || '').toLowerCase().includes(ql) ||
-            (k.clientName || '').toLowerCase().includes(ql) ||
-            (k.category || '').toLowerCase().includes(ql)
+    if(ql){
+        filtered=filtered.filter(k=>
+            (k.query||'').toLowerCase().includes(ql)||
+            (k.topik_kasus||'').toLowerCase().includes(ql)||
+            (k.clientName||'').toLowerCase().includes(ql)||
+            (k.category||'').toLowerCase().includes(ql)
         );
     }
 
-    const container = document.getElementById('kasus-list-content');
-
-    if (!filtered.length) {
-        container.innerHTML = `<div class="kasus-empty">
-            <i class="fas fa-folder-open" style="font-size:36px;color:var(--text-3);"></i>
-            <p style="font-size:14px;font-weight:800;color:var(--text-2);margin:0;">Tidak Ada Kasus</p>
-            <p style="font-size:12px;color:var(--text-3);margin:0;">Tidak ada kasus ditemukan untuk filter ini</p>
-        </div>`;
+    const container=document.getElementById('kasus-list-content');
+    if(!filtered.length){
+        container.innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><p style="font-size:14px;font-weight:800;color:var(--text-2);margin:0;">Tidak Ada Kasus</p><p style="font-size:12px;color:var(--text-3);margin:0;">Tidak ada kasus ditemukan untuk filter ini.</p></div>`;
         return;
     }
-
-    container.innerHTML = filtered.map((k, i) => buildKasusCard(k, i)).join('');
+    container.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;">'+filtered.map((k,i)=>buildKasusCard(k,i)).join('')+'</div>';
 }
 
-function buildKasusCard(k, i) {
-    const status = k.handling_status || 'menunggu';
-    const isMyCase = k.assigned_lawyer_id === currentMitra.id;
-    const dateStr = new Date(k.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const title = (k.query || k.topik_kasus || k.kronologi || 'Konsultasi AI').substring(0, 70);
-    const content = (k.response || k.hasil_analisis || '').substring(0, 150);
+function buildKasusCard(k,i){
+    const status=k.handling_status||'menunggu';
+    const isMyCase=k.assigned_lawyer_id===currentMitra.id;
+    const dateStr=new Date(k.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const title=(k.query||k.topik_kasus||k.kronologi||'Konsultasi AI').substring(0,70);
+    const content=(k.response||k.hasil_analisis||'').substring(0,150);
 
-    // Build action buttons based on status
-    let actions = '';
-    if (status === 'menunggu') {
-        actions += `<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}', 'sedang_ditangani')"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>`;
-    }
-    if (status === 'sedang_ditangani' && isMyCase) {
-        actions += `<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}', 'selesai')"><i class="fas fa-check-circle"></i> Tandai Selesai</button>`;
-        actions += `<button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}', 'ditutup')"><i class="fas fa-lock"></i> Tutup Kasus</button>`;
-    }
-    if (status === 'sedang_ditangani' && !isMyCase) {
-        actions += `<span style="font-size:10px;color:var(--text-3);font-weight:600;display:flex;align-items:center;gap:5px;"><i class="fas fa-user-tie"></i> Ditangani: ${escHtml(k.lawyer_name || 'Advokat lain')}</span>`;
-    }
-    if (status === 'selesai' || status === 'ditutup') {
-        actions += `<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}', 'menunggu')"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`;
-    }
-    actions += `<button class="kbtn kbtn-detail" onclick="openKasusDetail('${k.id}')"><i class="fas fa-eye"></i> Detail</button>`;
-    if (k.user_id) {
-        actions += `<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}', '${esc(k.clientName)}', '${esc(k.clientAv)}')"><i class="fas fa-comments"></i> Chat Klien</button>`;
+    // ── BUG FIX: Cek apakah klien adalah diri sendiri (harusnya tidak terjadi tapi sebagai safety)
+    const isSelf=k.user_id===currentMitra.user_id;
+
+    let actions='';
+    if(isSelf){
+        // Ini seharusnya tidak muncul karena sudah difilter di query, tapi fallback safety
+        actions=`<div class="self-case-warn"><i class="fas fa-shield-halved"></i> Ini adalah kasus konsultasi Anda sendiri — tidak dapat ditangani oleh advokat yang sama.</div>`;
+    }else{
+        if(status==='menunggu'){
+            actions+=`<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}','sedang_ditangani',event)"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>`;
+        }
+        if(status==='sedang_ditangani'&&isMyCase){
+            actions+=`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event)"><i class="fas fa-check-circle"></i> Tandai Selesai</button>`;
+            actions+=`<button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}','ditutup',event)"><i class="fas fa-lock"></i> Tutup Kasus</button>`;
+        }
+        if(status==='sedang_ditangani'&&!isMyCase){
+            actions+=`<span style="font-size:10px;color:var(--text-3);font-weight:600;display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);"><i class="fas fa-user-tie" style="color:#FBBF24;"></i> Ditangani: ${escHtml(k.lawyer_name||'Advokat lain')}</span>`;
+        }
+        if(status==='selesai'||status==='ditutup'){
+            actions+=`<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}','menunggu',event)"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`;
+        }
+        actions+=`<button class="kbtn kbtn-detail" onclick="openKasusDetail('${k.id}')"><i class="fas fa-eye"></i> Detail</button>`;
+        if(k.user_id){
+            actions+=`<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}')"><i class="fas fa-comments"></i> Chat Klien</button>`;
+        }
     }
 
-    return `<div class="kasus-card k-${status} fade-up" style="animation-delay:${i * 0.04}s;" id="kcard-${k.id}">
+    return `<div class="kasus-card k-${status}" style="animation:fadeUp 0.4s ease ${i*0.04}s both;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
-            <div class="client-info-row" style="margin:0;">
+            <div class="client-info-row">
                 <img src="${escHtml(k.clientAv)}" class="client-mini-av"
-                     onerror="this.src='https://ui-avatars.com/api/?name=K&background=EFF6FF&color=2563EB&bold=true'" alt="${escHtml(k.clientName)}">
+                     onerror="this.src='${clientAvatarFb(k.clientName)}'" alt="${escHtml(k.clientName)}">
                 <div>
                     <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0;">${escHtml(k.clientName)}</p>
                     <p style="font-size:10px;color:var(--text-3);margin:2px 0 0;">
-                        ${k.category ? `<span style="background:rgba(59,130,246,0.1);color:#60A5FA;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;">${escHtml(k.category)}</span>` : ''}
-                        ${dateStr}
+                        ${k.category?`<span style="background:rgba(59,130,246,0.1);color:#60A5FA;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;margin-right:5px;">${escHtml(k.category)}</span>`:''}${dateStr}
                     </p>
                 </div>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
                 ${renderKsBadge(status)}
-                ${isMyCase && status === 'sedang_ditangani' ? `<span style="font-size:9px;font-weight:800;background:rgba(245,158,11,0.1);color:#FBBF24;border:1px solid rgba(245,158,11,0.2);padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.07em;"><i class="fas fa-user-check"></i> Kasus Saya</span>` : ''}
+                ${isMyCase&&status==='sedang_ditangani'?`<span style="font-size:9px;font-weight:800;background:rgba(245,158,11,0.1);color:#FBBF24;border:1px solid rgba(245,158,11,0.2);padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.07em;"><i class="fas fa-user-check"></i> Kasus Saya</span>`:''}
             </div>
         </div>
-
-        <p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0 0 6px;line-height:1.5;">${escHtml(title)}${title.length >= 70 ? '...' : ''}</p>
-
-        ${content ? `<p style="font-size:12px;color:var(--text-3);margin:0 0 0;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${escHtml(content)}</p>` : ''}
-
-        ${k.catatan_advokat ? `
-        <div style="margin-top:10px;padding:10px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);border-radius:10px;">
-            <p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;"><i class="fas fa-sticky-note"></i> Catatan Advokat</p>
-            <p style="font-size:12px;color:var(--text-2);margin:0;line-height:1.5;">${escHtml(k.catatan_advokat)}</p>
-        </div>` : ''}
-
+        <p style="font-size:13.5px;font-weight:700;color:var(--text-1);margin:0 0 6px;line-height:1.5;">${escHtml(title)}${title.length>=70?'...':''}</p>
+        ${content?`<p style="font-size:12px;color:var(--text-3);margin:0;line-height:1.6;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${escHtml(content)}</p>`:''}
+        ${k.catatan_advokat?`<div style="margin-top:10px;padding:10px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);border-radius:10px;"><p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 3px;"><i class="fas fa-sticky-note"></i> Catatan Advokat</p><p style="font-size:12px;color:var(--text-2);margin:0;line-height:1.5;">${escHtml(k.catatan_advokat)}</p></div>`:''}
         <div class="kasus-actions">${actions}</div>
     </div>`;
 }
@@ -1229,66 +1414,40 @@ function buildKasusCard(k, i) {
 // ══════════════════════════════════════════════
 // UPDATE STATUS KASUS
 // ══════════════════════════════════════════════
-async function updateKasusStatus(kasusId, newStatus) {
-    const btn = event?.currentTarget;
-    if (btn) { btn.disabled = true; btn.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Memproses...`; }
+async function updateKasusStatus(kasusId,newStatus,event){
+    const btn=event?.currentTarget;
+    if(btn){btn.disabled=true;btn.innerHTML=`<i class="fas fa-circle-notch fa-spin"></i> Memproses...`;}
 
-    const updates = {
-        handling_status: newStatus,
-    };
+    const updates={handling_status:newStatus};
+    if(newStatus==='sedang_ditangani'){updates.assigned_lawyer_id=currentMitra.id;updates.lawyer_name=currentMitra.nama_lengkap;}
+    else if(newStatus==='menunggu'){updates.assigned_lawyer_id=null;updates.lawyer_name=null;updates.catatan_advokat=null;}
 
-    if (newStatus === 'sedang_ditangani') {
-        updates.assigned_lawyer_id = currentMitra.id;
-        updates.lawyer_name = currentMitra.nama_lengkap;
-    } else if (newStatus === 'menunggu') {
-        updates.assigned_lawyer_id = null;
-        updates.lawyer_name = null;
-        updates.catatan_advokat = null;
-    }
-
-    try {
-        const { error } = await window.supabase
-            .from('riwayat_konsultasi')
-            .update(updates)
-            .eq('id', kasusId);
-
-        if (error) throw error;
-
-        // Update local state
-        const idx = allKasus.findIndex(k => k.id === kasusId);
-        if (idx !== -1) {
-            allKasus[idx] = { ...allKasus[idx], ...updates };
-        }
-
-        updateKasusStats();
-        updateKasusFilterCounts();
-        renderKasusList(document.getElementById('kasus-search-input').value);
-
-        const cfg = STATUS_CFG[newStatus];
-        showLALToast?.('success', 'Status Diperbarui', `Kasus berhasil diubah ke: ${cfg?.label || newStatus}`);
-
-        // Kirim notif ke klien via realtime (otomatis via postgres_changes)
-    } catch(err) {
-        showLALToast?.('error', 'Gagal Update', err.message);
-        if (btn) { btn.disabled = false; }
-        await loadAllKasus(); // reload untuk sinkron
+    try{
+        const{error}=await window.supabase.from('riwayat_konsultasi').update(updates).eq('id',kasusId);
+        if(error) throw error;
+        const idx=allKasus.findIndex(k=>k.id===kasusId);
+        if(idx!==-1) allKasus[idx]={...allKasus[idx],...updates};
+        updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
+        const cfg=STATUS_CFG[newStatus];
+        toast(`Kasus diubah ke: ${cfg?.label||newStatus}`,'success');
+    }catch(err){
+        toast('Gagal update: '+err.message,'error');
+        if(btn){btn.disabled=false;}
+        await loadAllKasus();
     }
 }
 
 // ══════════════════════════════════════════════
-// OPEN KASUS DETAIL MODAL
+// KASUS DETAIL MODAL
 // ══════════════════════════════════════════════
-function openKasusDetail(kasusId) {
-    const k = allKasus.find(x => x.id === kasusId);
-    if (!k) return;
+function openKasusDetail(kasusId){
+    const k=allKasus.find(x=>x.id===kasusId);if(!k) return;
+    const status=k.handling_status||'menunggu';
+    const isMyCase=k.assigned_lawyer_id===currentMitra.id;
+    const dateStr=new Date(k.created_at).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
 
-    const status = k.handling_status || 'menunggu';
-    const isMyCase = k.assigned_lawyer_id === currentMitra.id;
-    const dateStr = new Date(k.created_at).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-    const modal = document.createElement('div');
-    modal.className = 'k-modal-overlay';
-    modal.innerHTML = `
+    const modal=document.createElement('div');modal.className='k-modal-overlay';
+    modal.innerHTML=`
         <div class="k-modal-bg" onclick="this.closest('.k-modal-overlay').remove()"></div>
         <div class="k-modal-box">
             <div class="k-modal-head">
@@ -1299,346 +1458,258 @@ function openKasusDetail(kasusId) {
                         ${renderKsBadge(status)}
                     </div>
                 </div>
-                <button onclick="this.closest('.k-modal-overlay').remove()"
-                    style="width:32px;height:32px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);font-size:12px;">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button onclick="this.closest('.k-modal-overlay').remove()" style="width:32px;height:32px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);font-size:12px;"><i class="fas fa-times"></i></button>
             </div>
-
             <div class="k-modal-body">
-                <!-- Klien info -->
                 <div class="detail-block">
                     <p class="detail-label" style="color:#60A5FA;"><i class="fas fa-user"></i> Klien</p>
                     <div style="display:flex;align-items:center;gap:10px;">
-                        <img src="${escHtml(k.clientAv)}" style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border);"
-                             onerror="this.src='https://ui-avatars.com/api/?name=K&background=EFF6FF&color=2563EB&bold=true'" alt="Klien">
+                        <img src="${escHtml(k.clientAv)}" style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border);" onerror="this.src='${clientAvatarFb(k.clientName)}'" alt="Klien">
                         <div>
                             <p style="font-size:14px;font-weight:800;color:var(--text-1);margin:0;">${escHtml(k.clientName)}</p>
-                            ${k.category ? `<span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:2px 8px;border-radius:10px;text-transform:uppercase;">${escHtml(k.category)}</span>` : ''}
+                            ${k.category?`<span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:2px 8px;border-radius:10px;text-transform:uppercase;">${escHtml(k.category)}</span>`:''}
                         </div>
                     </div>
                 </div>
-
-                <!-- Pertanyaan klien -->
                 <div class="detail-block">
                     <p class="detail-label" style="color:#60A5FA;"><i class="fas fa-question-circle"></i> Pertanyaan Klien</p>
-                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(k.query || k.topik_kasus || k.kronologi || '-')}</p>
+                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(k.query||k.topik_kasus||k.kronologi||'-')}</p>
                 </div>
-
-                ${k.kronologi && k.query ? `
-                <div class="detail-block">
-                    <p class="detail-label" style="color:#94A3B8;"><i class="fas fa-list-timeline"></i> Kronologi</p>
-                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(k.kronologi)}</p>
-                </div>` : ''}
-
-                <!-- Analisis AI -->
+                ${k.kronologi&&k.query?`<div class="detail-block"><p class="detail-label" style="color:#94A3B8;"><i class="fas fa-list"></i> Kronologi</p><p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(k.kronologi)}</p></div>`:''}
                 <div class="detail-block">
                     <p class="detail-label" style="color:#34D399;"><i class="fas fa-robot"></i> Analisis AI</p>
-                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml((k.response || k.hasil_analisis || '-').substring(0, 800))}${(k.response || k.hasil_analisis || '').length > 800 ? '...' : ''}</p>
+                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml((k.response||k.hasil_analisis||'-').substring(0,800))}${(k.response||k.hasil_analisis||'').length>800?'...':''}</p>
                 </div>
-
-                ${k.pasal_terkait ? `
-                <div class="detail-block">
-                    <p class="detail-label" style="color:#FBBF24;"><i class="fas fa-book-open"></i> Pasal Terkait</p>
-                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${escHtml(k.pasal_terkait)}</p>
-                </div>` : ''}
-
-                ${status === 'sedang_ditangani' && k.lawyer_name ? `
-                <div style="padding:12px 14px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;margin-bottom:12px;">
-                    <p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;"><i class="fas fa-user-tie"></i> Sedang Ditangani Oleh</p>
-                    <p style="font-size:14px;font-weight:700;color:var(--text-1);margin:0;">${escHtml(k.lawyer_name)}</p>
-                </div>` : ''}
-
-                <!-- Catatan Advokat -->
+                ${k.pasal_terkait?`<div class="detail-block"><p class="detail-label" style="color:#FBBF24;"><i class="fas fa-book-open"></i> Pasal Terkait</p><p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${escHtml(k.pasal_terkait)}</p></div>`:''}
+                ${status==='sedang_ditangani'&&k.lawyer_name?`<div style="padding:12px 14px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;margin-bottom:12px;"><p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;"><i class="fas fa-user-tie"></i> Sedang Ditangani Oleh</p><p style="font-size:14px;font-weight:700;color:var(--text-1);margin:0;">${escHtml(k.lawyer_name)}</p></div>`:''}
                 <div class="detail-block">
                     <p class="detail-label" style="color:#FBBF24;"><i class="fas fa-sticky-note"></i> Catatan Advokat (Internal)</p>
-                    <textarea class="catatan-area" id="catatan-input-${k.id}" placeholder="Tambahkan catatan internal untuk kasus ini...">${escHtml(k.catatan_advokat || '')}</textarea>
-                    <button onclick="saveCatatan('${k.id}')" style="margin-top:8px;padding:8px 16px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);border-radius:10px;font-size:10px;font-weight:800;color:#FBBF24;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:0.07em;display:flex;align-items:center;gap:6px;">
-                        <i class="fas fa-floppy-disk"></i> Simpan Catatan
-                    </button>
+                    <textarea class="catatan-area" id="catatan-input-${k.id}" placeholder="Tambahkan catatan internal...">${escHtml(k.catatan_advokat||'')}</textarea>
+                    <button onclick="saveCatatan('${k.id}')" style="margin-top:8px;padding:8px 14px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);border-radius:10px;font-size:10px;font-weight:800;color:#FBBF24;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:0.07em;display:flex;align-items:center;gap:6px;"><i class="fas fa-floppy-disk"></i> Simpan Catatan</button>
                 </div>
             </div>
-
             <div class="k-modal-footer">
-                ${status === 'menunggu' ? `<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}', 'sedang_ditangani');this.closest('.k-modal-overlay').remove()"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>` : ''}
-                ${status === 'sedang_ditangani' && isMyCase ? `
-                    <button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}', 'selesai');this.closest('.k-modal-overlay').remove()"><i class="fas fa-check-circle"></i> Selesai</button>
-                    <button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}', 'ditutup');this.closest('.k-modal-overlay').remove()"><i class="fas fa-lock"></i> Tutup</button>` : ''}
-                ${(status === 'selesai' || status === 'ditutup') ? `<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}', 'menunggu');this.closest('.k-modal-overlay').remove()"><i class="fas fa-rotate-left"></i> Buka Kembali</button>` : ''}
-                ${k.user_id ? `<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}');this.closest('.k-modal-overlay').remove()"><i class="fas fa-comments"></i> Chat Klien</button>` : ''}
-                <button onclick="this.closest('.k-modal-overlay').remove()" style="margin-left:auto;padding:7px 16px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;">Tutup</button>
+                ${status==='menunggu'?`<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}','sedang_ditangani',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>`:''}
+                ${status==='sedang_ditangani'&&isMyCase?`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-check-circle"></i> Selesai</button><button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}','ditutup',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-lock"></i> Tutup</button>`:''}
+                ${(status==='selesai'||status==='ditutup')?`<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}','menunggu',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`:''}
+                ${k.user_id?`<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}');this.closest('.k-modal-overlay').remove()"><i class="fas fa-comments"></i> Chat Klien</button>`:''}
+                <button onclick="this.closest('.k-modal-overlay').remove()" style="margin-left:auto;padding:7px 14px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;">Tutup</button>
             </div>
         </div>`;
-
     document.body.appendChild(modal);
 }
 
-// ══════════════════════════════════════════════
-// SAVE CATATAN ADVOKAT
-// ══════════════════════════════════════════════
-async function saveCatatan(kasusId) {
-    const ta = document.getElementById(`catatan-input-${kasusId}`);
-    if (!ta) return;
-    const catatan = ta.value.trim();
-
-    try {
-        const { error } = await window.supabase.from('riwayat_konsultasi').update({ catatan_advokat: catatan }).eq('id', kasusId);
-        if (error) throw error;
-        const idx = allKasus.findIndex(k => k.id === kasusId);
-        if (idx !== -1) allKasus[idx].catatan_advokat = catatan;
-        showLALToast?.('success', 'Catatan Disimpan', 'Catatan internal berhasil diperbarui.');
-    } catch(err) {
-        showLALToast?.('error', 'Gagal Simpan', err.message);
-    }
+async function saveCatatan(kasusId){
+    const ta=document.getElementById(`catatan-input-${kasusId}`);if(!ta) return;
+    const catatan=ta.value.trim();
+    try{
+        const{error}=await window.supabase.from('riwayat_konsultasi').update({catatan_advokat:catatan}).eq('id',kasusId);
+        if(error) throw error;
+        const idx=allKasus.findIndex(k=>k.id===kasusId);
+        if(idx!==-1) allKasus[idx].catatan_advokat=catatan;
+        toast('Catatan disimpan','success');
+    }catch(err){toast('Gagal simpan: '+err.message,'error');}
 }
 
 // ══════════════════════════════════════════════
 // OPEN CHAT WITH CLIENT (from Kasus panel)
 // ══════════════════════════════════════════════
-async function openChatWithClient(clientId, clientName, clientAv) {
-    // Switch to inbox tab
-    const inboxTab = document.getElementById('tab-inbox');
-    switchTab('inbox', inboxTab);
-
-    // Cari existing conversation
-    const existingConv = allConvs.find(c => c.clientId === clientId);
-    if (existingConv) {
-        openConv(existingConv.convId, existingConv.clientId, existingConv.clientName, existingConv.clientAv);
-        return;
+async function openChatWithClient(clientId,clientName,clientAv){
+    // ── BUG FIX: Jangan buka chat dengan diri sendiri
+    if(clientId===currentMitra.user_id){
+        toast('Tidak bisa chat dengan diri sendiri','warn');return;
     }
-
-    // Buat conversation baru dengan UUID
-    const convId = crypto.randomUUID();
-    await openConv(convId, clientId, clientName || 'Klien', clientAv || `https://ui-avatars.com/api/?name=K&background=EFF6FF&color=2563EB&bold=true`);
+    const inboxTab=document.getElementById('tab-inbox');
+    switchTab('inbox',inboxTab);
+    const existingConv=allConvs.find(c=>c.clientId===clientId);
+    if(existingConv){openConv(existingConv.convId,existingConv.clientId,existingConv.clientName,existingConv.clientAv);return;}
+    const convId=crypto.randomUUID();
+    await openConv(convId,clientId,clientName||'Klien',clientAv||clientAvatarFb(clientName||'K'));
 }
 
 // ══════════════════════════════════════════════
 // KASUS REALTIME
 // ══════════════════════════════════════════════
-function subscribeKasusRealtime() {
-    if (rtKasusChannel) window.supabase.removeChannel(rtKasusChannel);
-
-    rtKasusChannel = window.supabase
-        .channel('adv-kasus-rt-' + currentMitra.id)
-        .on('postgres_changes', {
-            event: '*', schema: 'public', table: 'riwayat_konsultasi'
-        }, async (payload) => {
-            if (payload.eventType === 'INSERT') {
-                // Kasus baru masuk
-                const newK = payload.new;
-                // Get client profile
-                const { data: prof } = await window.supabase.from('profiles').select('id, full_name, avatar_url').eq('id', newK.user_id).maybeSingle();
-                allKasus.unshift({
-                    ...newK,
-                    clientName: prof?.full_name || 'Klien',
-                    clientAv: prof?.avatar_url || `https://ui-avatars.com/api/?name=K&background=EFF6FF&color=2563EB&bold=true`,
-                });
-                updateKasusStats();
-                updateKasusFilterCounts();
+function subscribeKasusRealtime(){
+    if(rtKasusChannel) window.supabase.removeChannel(rtKasusChannel);
+    rtKasusChannel=window.supabase.channel('adv-kasus-rt-'+currentMitra.id)
+        .on('postgres_changes',{event:'*',schema:'public',table:'riwayat_konsultasi'},async(payload)=>{
+            if(payload.eventType==='INSERT'){
+                const newK=payload.new;
+                // ── BUG FIX: Abaikan kasus dari diri sendiri
+                if(newK.user_id===currentMitra.user_id) return;
+                const{data:prof}=await window.supabase.from('profiles').select('id,full_name,avatar_url').eq('id',newK.user_id).maybeSingle();
+                allKasus.unshift({...newK,clientName:prof?.full_name||'Klien',clientAv:prof?.avatar_url||clientAvatarFb(prof?.full_name||'K')});
+                updateKasusStats();updateKasusFilterCounts();
                 renderKasusList(document.getElementById('kasus-search-input').value);
                 ringBell();
-                showLALToast?.('info', '📋 Kasus Baru', `Kasus baru dari ${prof?.full_name || 'klien'} masuk.`, 5000);
-
-            } else if (payload.eventType === 'UPDATE') {
-                const updated = payload.new;
-                const idx = allKasus.findIndex(k => k.id === updated.id);
-                if (idx !== -1) allKasus[idx] = { ...allKasus[idx], ...updated };
-                updateKasusStats();
-                updateKasusFilterCounts();
+                toast(`📋 Kasus baru dari ${prof?.full_name||'klien'}`,'info');
+            }else if(payload.eventType==='UPDATE'){
+                const updated=payload.new;
+                const idx=allKasus.findIndex(k=>k.id===updated.id);
+                if(idx!==-1) allKasus[idx]={...allKasus[idx],...updated};
+                updateKasusStats();updateKasusFilterCounts();
                 renderKasusList(document.getElementById('kasus-search-input').value);
-
-            } else if (payload.eventType === 'DELETE') {
-                allKasus = allKasus.filter(k => k.id !== payload.old.id);
-                updateKasusStats();
-                updateKasusFilterCounts();
+            }else if(payload.eventType==='DELETE'){
+                allKasus=allKasus.filter(k=>k.id!==payload.old.id);
+                updateKasusStats();updateKasusFilterCounts();
                 renderKasusList(document.getElementById('kasus-search-input').value);
             }
-        })
-        .subscribe();
+        }).subscribe();
 }
 
 // ══════════════════════════════════════════════
 // REALTIME — PESAN MASUK
 // ══════════════════════════════════════════════
-function subscribeRealtime() {
-    if (rtChannel) window.supabase.removeChannel(rtChannel);
-    rtChannel = window.supabase
-        .channel('adv-rt-' + currentMitra.id)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `lawyer_id=eq.${currentMitra.id}` },
-            async (payload) => { await handleIncomingMessage(payload.new); })
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${currentMitra.user_id}` },
-            async (payload) => { const m = payload.new; if (m.lawyer_id && m.lawyer_id === currentMitra.id) return; await handleIncomingMessage(m); })
-        .on('broadcast', { event: 'typing' }, (p) => { if (p.payload?.from === selectedClientId) showTyping(); })
-        .subscribe((status) => {
-            const el = document.getElementById('rt-status');
-            if (status === 'SUBSCRIBED') { el.textContent = 'Realtime ✓'; el.style.color = '#10B981'; }
-            else { el.textContent = 'Reconnecting...'; el.style.color = 'var(--text-3)'; }
+function subscribeRealtime(){
+    if(rtChannel) window.supabase.removeChannel(rtChannel);
+    rtChannel=window.supabase.channel('adv-rt-'+currentMitra.id)
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`lawyer_id=eq.${currentMitra.id}`},
+            async(payload)=>{
+                // ── BUG FIX: Abaikan pesan dari diri sendiri
+                if(payload.new.sender_id===currentMitra.user_id) return;
+                await handleIncomingMessage(payload.new);
+            })
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentMitra.user_id}`},
+            async(payload)=>{
+                const m=payload.new;
+                // ── BUG FIX: Abaikan pesan dari diri sendiri
+                if(m.sender_id===currentMitra.user_id) return;
+                if(m.lawyer_id&&m.lawyer_id===currentMitra.id) return;
+                await handleIncomingMessage(m);
+            })
+        .on('broadcast',{event:'typing'},(p)=>{if(p.payload?.from===selectedClientId)showTyping();})
+        .subscribe((status)=>{
+            const el=document.getElementById('rt-status');
+            if(status==='SUBSCRIBED'){el.textContent='Realtime ✓';el.style.color='#10B981';}
+            else{el.textContent='Reconnecting...';el.style.color='var(--text-3)';}
         });
 }
 
-async function handleIncomingMessage(m) {
+async function handleIncomingMessage(m){
     await loadConvList();
-    if (m.conversation_id === selectedConvId) {
+    if(m.conversation_id===selectedConvId){
         await loadMessages();
-        await window.supabase.from('messages').update({ is_read: true }).eq('conversation_id', selectedConvId).eq('receiver_id', currentMitra.user_id);
-    } else {
+        await window.supabase.from('messages').update({is_read:true}).eq('conversation_id',selectedConvId).eq('receiver_id',currentMitra.user_id);
+    }else{
         ringBell();
-        const conv = allConvs.find(c => c.convId === m.conversation_id);
-        const senderName = conv?.clientName || 'Klien baru';
-        showLALToast?.('info', `💬 ${senderName}`, m.message_text?.slice(0, 60) || 'Pesan baru', 5000);
+        const conv=allConvs.find(c=>c.convId===m.conversation_id);
+        const senderName=conv?.clientName||'Klien baru';
+        toast(`💬 ${senderName}: ${m.message_text?.slice(0,45)||'Pesan baru'}`,'info');
     }
 }
 
-function ringBell() {
-    const bell = document.getElementById('notif-bell');
-    bell.classList.remove('bell-shake'); void bell.offsetWidth; bell.classList.add('bell-shake');
-    bell.style.color = '#F59E0B'; setTimeout(() => { bell.style.color = ''; }, 800);
+function ringBell(){
+    const bell=document.getElementById('notif-bell');
+    bell.classList.remove('bell-shake');void bell.offsetWidth;bell.classList.add('bell-shake');
+    bell.style.color='#F59E0B';setTimeout(()=>{bell.style.color='';},800);
     playNotifSound();
 }
 
-function showTyping() {
-    document.getElementById('typing-label').style.display = '';
-    document.getElementById('typing-indicator-row').style.display = 'flex';
-    const box = document.getElementById('chat-box'); box.scrollTop = box.scrollHeight;
+function showTyping(){
+    document.getElementById('typing-label').style.display='';
+    document.getElementById('typing-indicator-row').style.display='flex';
+    const box=document.getElementById('chat-box');box.scrollTop=box.scrollHeight;
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-        document.getElementById('typing-label').style.display = 'none';
-        document.getElementById('typing-indicator-row').style.display = 'none';
-    }, 3500);
+    typingTimer=setTimeout(()=>{
+        document.getElementById('typing-label').style.display='none';
+        document.getElementById('typing-indicator-row').style.display='none';
+    },3500);
 }
 
 // ══════════════════════════════════════════════
 // PROFIL
 // ══════════════════════════════════════════════
-async function loadProfile() {
-    if (!currentMitra) return;
-    const m = currentMitra;
-    document.getElementById('profil-nama-display').textContent = m.nama_lengkap || 'Nama Advokat';
-    document.getElementById('profil-spec-badge').textContent = m.spesialisasi || 'Hukum Umum';
-    document.getElementById('profil-avatar-img').src = m.foto_profil_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
-    ['f-nama','f-nia','f-pengalaman','f-lulusan','f-jurusan','f-kabupaten','f-provinsi','f-bio'].forEach(id => {
-        const key = { 'f-nama': 'nama_lengkap', 'f-nia': 'nomor_nia', 'f-pengalaman': 'pengalaman', 'f-lulusan': 'lulusan', 'f-jurusan': 'jurusan', 'f-kabupaten': 'kabupaten', 'f-provinsi': 'provinsi', 'f-bio': 'bio_singkat' }[id];
-        const el = document.getElementById(id); if (el) el.value = m[key] || '';
-    });
-    document.getElementById('f-spesialisasi').value = m.spesialisasi || '';
+async function loadProfile(){
+    if(!currentMitra) return;
+    const m=currentMitra;
+    document.getElementById('profil-nama-display').textContent=m.nama_lengkap||'Nama Advokat';
+    document.getElementById('profil-spec-badge').textContent=m.spesialisasi||'Hukum Umum';
+    document.getElementById('profil-avatar-img').src=m.foto_profil_url||avatarFb(m.nama_lengkap);
+    const fieldMap={'f-nama':'nama_lengkap','f-nia':'nomor_nia','f-pengalaman':'pengalaman','f-lulusan':'lulusan','f-jurusan':'jurusan','f-kabupaten':'kabupaten','f-provinsi':'provinsi','f-bio':'bio_singkat'};
+    Object.entries(fieldMap).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=m[key]||'';});
+    document.getElementById('f-spesialisasi').value=m.spesialisasi||'';
     updateBioCount(document.getElementById('f-bio'));
-    updateAvailUI();
-    document.getElementById('save-hint').textContent = '';
+    document.getElementById('save-hint').textContent='';
 }
 
-async function saveProfile() {
-    const btn = document.getElementById('save-btn'); const hint = document.getElementById('save-hint');
-    const updates = { nama_lengkap: document.getElementById('f-nama').value.trim(), nomor_nia: document.getElementById('f-nia').value.trim(), spesialisasi: document.getElementById('f-spesialisasi').value, pengalaman: parseInt(document.getElementById('f-pengalaman').value) || 0, lulusan: document.getElementById('f-lulusan').value.trim(), jurusan: document.getElementById('f-jurusan').value.trim(), kabupaten: document.getElementById('f-kabupaten').value.trim(), provinsi: document.getElementById('f-provinsi').value.trim(), bio_singkat: document.getElementById('f-bio').value.trim() };
-    if (!updates.nama_lengkap) { hint.textContent = '⚠️ Nama lengkap wajib diisi!'; hint.style.color = '#F87171'; return; }
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
-    try {
-        const { data: { session } } = await window.supabase.auth.getSession();
-        const res = await fetch(SUPA_URL + '/rest/v1/mitra_ahli?id=eq.' + encodeURIComponent(currentMitra.id), { method: 'PATCH', headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(updates) });
-        if (!res.ok) { const errText = await res.text(); throw new Error(JSON.parse(errText)?.message || 'HTTP ' + res.status); }
-        const rows = await res.json(); const saved = (Array.isArray(rows) && rows.length) ? rows[0] : updates;
-        currentMitra = { ...currentMitra, ...saved }; updateSidebarUI();
-        document.getElementById('profil-nama-display').textContent = updates.nama_lengkap;
-        document.getElementById('profil-spec-badge').textContent = updates.spesialisasi || 'Hukum Umum';
-        hint.textContent = '✓ Tersimpan pada ' + new Date().toLocaleTimeString('id-ID'); hint.style.color = '#34D399';
-        showLALToast?.('success', 'Profil Diperbarui', 'Data berhasil disimpan.');
-    } catch(e) { hint.textContent = '❌ Gagal: ' + e.message; hint.style.color = '#F87171'; showLALToast?.('error', 'Gagal Simpan', e.message); }
-    finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-floppy-disk"></i> Simpan Perubahan'; }
+async function saveProfile(){
+    const btn=document.getElementById('save-btn');const hint=document.getElementById('save-hint');
+    const updates={nama_lengkap:document.getElementById('f-nama').value.trim(),nomor_nia:document.getElementById('f-nia').value.trim(),spesialisasi:document.getElementById('f-spesialisasi').value,pengalaman:parseInt(document.getElementById('f-pengalaman').value)||0,lulusan:document.getElementById('f-lulusan').value.trim(),jurusan:document.getElementById('f-jurusan').value.trim(),kabupaten:document.getElementById('f-kabupaten').value.trim(),provinsi:document.getElementById('f-provinsi').value.trim(),bio_singkat:document.getElementById('f-bio').value.trim()};
+    if(!updates.nama_lengkap){hint.textContent='⚠️ Nama lengkap wajib diisi!';hint.style.color='#F87171';return;}
+    btn.disabled=true;btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
+    try{
+        const{data:{session}}=await window.supabase.auth.getSession();
+        const res=await fetch(SUPA_URL+'/rest/v1/mitra_ahli?id=eq.'+encodeURIComponent(currentMitra.id),{method:'PATCH',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(updates)});
+        if(!res.ok){const errText=await res.text();throw new Error(JSON.parse(errText)?.message||'HTTP '+res.status);}
+        const rows=await res.json();const saved=(Array.isArray(rows)&&rows.length)?rows[0]:updates;
+        currentMitra={...currentMitra,...saved};updateSidebarUI();
+        document.getElementById('profil-nama-display').textContent=updates.nama_lengkap;
+        document.getElementById('profil-spec-badge').textContent=updates.spesialisasi||'Hukum Umum';
+        hint.textContent='✓ Tersimpan pada '+new Date().toLocaleTimeString('id-ID');hint.style.color='#34D399';
+        toast('Profil berhasil diperbarui','success');
+    }catch(e){hint.textContent='❌ Gagal: '+e.message;hint.style.color='#F87171';toast('Gagal simpan: '+e.message,'error');}
+    finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-floppy-disk"></i> Simpan Perubahan';}
 }
 
-async function uploadAvatar(input) {
-    const file = input.files[0]; if (!file) return;
-    if (file.size > 3 * 1024 * 1024) { showLALToast?.('warning', 'File Terlalu Besar', 'Maksimal 3MB'); return; }
-    const btn = document.querySelector('.profil-avatar-upload'); btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
-    try {
-        const ext = file.name.split('.').pop(); const path = `mitra/${currentMitra.id}/avatar-${Date.now()}.${ext}`;
-        const { error: upErr } = await window.supabase.storage.from('avatars').upload(path, file, { upsert: true }); if (upErr) throw upErr;
-        const { data: urlData } = window.supabase.storage.from('avatars').getPublicUrl(path); const publicUrl = urlData.publicUrl;
-        const { error: dbErr } = await window.supabase.from('mitra_ahli').update({ foto_profil_url: publicUrl }).eq('id', currentMitra.id); if (dbErr) throw dbErr;
-        currentMitra.foto_profil_url = publicUrl;
-        document.getElementById('profil-avatar-img').src = publicUrl;
-        const sa2 = document.getElementById('side-avatar'); if (sa2) sa2.src = publicUrl;
-        showLALToast?.('success', 'Foto Diperbarui', 'Foto profil berhasil diunggah.');
-    } catch(e) { showLALToast?.('error', 'Upload Gagal', e.message); }
-    finally { btn.innerHTML = '<i class="fas fa-camera"></i>'; input.value = ''; }
+async function uploadAvatar(input){
+    const file=input.files[0];if(!file) return;
+    if(file.size>3*1024*1024){toast('File maksimal 3MB','warn');return;}
+    const btn=document.querySelector('.profil-avatar-upload');btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i>';
+    try{
+        const ext=file.name.split('.').pop();const path=`mitra/${currentMitra.id}/avatar-${Date.now()}.${ext}`;
+        const{error:upErr}=await window.supabase.storage.from('avatars').upload(path,file,{upsert:true});if(upErr) throw upErr;
+        const{data:urlData}=window.supabase.storage.from('avatars').getPublicUrl(path);const publicUrl=urlData.publicUrl;
+        const{error:dbErr}=await window.supabase.from('mitra_ahli').update({foto_profil_url:publicUrl}).eq('id',currentMitra.id);if(dbErr) throw dbErr;
+        currentMitra.foto_profil_url=publicUrl;
+        document.getElementById('profil-avatar-img').src=publicUrl;
+        const sa2=document.getElementById('side-avatar');if(sa2)sa2.src=publicUrl;
+        toast('Foto profil berhasil diperbarui','success');
+    }catch(e){toast('Upload gagal: '+e.message,'error');}
+    finally{btn.innerHTML='<i class="fas fa-camera"></i>';input.value='';}
 }
 
-function toggleAvailability() { isAvailable = !isAvailable; updateAvailUI(); }
-function updateAvailUI() {
-    const toggle = document.getElementById('avail-toggle'); const label = document.getElementById('avail-label'); const sub = document.getElementById('avail-sub');
-    if (isAvailable) { toggle.classList.remove('off'); label.textContent = 'Menerima Klien Baru'; label.style.color = '#10B981'; sub.textContent = 'Profil Anda terlihat di direktori mitra'; }
-    else { toggle.classList.add('off'); label.textContent = 'Tidak Menerima Klien'; label.style.color = 'var(--text-3)'; sub.textContent = 'Profil Anda disembunyikan dari direktori'; }
+function updateAvailUI(){
+    const toggle=document.getElementById('avail-toggle');const label=document.getElementById('avail-label');const sub=document.getElementById('avail-sub');
+    if(isAvailable){toggle.classList.remove('off');label.textContent='Menerima Klien Baru';label.style.color='#10B981';sub.textContent='Profil Anda terlihat di direktori mitra';}
+    else{toggle.classList.add('off');label.textContent='Tidak Menerima Klien';label.style.color='var(--text-3)';sub.textContent='Profil Anda disembunyikan dari direktori';}
 }
-function updateBioCount(el) { document.getElementById('bio-count').textContent = `${el.value.length}/500`; }
-
-// ══════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════
-function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function esc(s) { return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
-function fmtTime(iso) {
-    if (!iso) return ''; const d = new Date(iso), now = new Date(), df = now - d;
-    if (df < 60000) return 'Baru'; if (df < 3600000) return Math.floor(df/60000) + 'm';
-    if (df < 86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    if (df < 604800000) return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
-    return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
-}
+function updateBioCount(el){document.getElementById('bio-count').textContent=`${el.value.length}/500`;}
 
 // ══════════════════════════════════════════════
 // SOUND
 // ══════════════════════════════════════════════
-let audioCtx = null;
-function getAudioCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
-function playNotifSound() {
-    try {
-        const ctx = getAudioCtx();
-        [0, 0.12, 0.24].forEach((t, i) => {
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.frequency.value = [880, 1100, 1320][i];
-            gain.gain.setValueAtTime(0.25, ctx.currentTime + t);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.1);
-            osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.12);
+let audioCtx=null;
+function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playNotifSound(){
+    try{
+        const ctx=getAudioCtx();
+        [0,0.12,0.24].forEach((t,i)=>{
+            const osc=ctx.createOscillator();const gain=ctx.createGain();
+            osc.connect(gain);gain.connect(ctx.destination);
+            osc.frequency.value=[880,1100,1320][i];
+            gain.gain.setValueAtTime(0.22,ctx.currentTime+t);
+            gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.1);
+            osc.start(ctx.currentTime+t);osc.stop(ctx.currentTime+t+0.12);
         });
-    } catch(e) {}
-}
-
-// ══════════════════════════════════════════════
-// QUICK REPLY
-// ══════════════════════════════════════════════
-const ADV_QUICK_REPLIES = ['Baik, saya pahami masalah Anda.','Silakan kirim dokumen pendukung.','Kasus Anda termasuk kategori pidana.','Kami bisa jadwalkan konsultasi lanjutan.','Saya akan pelajari lebih lanjut.','Ada pertanyaan tambahan?'];
-
-document.addEventListener('DOMContentLoaded', () => {
-    const textarea = document.getElementById('msg-textarea'); if (!textarea) return;
-    const qrBar = document.createElement('div');
-    qrBar.id = 'adv-qr-bar';
-    qrBar.style.cssText = 'display:none;padding:8px 14px;border-top:1px solid var(--border);background:var(--bg-sidebar);overflow-x:auto;scrollbar-width:none;flex-shrink:0;gap:6px;align-items:center;';
-    qrBar.innerHTML = '<span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);flex-shrink:0;">Template:</span>' +
-        ADV_QUICK_REPLIES.map(r => `<div onclick="useAdvQR(this)" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.color='#60A5FA';this.style.borderColor='rgba(59,130,246,0.3)'" onmouseout="this.style.color='var(--text-2)';this.style.borderColor='var(--border)'">${r}</div>`).join('');
-    const inputWrap = document.getElementById('chat-input-area'); if (inputWrap) inputWrap.insertBefore(qrBar, inputWrap.firstChild);
-    textarea.addEventListener('focus', () => { if (!textarea.value.trim()) qrBar.style.display = 'flex'; });
-    textarea.addEventListener('input', () => { qrBar.style.display = textarea.value.trim() ? 'none' : 'flex'; });
-});
-
-function useAdvQR(el) {
-    const ta = document.getElementById('msg-textarea'); if (ta) { ta.value = el.textContent; ta.focus(); autoResize(ta); document.getElementById('adv-qr-bar').style.display = 'none'; }
+    }catch(e){}
 }
 
 // ══════════════════════════════════════════════
 // LOGOUT
 // ══════════════════════════════════════════════
-async function handleLogout() {
-    await window.supabase.auth.signOut();
-    location.href = 'login.html';
+async function handleLogout(){
+    await window.supabase.auth.signOut();location.href='login.html';
 }
 
 // ══════════════════════════════════════════════
 // BOOT
 // ══════════════════════════════════════════════
-init().catch(err => {
-    console.error('[Dashboard Advokat] Fatal:', err);
-    document.getElementById('load-overlay').innerHTML = `
+init().catch(err=>{
+    console.error('[Dashboard Advokat] Fatal:',err);
+    document.getElementById('load-overlay').innerHTML=`
         <div style="text-align:center;padding:40px;max-width:360px;">
-            <i class="fas fa-triangle-exclamation" style="font-size:32px;color:#F59E0B;margin-bottom:16px;display:block;"></i>
+            <div class="empty-icon" style="margin:0 auto 16px;"><i class="fas fa-triangle-exclamation" style="color:#F59E0B;"></i></div>
             <p style="font-size:14px;font-weight:700;color:var(--text-1);margin:0 0 8px;">Gagal Memuat Dashboard</p>
             <p style="font-size:12px;color:var(--text-3);margin:0 0 20px;">${err.message}</p>
             <button onclick="location.reload()" class="btn-primary">Coba Lagi</button>
