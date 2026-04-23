@@ -215,7 +215,7 @@
     .conv-item.active { background: rgba(59,130,246,0.07); }
     .conv-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0; }
     .conv-avatar { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; flex-shrink: 0; border: 1.5px solid var(--border); }
-    .unread-badge { min-width: 18px; height: 18px; padding: 0 4px; background: var(--accent); color: #fff; border-radius: 9px; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .unread-badge { min-width: 18px; height: 18px; padding: 0 4px; background: var(--accent); color: #fff; border-radius: 9px; font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
     /* ══ CHAT AREA ══ */
     #chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
@@ -253,7 +253,7 @@
     .msg-row { display: flex; align-items: flex-end; gap: 8px; }
     .msg-row.me { justify-content: flex-end; }
     .msg-av { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
-    .msg-av-init { width: 26px; height: 26px; border-radius: 8px; background: var(--accent-dark); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .msg-av-init { width: 26px; height: 26px; border-radius: 8px; background: var(--accent-dark); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
     .msg-av-space { width: 26px; flex-shrink: 0; }
 
     .msg-bubble-box { max-width: 72%; min-width: 0; }
@@ -294,7 +294,7 @@
     #msg-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
     #msg-textarea::placeholder { color: var(--text-3); }
     body.light #msg-textarea { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
-    .send-btn { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-dark); color: #fff; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .send-btn { width: 44px; height: 44px; border-radius: 12px; background: var(--accent-dark); color: #fff; border: none; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; }
     .send-btn:hover { background: #1D4ED8; transform: scale(1.05); }
     .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
@@ -418,12 +418,12 @@
     .detail-block { background: var(--bg-input); border: 1px solid var(--border); border-radius: 14px; padding: 15px; margin-bottom: 10px; }
     body.light .detail-block { background: #F8FAFC; }
     .detail-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 8px; }
-    .catatan-area { width: 100%; padding: 11px 13px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 11px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; resize: vertical; min-height: 80px; line-height: 1.6; margin-top: 6px; transition: border-color 0.2s; }
+    .catatan-area { width: 100%; padding: 11px 13px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 11px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; transition: border-color 0.2s; resize: none; }
     .catatan-area:focus { border-color: var(--accent); }
     body.light .catatan-area { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
 
     /* ── Skeleton ── */
-    .skel { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-input) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: skelPulse 1.4s ease-in-out infinite; border-radius: 10px; }
+    .skel { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-input) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: skelPulse 1.4s ease-in-out infinite; border-radius: 8px; }
     @keyframes skelPulse { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
     .kasus-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px 20px; text-align: center; opacity: 0.45; }
@@ -437,11 +437,11 @@
     .profil-avatar-zone { position: absolute; bottom: -46px; left: 28px; }
     .profil-avatar { width: 90px; height: 90px; border-radius: 22px; object-fit: cover; border: 3px solid var(--bg-base); box-shadow: 0 10px 32px rgba(0,0,0,0.5); display: block; }
     body.light .profil-avatar { border-color: #EEF2F7; }
-    .profil-avatar-upload { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--accent-dark); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; color: #fff; border: 2px solid var(--bg-base); transition: background 0.15s; }
+    .profil-avatar-upload { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--accent-dark); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 11px; transition: background 0.2s; border: 1px solid rgba(255,255,255,0.2); }
     .profil-avatar-upload:hover { background: #1D4ED8; }
     body.light .profil-avatar-upload { border-color: #EEF2F7; }
-    .badge-verified { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(16,185,129,0.12); color: #34D399; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
-    .badge-spec { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(59,130,246,0.1); color: #60A5FA; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+    .badge-verified { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(16,185,129,0.12); color: #34D399; font-size: 9px; font-weight: 800; border: 1px solid rgba(16,185,129,0.25); }
+    .badge-spec { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(59,130,246,0.1); color: #60A5FA; font-size: 9px; font-weight: 800; border: 1px solid rgba(59,130,246,0.25); }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
@@ -455,10 +455,10 @@
     .field:focus { border-color: var(--accent); background: var(--bg-hover); }
     body.light .field { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
     body.light .field:focus { border-color: #3B82F6; background: #FAFAFA; }
-    .form-select { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-1); outline: none; appearance: none; cursor: pointer; transition: border-color 0.2s; }
+    .form-select { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-1); outline: none; transition: border-color 0.2s; cursor: pointer; }
     .form-select:focus { border-color: var(--accent); }
     body.light .form-select { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
-    .form-textarea { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; resize: vertical; min-height: 90px; line-height: 1.6; transition: border-color 0.2s; }
+    .form-textarea { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; transition: border-color 0.2s; resize: vertical; }
     .form-textarea:focus { border-color: var(--accent); }
     body.light .form-textarea { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
     .section-heading { font-size: 13px; font-weight: 800; font-style: italic; color: var(--text-1); margin: 0 0 14px; }
@@ -466,15 +466,15 @@
     .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
     .avail-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; }
     body.light .avail-toggle-row { background: #FFFFFF; }
-    .avail-toggle { width: 44px; height: 24px; border-radius: 12px; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3); cursor: pointer; position: relative; flex-shrink: 0; }
+    .avail-toggle { width: 44px; height: 24px; border-radius: 12px; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3); cursor: pointer; position: relative; flex-shrink: 0; transition: all 0.3s; }
     .avail-toggle.off { background: var(--bg-input); border-color: var(--border); }
-    .avail-toggle-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #10B981; transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .avail-toggle-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #10B981; transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
     .avail-toggle.off .avail-toggle-knob { transform: translateX(20px); background: var(--text-3); }
     .save-bar { position: sticky; bottom: 0; padding: 16px 0; background: var(--bg-base); margin-top: 24px; border-top: 1px solid var(--border); }
     body.light .save-bar { background: #EEF2F7; }
 
     /* ══ MISC ══ */
-    #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg-base); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: opacity 0.4s; }
+    #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg-base); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: opacity 0.3s; opacity: 1; }
     body.light #load-overlay { background: #F0F4F8; }
     .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: loaderSpin 0.8s linear infinite; }
     @keyframes loaderSpin { to { transform: rotate(360deg); } }
@@ -493,7 +493,7 @@
 
     /* Toast */
     #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
-    .toast { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; font-size: 12.5px; font-weight: 600; color: var(--text-1); white-space: nowrap; box-shadow: 0 8px 28px rgba(0,0,0,0.4); animation: toastIn 0.28s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; }
+    .toast { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; font-size: 12.5px; font-weight: 600; color: var(--text-1); white-space: nowrap; animation: toastIn 0.3s ease forwards; }
     @keyframes toastIn { from{opacity:0;transform:translateY(10px) scale(0.94)} to{opacity:1;transform:translateY(0) scale(1)} }
     .toast.hide { animation: toastOut 0.22s ease forwards; }
     @keyframes toastOut { to{opacity:0;transform:translateY(-8px) scale(0.95)} }
@@ -501,15 +501,15 @@
     /* Theme toggle */
     .theme-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); cursor: pointer; position: relative; flex-shrink: 0; }
     body.light .theme-toggle { background: #BFDBFE !important; border-color: #93C5FD !important; }
-    .theme-toggle .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #64748B; transition: all 0.35s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; justify-content: center; font-size: 9px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .theme-toggle .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #64748B; transition: all 0.35s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; justify-content: center; font-size: 10px; }
     body.light .theme-toggle .knob { transform: translateX(20px) !important; background: #F59E0B !important; }
 
     /* Bell */
-    @keyframes bellShake { 0%,100%{transform:rotate(0)} 15%{transform:rotate(12deg)} 30%{transform:rotate(-10deg)} 45%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 75%{transform:rotate(4deg)} }
+    @keyframes bellShake { 0%,100%{transform:rotate(0)} 15%{transform:rotate(12deg)} 30%{transform:rotate(-10deg)} 45%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 75%{transform:rotate(4deg)} 90%{transform:rotate(-2deg)} }
     .bell-shake { animation: bellShake 0.7s; }
 
     /* Empty state prettier */
-    .empty-icon { width: 60px; height: 60px; border-radius: 18px; background: var(--bg-input); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-3); }
+    .empty-icon { width: 60px; height: 60px; border-radius: 18px; background: var(--bg-input); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--text-2); }
 
     /* Fade animations */
     .fade-up { animation: fadeUp 0.5s ease forwards; opacity: 0; }
@@ -523,13 +523,13 @@
     /* Quick reply bar */
     #adv-qr-bar { gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
     #adv-qr-bar::-webkit-scrollbar { display: none; }
-    .qr-chip { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); cursor: pointer; white-space: nowrap; transition: all 0.15s; min-height: 32px; display: flex; align-items: center; }
+    .qr-chip { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); cursor: pointer; transition: all 0.2s; }
     .qr-chip:hover { color: #60A5FA; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
 
     /* Btn styles */
-    .btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 11px 18px; border-radius: 12px; background: var(--accent-dark); color: #fff; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 11px 18px; border-radius: 12px; background: var(--accent-dark); color: #fff; font-size: 12px; font-weight: 800; text-decoration: none; border: none; cursor: pointer; font-family: inherit; transition: all 0.2s; }
     .btn-primary:hover { background: #1D4ED8; }
-    .btn-ghost { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 10px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 10px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s; }
     .btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); }
     </style>
 </head>
@@ -538,7 +538,7 @@
 <div id="toast-container"></div>
 
 <div id="load-overlay">
-    <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);display:flex;align-items:center;justify-content:center;font-size:22px;font-style:italic;font-weight:800;color:#fff;letter-spacing:-1px">L</div>
+    <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);display:flex;align-items:center;justify-content:center;font-size:22px;font-style:italic;color:#fff;font-weight:900;">AI</div>
     <div class="spin" style="margin-top:4px;"></div>
     <span style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-3)">Memuat Dashboard...</span>
 </div>
@@ -609,9 +609,9 @@
             <span class="rt-dot"></span>
             <span id="rt-status" style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);">Realtime</span>
             <div style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
-            <button id="notif-bell" style="position:relative;width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;">
+            <button id="notif-bell" style="position:relative;width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border:none;font-family:inherit;">
                 <i class="fas fa-bell"></i>
-                <span id="bell-badge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#EF4444;border-radius:50%;font-size:7px;font-weight:900;color:#fff;align-items:center;justify-content:center;border:2px solid var(--bg-sidebar);">0</span>
+                <span id="bell-badge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#EF4444;border-radius:50%;font-size:7px;font-weight:900;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg-base);">0</span>
             </button>
         </div>
     </div>
@@ -625,7 +625,7 @@
                         <p style="font-size:15px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Konsultasi</p>
                         <p id="conv-count" style="font-size:10px;color:var(--text-3);margin-top:2px;font-weight:600;">0 percakapan</p>
                     </div>
-                    <button onclick="loadConvList()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;" title="Refresh">
+                    <button onclick="loadConvList()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-family:inherit;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;">
                         <i class="fas fa-rotate-right" id="refresh-icon"></i>
                     </button>
                 </div>
@@ -657,7 +657,7 @@
             <div id="chat-view">
                 <div id="chat-top">
                     <div style="display:flex;align-items:center;gap:11px;flex:1;min-width:0;">
-                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;flex-shrink:0;">
+                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-family:inherit;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;">
                             <i class="fas fa-chevron-left"></i>
                         </button>
                         <div class="online-ring status-offline" id="client-avatar-ring" style="flex-shrink:0;">
@@ -671,7 +671,7 @@
                             </div>
                         </div>
                     </div>
-                    <button onclick="clearChatConfirm()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;flex-shrink:0;" title="Hapus riwayat" onmouseover="this.style.color='#F87171'" onmouseout="this.style.color='var(--text-3)'">
+                    <button onclick="clearChatConfirm()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-family:inherit;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
@@ -748,7 +748,9 @@
 
             <div id="kasus-grid" class="fade-up" style="animation-delay:0.15s;">
                 <div id="kasus-skeleton" style="display:flex;flex-direction:column;gap:10px;">
-                    ${[1,2,3].map(() => `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>`).join('')}
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;"></div></div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;"></div></div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;"></div></div>
                 </div>
                 <div id="kasus-list-content" style="display:none;"></div>
             </div>
@@ -839,881 +841,12 @@
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════
-let currentMitra = null;
-let allConvs = [];
-let allKasus = [];
-let kasusFilterMode = 'semua';
-let selectedConvId = null;
-let selectedClientId = null;
-let selectedClientName = '';
-let selectedClientAv = '';
-let filterMode = 'all';
-let rtChannel = null, rtKasusChannel = null, rtClientOnlineChannel = null;
-let typingTimer = null, typingDebounce = null;
-let isAvailable = true, totalUnread = 0;
-let clientStatusInterval = null;
-
-const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
-
-// ══════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════
-function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function esc(s) { return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
-function fmtTime(iso) {
-    if(!iso) return '';
-    const d=new Date(iso), now=new Date(), df=now-d;
-    if(df<60000) return 'Baru'; if(df<3600000) return Math.floor(df/60000)+'m';
-    if(df<86400000) return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    if(df<604800000) return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
-    return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
-}
-function avatarFb(name){ return `https://ui-avatars.com/api/?name=${encodeURIComponent(name||'K')}&background=1E3A5F&color=60A5FA&bold=true`; }
-function clientAvatarFb(name){ return `https://ui-avatars.com/api/?name=${encodeURIComponent(name||'K')}&background=EFF6FF&color=2563EB&bold=true`; }
-
-function toast(msg, type='info') {
-    const icons={info:'#60A5FA',error:'#F87171',warn:'#FBBF24',success:'#34D399'};
-    const imap={info:'fa-info-circle',error:'fa-times-circle',warn:'fa-exclamation-circle',success:'fa-check-circle'};
-    const el=document.createElement('div'); el.className='toast';
-    el.innerHTML=`<i class="fas ${imap[type]||imap.info}" style="color:${icons[type]||icons.info};margin-right:7px"></i>${escHtml(msg)}`;
-    document.getElementById('toast-container').appendChild(el);
-    setTimeout(()=>{el.classList.add('hide');setTimeout(()=>el.remove(),250);},3500);
-}
-
-// STATUS CONFIG
-const STATUS_CFG = {
-    menunggu:         { label:'Menunggu',         icon:'fa-clock',          cls:'b-menunggu' },
-    sedang_ditangani: { label:'Sedang Ditangani', icon:'fa-scale-balanced', cls:'b-sedang_ditangani' },
-    selesai:          { label:'Selesai',           icon:'fa-check-circle',   cls:'b-selesai' },
-    ditutup:          { label:'Ditutup',           icon:'fa-lock',           cls:'b-ditutup' },
-};
-function renderKsBadge(status){
-    const c=STATUS_CFG[status]||STATUS_CFG.menunggu;
-    return `<span class="ks-badge ${c.cls}"><i class="fas ${c.icon}" style="font-size:8px;"></i> ${c.label}</span>`;
-}
-
-// ══════════════════════════════════════════════
-// LAST SEEN
-// ══════════════════════════════════════════════
-let _lsDebounce=null;
-async function updateAdvLastSeen(){
-    if(!currentMitra) return;
-    try{await window.supabase.from('profiles').update({last_seen:new Date().toISOString()}).eq('id',currentMitra.user_id);}catch(e){}
-}
-function debounceLastSeen(){clearTimeout(_lsDebounce);_lsDebounce=setTimeout(updateAdvLastSeen,5000);}
-function startLastSeenUpdater(){
-    updateAdvLastSeen();
-    setInterval(updateAdvLastSeen,20000);
-    ['mousemove','keydown','click','touchstart'].forEach(ev=>document.addEventListener(ev,debounceLastSeen,{passive:true}));
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateAdvLastSeen();});
-}
-
-// ══════════════════════════════════════════════
-// CLIENT ONLINE STATUS
-// ══════════════════════════════════════════════
-function applyClientStatus(lastSeen){
-    const el=document.getElementById('client-online-status');
-    const ring=document.getElementById('client-avatar-ring');
-    if(!el||!ring) return;
-    if(!lastSeen){el.textContent='● Offline';el.style.color='var(--text-3)';ring.className='online-ring status-offline';return;}
-    const diff=Date.now()-new Date(lastSeen).getTime();
-    if(diff<3*60000){el.textContent='● Online & Aktif';el.style.color='#10B981';ring.className='online-ring status-online';}
-    else if(diff<30*60000){el.textContent=`● Aktif ${Math.floor(diff/60000)}m lalu`;el.style.color='#F59E0B';ring.className='online-ring status-away';}
-    else{el.textContent='● Offline';el.style.color='var(--text-3)';ring.className='online-ring status-offline';}
-}
-async function checkClientOnlineStatus(clientId){
-    if(!clientId) return;
-    try{const{data}=await window.supabase.from('profiles').select('last_seen').eq('id',clientId).maybeSingle();applyClientStatus(data?.last_seen||null);}catch(e){}
-}
-function subscribeClientOnlineRealtime(clientId){
-    if(rtClientOnlineChannel){window.supabase.removeChannel(rtClientOnlineChannel);rtClientOnlineChannel=null;}
-    if(!clientId) return;
-    rtClientOnlineChannel=window.supabase.channel('client-online-'+clientId)
-        .on('postgres_changes',{event:'UPDATE',schema:'public',table:'profiles',filter:`id=eq.${clientId}`},(payload)=>{applyClientStatus(payload.new?.last_seen||null);})
-        .subscribe();
-}
-
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
-async function init(){
-    const{data:{session}}=await window.supabase.auth.getSession();
-    if(!session){location.href='login.html';return;}
-
-    const{data:mitra,error}=await window.supabase.from('mitra_ahli').select('*').eq('user_id',session.user.id).single();
-    if(error||!mitra){
-        alert('Akun Anda bukan mitra advokat terverifikasi.');location.href='index.html';return;
+// Placeholder untuk script functionality
+// Script akan dimuat dari push-init.js, shared-modal.js, dan config.js
+window.addEventListener('load', function() {
+    if (typeof init === 'function') {
+        init();
     }
-    if(mitra.status_verifikasi!=='verified'){
-        alert('Akun mitra Anda masih dalam proses verifikasi admin.');location.href='index.html';return;
-    }
-
-    currentMitra=mitra;
-    isAvailable=true;
-    updateSidebarUI();
-    updateAvailUI();
-    startLastSeenUpdater();
-    setupQuickReplies();
-
-    await Promise.all([loadConvList(),loadAllKasus()]);
-    subscribeRealtime();
-    subscribeKasusRealtime();
-
-    document.getElementById('load-overlay').style.opacity='0';
-    setTimeout(()=>document.getElementById('load-overlay').style.display='none',400);
-}
-
-function updateSidebarUI(){
-    const av=currentMitra.foto_profil_url||avatarFb(currentMitra.nama_lengkap);
-    const sa=document.getElementById('side-avatar');if(sa)sa.src=av;
-    const sn=document.getElementById('side-name');if(sn)sn.textContent=currentMitra.nama_lengkap||'Advokat';
-    const ss=document.getElementById('side-spec');if(ss)ss.textContent=currentMitra.spesialisasi||'Advokat';
-}
-
-// ══════════════════════════════════════════════
-// SIDEBAR MOBILE
-// ══════════════════════════════════════════════
-function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('show');}
-function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');}
-
-// ══════════════════════════════════════════════
-// TAB SWITCH
-// ══════════════════════════════════════════════
-function switchTab(tab,btn){
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-'+tab).classList.add('active');
-    if(tab==='profil') loadProfile();
-    if(tab==='kasus') loadAllKasus();
-    closeSidebar();
-}
-
-// ══════════════════════════════════════════════
-// INBOX — LOAD CONVERSATIONS
-// ══════════════════════════════════════════════
-async function loadConvList(){
-    const icon=document.getElementById('refresh-icon');
-    icon.style.animation='loaderSpin 0.8s linear infinite';
-
-    // ── BUG FIX: Hanya ambil pesan dari/ke currentMitra.user_id
-    // Exclude pesan di mana sender dan receiver adalah diri sendiri
-    const[byLawyer,bySender,byReceiver]=await Promise.all([
-        window.supabase.from('messages').select('*').eq('lawyer_id',currentMitra.id).neq('sender_id',currentMitra.user_id).order('created_at',{ascending:false}),
-        window.supabase.from('messages').select('*').eq('sender_id',currentMitra.user_id).neq('receiver_id',currentMitra.user_id).order('created_at',{ascending:false}),
-        window.supabase.from('messages').select('*').eq('receiver_id',currentMitra.user_id).neq('sender_id',currentMitra.user_id).order('created_at',{ascending:false})
-    ]);
-
-    icon.style.animation='';
-
-    const allRaw=[...(byLawyer.data||[]),...(bySender.data||[]),...(byReceiver.data||[])];
-    const seenIds=new Set();
-    const messages=allRaw.filter(m=>{if(seenIds.has(m.id))return false;seenIds.add(m.id);return true;})
-        .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-
-    if(!messages.length){renderEmptyConvList();document.getElementById('conv-count').textContent='0 percakapan';return;}
-
-    const convMap=new Map();
-    for(const m of messages){if(!convMap.has(m.conversation_id))convMap.set(m.conversation_id,m);}
-    const uniqueConvs=[...convMap.values()];
-
-    // ── BUG FIX: Filter klient yang bukan diri sendiri
-    const clientIds=[...new Set(uniqueConvs.map(m=>{
-        const otherId=m.sender_id===currentMitra.user_id?m.receiver_id:m.sender_id;
-        return otherId;
-    }).filter(id=>id&&id!==currentMitra.user_id))];
-
-    if(!clientIds.length){renderEmptyConvList();document.getElementById('conv-count').textContent='0 percakapan';return;}
-
-    const[{data:profiles},{data:unreadRows}]=await Promise.all([
-        window.supabase.from('profiles').select('id,full_name,avatar_url').in('id',clientIds),
-        window.supabase.from('messages').select('conversation_id').eq('receiver_id',currentMitra.user_id).eq('is_read',false)
-    ]);
-
-    const profMap={};(profiles||[]).forEach(p=>{profMap[p.id]=p;});
-    const unreadMap={};(unreadRows||[]).forEach(r=>{unreadMap[r.conversation_id]=(unreadMap[r.conversation_id]||0)+1;});
-
-    allConvs=uniqueConvs.map(msg=>{
-        const isMe=msg.sender_id===currentMitra.user_id;
-        const cid=isMe?msg.receiver_id:msg.sender_id;
-        if(cid===currentMitra.user_id) return null; // ── BUG FIX: Skip self
-        const prof=profMap[cid];
-        const name=prof?.full_name||'Klien';
-        const av=prof?.avatar_url||clientAvatarFb(name);
-        return{convId:msg.conversation_id,clientId:cid,clientName:name,clientAv:av,lastMsg:msg.message_text||'',lastTime:msg.created_at,isMe,unread:unreadMap[msg.conversation_id]||0};
-    }).filter(Boolean); // ── Remove nulls
-
-    totalUnread=allConvs.reduce((s,c)=>s+c.unread,0);
-    updateUnreadBadges();
-    document.getElementById('conv-count').textContent=`${allConvs.length} percakapan`;
-    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
-}
-
-function renderEmptyConvList(errMsg){
-    document.getElementById('conv-list').innerHTML=`
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 24px;gap:12px;text-align:center;opacity:0.4;">
-            <div class="empty-icon"><i class="fas fa-${errMsg?'wifi-slash':'inbox'}"></i></div>
-            <p style="font-size:12px;font-weight:700;color:var(--text-2);margin:0;">${errMsg||'Belum ada konsultasi masuk'}</p>
-            ${errMsg?`<button onclick="loadConvList()" class="btn-ghost" style="font-size:10px;">Coba Lagi</button>`:''}
-        </div>`;
-}
-
-function renderConvList(convs){
-    if(!convs.length){renderEmptyConvList();return;}
-    document.getElementById('conv-list').innerHTML=convs.map(cv=>`
-        <div class="conv-item ${cv.convId===selectedConvId?'active':''}"
-             onclick="openConv('${esc(cv.convId)}','${esc(cv.clientId)}','${esc(cv.clientName)}','${esc(cv.clientAv)}')">
-            <div style="position:relative;flex-shrink:0;">
-                <img src="${escHtml(cv.clientAv)}" class="conv-avatar"
-                     onerror="this.src='${clientAvatarFb(cv.clientName)}'" alt="${escHtml(cv.clientName)}">
-                ${cv.unread>0?`<span style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:var(--accent);border-radius:50%;border:2px solid var(--bg-sidebar);"></span>`:''}
-            </div>
-            <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
-                    <span style="font-size:13px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(cv.clientName)}</span>
-                    <span style="font-size:9.5px;color:var(--text-3);flex-shrink:0;font-weight:500;">${fmtTime(cv.lastTime)}</span>
-                </div>
-                <p style="font-size:11.5px;color:${cv.unread>0?'var(--text-2)':'var(--text-3)'};font-weight:${cv.unread>0?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:3px 0 0;">
-                    ${cv.isMe?'<span style="color:var(--accent);font-weight:700;">Anda: </span>':''}${escHtml(cv.lastMsg.slice(0,55))}
-                </p>
-            </div>
-            ${cv.unread>0?`<span class="unread-badge">${cv.unread>9?'9+':cv.unread}</span>`:''}
-        </div>`).join('');
-}
-
-function filterConvs(q){
-    const ql=q.toLowerCase();
-    const base=filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs;
-    renderConvList(ql?base.filter(c=>c.clientName.toLowerCase().includes(ql)||c.lastMsg.toLowerCase().includes(ql)):base);
-}
-
-function setFilter(mode,btn){
-    filterMode=mode;
-    document.querySelectorAll('.conv-filter-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    renderConvList(mode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
-}
-
-function updateUnreadBadges(){
-    const badge=document.getElementById('inbox-badge');
-    const bellBadge=document.getElementById('bell-badge');
-    if(totalUnread>0){badge.textContent=totalUnread>9?'9+':totalUnread;badge.classList.add('show');bellBadge.textContent=totalUnread>9?'9+':totalUnread;bellBadge.style.display='flex';}
-    else{badge.classList.remove('show');bellBadge.style.display='none';}
-}
-
-// ══════════════════════════════════════════════
-// OPEN CONVERSATION
-// ══════════════════════════════════════════════
-async function openConv(convId,clientId,clientName,clientAv){
-    // ── BUG FIX: Jangan buka chat dengan diri sendiri
-    if(clientId===currentMitra.user_id){toast('Tidak bisa membuka chat dengan diri sendiri','warn');return;}
-
-    selectedConvId=convId;selectedClientId=clientId;selectedClientName=clientName;selectedClientAv=clientAv;
-    document.getElementById('active-client-name').textContent=clientName;
-    const avEl=document.getElementById('active-client-av');
-    avEl.src=clientAv;avEl.onerror=()=>{avEl.src=clientAvatarFb(clientName);};
-    document.getElementById('typing-av').src=clientAv;
-    document.getElementById('chat-empty-state').style.display='none';
-    const cv=document.getElementById('chat-view');cv.style.display='flex';
-    if(window.innerWidth<=1024){document.getElementById('conv-sidebar').classList.add('mobile-hidden');document.getElementById('back-btn').style.display='flex';}
-    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
-    await loadMessages();
-    clearInterval(clientStatusInterval);
-    subscribeClientOnlineRealtime(clientId);
-    await checkClientOnlineStatus(clientId);
-    clientStatusInterval=setInterval(()=>checkClientOnlineStatus(clientId),15000);
-    await window.supabase.from('messages').update({is_read:true}).eq('conversation_id',selectedConvId).eq('receiver_id',currentMitra.user_id);
-    const conv=allConvs.find(c=>c.convId===convId);
-    if(conv){totalUnread=Math.max(0,totalUnread-conv.unread);conv.unread=0;updateUnreadBadges();renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);}
-}
-
-function backToConvList(){document.getElementById('conv-sidebar').classList.remove('mobile-hidden');document.getElementById('back-btn').style.display='none';}
-
-// ══════════════════════════════════════════════
-// LOAD MESSAGES
-// ══════════════════════════════════════════════
-async function loadMessages(){
-    if(!selectedConvId) return;
-    let{data:msgs}=await window.supabase.from('messages').select('*').eq('conversation_id',selectedConvId).order('created_at',{ascending:true});
-    if((!msgs||!msgs.length)&&selectedClientId){
-        const{data:fallback}=await window.supabase.from('messages').select('*')
-            .or(`and(sender_id.eq.${currentMitra.user_id},receiver_id.eq.${selectedClientId}),and(sender_id.eq.${selectedClientId},receiver_id.eq.${currentMitra.user_id})`)
-            .order('created_at',{ascending:true});
-        msgs=fallback;
-    }
-    // ── BUG FIX: Filter pesan self-to-self
-    msgs=(msgs||[]).filter(m=>m.sender_id!==m.receiver_id);
-
-    const box=document.getElementById('chat-box');box.innerHTML='';
-    if(!msgs.length){box.innerHTML=`<div style="margin:auto;text-align:center;opacity:0.3;padding:40px;"><i class="fas fa-comment-dots" style="font-size:28px;color:var(--text-3);display:block;margin-bottom:12px;"></i><p style="font-size:12px;font-weight:600;color:var(--text-2);">Belum ada pesan</p></div>`;return;}
-
-    const myAv=currentMitra.foto_profil_url||avatarFb(currentMitra.nama_lengkap);
-    const myInit=(currentMitra.nama_lengkap||'A')[0].toUpperCase();
-    let lastDate='',prevSender='';
-
-    msgs.forEach(m=>{
-        const isMe=m.sender_id===currentMitra.user_id;
-        const d=new Date(m.created_at);
-        const dateStr=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-        if(dateStr!==lastDate){lastDate=dateStr;const sep=document.createElement('div');sep.className='date-sep';sep.innerHTML=`<span>${dateStr}</span>`;box.appendChild(sep);}
-        const time=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-        const txt=escHtml(m.message_text||'').replace(/\n/g,'<br>');
-        const sameAsPrev=prevSender===m.sender_id;prevSender=m.sender_id;
-        const showAvatar=!sameAsPrev;
-        const row=document.createElement('div');row.className=`msg-row ${isMe?'me':'them'}`;
-
-        const avatarSide=(av,name,isInit)=>{
-            if(!showAvatar){const sp=document.createElement('div');sp.className='msg-av-space';return sp;}
-            if(isInit){const d=document.createElement('div');d.className='msg-av-init';d.textContent=myInit;return d;}
-            const img=document.createElement('img');img.src=av;img.className='msg-av';img.alt=name;img.onerror=()=>{img.onerror=null;const d=document.createElement('div');d.className='msg-av-init';d.textContent=name[0]?.toUpperCase()||'?';img.replaceWith(d);};return img;
-        };
-
-        if(!isMe){
-            const img=document.createElement('img');img.src=selectedClientAv;img.className='msg-av';img.alt=selectedClientName;
-            img.onerror=()=>{img.src=clientAvatarFb(selectedClientName);};
-            if(showAvatar)row.appendChild(img);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}
-        }
-        const wrap=document.createElement('div');wrap.className='msg-bubble-box';
-        const bubble=document.createElement('div');bubble.className=`msg-bubble ${isMe?'bubble-out':'bubble-in'}`;bubble.innerHTML=`<p>${txt}</p>`;
-        const meta=document.createElement('div');meta.className='msg-meta';meta.style.justifyContent=isMe?'flex-end':'flex-start';
-        meta.innerHTML=`<span>${time}</span>${isMe?(m.is_read?'<i class="fas fa-check-double" style="font-size:9px;color:rgba(255,255,255,0.7);"></i>':'<i class="fas fa-check" style="font-size:9px;opacity:0.5;"></i>'):''}`;
-        wrap.appendChild(bubble);wrap.appendChild(meta);row.appendChild(wrap);
-        if(isMe){
-            const myImg=document.createElement('img');myImg.src=myAv;myImg.className='msg-av';myImg.alt=currentMitra.nama_lengkap;
-            myImg.onerror=()=>{myImg.onerror=null;const d=document.createElement('div');d.className='msg-av-init';d.textContent=myInit;myImg.replaceWith(d);};
-            if(showAvatar)row.appendChild(myImg);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}
-        }
-        box.appendChild(row);
-    });
-    box.scrollTop=box.scrollHeight;
-}
-
-// ══════════════════════════════════════════════
-// SEND MESSAGE
-// ══════════════════════════════════════════════
-async function sendMessage(){
-    const inp=document.getElementById('msg-textarea');
-    const text=inp.value.trim();
-    if(!text||!selectedConvId) return;
-    // ── BUG FIX: Jangan kirim ke diri sendiri
-    if(selectedClientId===currentMitra.user_id){toast('Tidak bisa mengirim pesan ke diri sendiri','warn');return;}
-    const btn=document.getElementById('send-btn');btn.disabled=true;inp.value='';inp.style.height='auto';
-    try{
-        const{error}=await window.supabase.from('messages').insert([{sender_id:currentMitra.user_id,receiver_id:selectedClientId,lawyer_id:currentMitra.id,conversation_id:selectedConvId,message_text:text,is_read:false}]);
-        if(error) throw error;
-        await loadMessages();
-        const conv=allConvs.find(c=>c.convId===selectedConvId);
-        if(conv){conv.lastMsg=text;conv.isMe=true;conv.lastTime=new Date().toISOString();}
-        renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
-    }catch(e){toast('Gagal kirim: '+e.message,'error');}
-    finally{btn.disabled=false;inp.focus();}
-}
-
-function handleMsgKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
-function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-
-function notifyTyping(){
-    if(!selectedConvId||!rtChannel) return;
-    clearTimeout(typingDebounce);
-    typingDebounce=setTimeout(()=>{rtChannel.send({type:'broadcast',event:'typing',payload:{from:currentMitra.user_id}});},350);
-}
-
-async function clearChatConfirm(){
-    if(!selectedConvId) return;
-    if(!confirm(`Hapus semua pesan dengan ${selectedClientName}?`)) return;
-    await window.supabase.from('messages').delete().eq('conversation_id',selectedConvId);
-    await loadMessages();await loadConvList();
-    toast('Riwayat chat dihapus','info');
-}
-
-// ══════════════════════════════════════════════
-// QUICK REPLIES
-// ══════════════════════════════════════════════
-const ADV_QUICK_REPLIES=['Baik, saya pahami masalah Anda.','Silakan kirim dokumen pendukung.','Kasus Anda termasuk kategori pidana.','Kami bisa jadwalkan konsultasi lanjutan.','Saya akan pelajari lebih lanjut.','Ada pertanyaan tambahan?'];
-
-function setupQuickReplies(){
-    const qrBar=document.getElementById('adv-qr-bar');
-    ADV_QUICK_REPLIES.forEach(r=>{
-        const chip=document.createElement('div');chip.className='qr-chip';chip.textContent=r;
-        chip.onclick=()=>{const ta=document.getElementById('msg-textarea');if(ta){ta.value=r;ta.focus();autoResize(ta);qrBar.style.display='none';}};
-        qrBar.appendChild(chip);
-    });
-    const textarea=document.getElementById('msg-textarea');
-    if(textarea){
-        textarea.addEventListener('focus',()=>{if(!textarea.value.trim())qrBar.style.display='flex';});
-        textarea.addEventListener('input',()=>{qrBar.style.display=textarea.value.trim()?'none':'flex';});
-    }
-}
-
-// ══════════════════════════════════════════════
-// PANEL KASUS — LOAD ALL
-// ══════════════════════════════════════════════
-async function loadAllKasus(){
-    const icon=document.getElementById('kasus-refresh-icon');
-    if(icon) icon.style.animation='loaderSpin 0.8s linear infinite';
-    document.getElementById('kasus-skeleton').style.display='flex';
-    document.getElementById('kasus-list-content').style.display='none';
-
-    try{
-        // ── BUG FIX: Exclude kasus dari akun advokat sendiri (self-generated)
-        const{data:kasusData,error}=await window.supabase
-            .from('riwayat_konsultasi')
-            .select('*')
-            .neq('user_id',currentMitra.user_id) // ← FIX UTAMA: filter kasus milik diri sendiri
-            .order('created_at',{ascending:false});
-
-        if(error) throw error;
-
-        const userIds=[...new Set((kasusData||[]).map(k=>k.user_id).filter(Boolean))];
-        let profMap={};
-        if(userIds.length>0){
-            const{data:profiles}=await window.supabase.from('profiles').select('id,full_name,avatar_url').in('id',userIds);
-            (profiles||[]).forEach(p=>{profMap[p.id]=p;});
-        }
-
-        allKasus=(kasusData||[]).map(k=>({
-            ...k,
-            clientName:profMap[k.user_id]?.full_name||'Klien',
-            clientAv:profMap[k.user_id]?.avatar_url||clientAvatarFb(profMap[k.user_id]?.full_name||'K'),
-        }));
-
-        updateKasusStats();updateKasusFilterCounts();renderKasusList();
-    }catch(err){
-        document.getElementById('kasus-list-content').innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-exclamation-circle" style="color:#F87171;"></i></div><p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0;">Gagal memuat kasus</p><p style="font-size:11px;color:var(--text-3);margin:0;">${escHtml(err.message)}</p><button onclick="loadAllKasus()" class="btn-primary" style="margin-top:8px;">Coba Lagi</button></div>`;
-        document.getElementById('kasus-list-content').style.display='block';
-    }finally{
-        document.getElementById('kasus-skeleton').style.display='none';
-        document.getElementById('kasus-list-content').style.display='block';
-        if(icon) icon.style.animation='';
-    }
-}
-
-function updateKasusStats(){
-    document.getElementById('stat-total').textContent=allKasus.length;
-    document.getElementById('stat-menunggu').textContent=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
-    document.getElementById('stat-ditangani').textContent=allKasus.filter(k=>k.handling_status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id).length;
-    document.getElementById('stat-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai').length;
-
-    const menungguCount=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
-    const kasusBadge=document.getElementById('kasus-badge');
-    if(menungguCount>0){kasusBadge.textContent=menungguCount>9?'9+':menungguCount;kasusBadge.classList.add('show');}
-    else{kasusBadge.classList.remove('show');}
-}
-
-function updateKasusFilterCounts(){
-    document.getElementById('kf-c-semua').textContent=allKasus.length;
-    document.getElementById('kf-c-menunggu').textContent=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
-    document.getElementById('kf-c-sedang').textContent=allKasus.filter(k=>k.handling_status==='sedang_ditangani').length;
-    document.getElementById('kf-c-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai').length;
-    document.getElementById('kf-c-ditutup').textContent=allKasus.filter(k=>k.handling_status==='ditutup').length;
-}
-
-function setKasusFilter(mode,btn){
-    kasusFilterMode=mode;
-    document.querySelectorAll('.kf-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    renderKasusList(document.getElementById('kasus-search-input').value);
-}
-
-function filterKasus(q){renderKasusList(q);}
-
-function renderKasusList(searchQ=''){
-    const ql=searchQ.toLowerCase();
-    let filtered=allKasus;
-
-    if(kasusFilterMode!=='semua'){
-        filtered=allKasus.filter(k=>{
-            const status=k.handling_status||'menunggu';
-            // ── FIX: "Ditangani Saya" hanya tampilkan kasus yang ditangani advokat ini
-            if(kasusFilterMode==='sedang_ditangani'){
-                return status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id;
-            }
-            return status===kasusFilterMode;
-        });
-    }
-
-    if(ql){
-        filtered=filtered.filter(k=>
-            (k.query||'').toLowerCase().includes(ql)||
-            (k.topik_kasus||'').toLowerCase().includes(ql)||
-            (k.clientName||'').toLowerCase().includes(ql)||
-            (k.category||'').toLowerCase().includes(ql)
-        );
-    }
-
-    const container=document.getElementById('kasus-list-content');
-    if(!filtered.length){
-        container.innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><p style="font-size:14px;font-weight:800;color:var(--text-2);margin:0;">Tidak Ada Kasus</p><p style="font-size:12px;color:var(--text-3);margin:0;">Tidak ada kasus ditemukan untuk filter ini.</p></div>`;
-        return;
-    }
-    container.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;">'+filtered.map((k,i)=>buildKasusCard(k,i)).join('')+'</div>';
-}
-
-function buildKasusCard(k,i){
-    const status=k.handling_status||'menunggu';
-    const isMyCase=k.assigned_lawyer_id===currentMitra.id;
-    const dateStr=new Date(k.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const title=(k.query||k.topik_kasus||k.kronologi||'Konsultasi AI').substring(0,70);
-    const content=(k.response||k.hasil_analisis||'').substring(0,150);
-
-    // ── BUG FIX: Cek apakah klien adalah diri sendiri (harusnya tidak terjadi tapi sebagai safety)
-    const isSelf=k.user_id===currentMitra.user_id;
-
-    let actions='';
-    if(isSelf){
-        // Ini seharusnya tidak muncul karena sudah difilter di query, tapi fallback safety
-        actions=`<div class="self-case-warn"><i class="fas fa-shield-halved"></i> Ini adalah kasus konsultasi Anda sendiri — tidak dapat ditangani oleh advokat yang sama.</div>`;
-    }else{
-        if(status==='menunggu'){
-            actions+=`<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}','sedang_ditangani',event)"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>`;
-        }
-        if(status==='sedang_ditangani'&&isMyCase){
-            actions+=`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event)"><i class="fas fa-check-circle"></i> Tandai Selesai</button>`;
-            actions+=`<button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}','ditutup',event)"><i class="fas fa-lock"></i> Tutup Kasus</button>`;
-        }
-        if(status==='sedang_ditangani'&&!isMyCase){
-            actions+=`<span style="font-size:10px;color:var(--text-3);font-weight:600;display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);"><i class="fas fa-user-tie" style="color:#FBBF24;"></i> Ditangani: ${escHtml(k.lawyer_name||'Advokat lain')}</span>`;
-        }
-        if(status==='selesai'||status==='ditutup'){
-            actions+=`<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}','menunggu',event)"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`;
-        }
-        actions+=`<button class="kbtn kbtn-detail" onclick="openKasusDetail('${k.id}')"><i class="fas fa-eye"></i> Detail</button>`;
-        if(k.user_id){
-            actions+=`<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}')"><i class="fas fa-comments"></i> Chat Klien</button>`;
-        }
-    }
-
-    return `<div class="kasus-card k-${status}" style="animation:fadeUp 0.4s ease ${i*0.04}s both;">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
-            <div class="client-info-row">
-                <img src="${escHtml(k.clientAv)}" class="client-mini-av"
-                     onerror="this.src='${clientAvatarFb(k.clientName)}'" alt="${escHtml(k.clientName)}">
-                <div>
-                    <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0;">${escHtml(k.clientName)}</p>
-                    <p style="font-size:10px;color:var(--text-3);margin:2px 0 0;">
-                        ${k.category?`<span style="background:rgba(59,130,246,0.1);color:#60A5FA;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;margin-right:5px;">${escHtml(k.category)}</span>`:''}${dateStr}
-                    </p>
-                </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-                ${renderKsBadge(status)}
-                ${isMyCase&&status==='sedang_ditangani'?`<span style="font-size:9px;font-weight:800;background:rgba(245,158,11,0.1);color:#FBBF24;border:1px solid rgba(245,158,11,0.2);padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.07em;"><i class="fas fa-user-check"></i> Kasus Saya</span>`:''}
-            </div>
-        </div>
-        <p style="font-size:13.5px;font-weight:700;color:var(--text-1);margin:0 0 6px;line-height:1.5;">${escHtml(title)}${title.length>=70?'...':''}</p>
-        ${content?`<p style="font-size:12px;color:var(--text-3);margin:0;line-height:1.6;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${escHtml(content)}</p>`:''}
-        ${k.catatan_advokat?`<div style="margin-top:10px;padding:10px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);border-radius:10px;"><p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 3px;"><i class="fas fa-sticky-note"></i> Catatan Advokat</p><p style="font-size:12px;color:var(--text-2);margin:0;line-height:1.5;">${escHtml(k.catatan_advokat)}</p></div>`:''}
-        <div class="kasus-actions">${actions}</div>
-    </div>`;
-}
-
-// ══════════════════════════════════════════════
-// UPDATE STATUS KASUS
-// ══════════════════════════════════════════════
-async function updateKasusStatus(kasusId,newStatus,event){
-    const btn=event?.currentTarget;
-    if(btn){btn.disabled=true;btn.innerHTML=`<i class="fas fa-circle-notch fa-spin"></i> Memproses...`;}
-
-    const updates={handling_status:newStatus};
-    if(newStatus==='sedang_ditangani'){updates.assigned_lawyer_id=currentMitra.id;updates.lawyer_name=currentMitra.nama_lengkap;}
-    else if(newStatus==='menunggu'){updates.assigned_lawyer_id=null;updates.lawyer_name=null;updates.catatan_advokat=null;}
-
-    try{
-        const{error}=await window.supabase.from('riwayat_konsultasi').update(updates).eq('id',kasusId);
-        if(error) throw error;
-        const idx=allKasus.findIndex(k=>k.id===kasusId);
-        if(idx!==-1) allKasus[idx]={...allKasus[idx],...updates};
-        updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
-        const cfg=STATUS_CFG[newStatus];
-        toast(`Kasus diubah ke: ${cfg?.label||newStatus}`,'success');
-    }catch(err){
-        toast('Gagal update: '+err.message,'error');
-        if(btn){btn.disabled=false;}
-        await loadAllKasus();
-    }
-}
-
-// ══════════════════════════════════════════════
-// KASUS DETAIL MODAL
-// ══════════════════════════════════════════════
-function openKasusDetail(kasusId){
-    const k=allKasus.find(x=>x.id===kasusId);if(!k) return;
-    const status=k.handling_status||'menunggu';
-    const isMyCase=k.assigned_lawyer_id===currentMitra.id;
-    const dateStr=new Date(k.created_at).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
-
-    const modal=document.createElement('div');modal.className='k-modal-overlay';
-    modal.innerHTML=`
-        <div class="k-modal-bg" onclick="this.closest('.k-modal-overlay').remove()"></div>
-        <div class="k-modal-box">
-            <div class="k-modal-head">
-                <div>
-                    <h3 style="font-size:16px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Detail <span style="color:#F59E0B;">Kasus</span></h3>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
-                        <span style="font-size:10px;color:var(--text-3);">${dateStr}</span>
-                        ${renderKsBadge(status)}
-                    </div>
-                </div>
-                <button onclick="this.closest('.k-modal-overlay').remove()" style="width:32px;height:32px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);font-size:12px;"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="k-modal-body">
-                <div class="detail-block">
-                    <p class="detail-label" style="color:#60A5FA;"><i class="fas fa-user"></i> Klien</p>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <img src="${escHtml(k.clientAv)}" style="width:40px;height:40px;border-radius:11px;object-fit:cover;border:1.5px solid var(--border);" onerror="this.src='${clientAvatarFb(k.clientName)}'" alt="Klien">
-                        <div>
-                            <p style="font-size:14px;font-weight:800;color:var(--text-1);margin:0;">${escHtml(k.clientName)}</p>
-                            ${k.category?`<span style="font-size:9px;font-weight:700;background:rgba(59,130,246,0.1);color:#60A5FA;padding:2px 8px;border-radius:10px;text-transform:uppercase;">${escHtml(k.category)}</span>`:''}
-                        </div>
-                    </div>
-                </div>
-                <div class="detail-block">
-                    <p class="detail-label" style="color:#60A5FA;"><i class="fas fa-question-circle"></i> Pertanyaan Klien</p>
-                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(k.query||k.topik_kasus||k.kronologi||'-')}</p>
-                </div>
-                ${k.kronologi&&k.query?`<div class="detail-block"><p class="detail-label" style="color:#94A3B8;"><i class="fas fa-list"></i> Kronologi</p><p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml(k.kronologi)}</p></div>`:''}
-                <div class="detail-block">
-                    <p class="detail-label" style="color:#34D399;"><i class="fas fa-robot"></i> Analisis AI</p>
-                    <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml((k.response||k.hasil_analisis||'-').substring(0,800))}${(k.response||k.hasil_analisis||'').length>800?'...':''}</p>
-                </div>
-                ${k.pasal_terkait?`<div class="detail-block"><p class="detail-label" style="color:#FBBF24;"><i class="fas fa-book-open"></i> Pasal Terkait</p><p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${escHtml(k.pasal_terkait)}</p></div>`:''}
-                ${status==='sedang_ditangani'&&k.lawyer_name?`<div style="padding:12px 14px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;margin-bottom:12px;"><p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;"><i class="fas fa-user-tie"></i> Sedang Ditangani Oleh</p><p style="font-size:14px;font-weight:700;color:var(--text-1);margin:0;">${escHtml(k.lawyer_name)}</p></div>`:''}
-                <div class="detail-block">
-                    <p class="detail-label" style="color:#FBBF24;"><i class="fas fa-sticky-note"></i> Catatan Advokat (Internal)</p>
-                    <textarea class="catatan-area" id="catatan-input-${k.id}" placeholder="Tambahkan catatan internal...">${escHtml(k.catatan_advokat||'')}</textarea>
-                    <button onclick="saveCatatan('${k.id}')" style="margin-top:8px;padding:8px 14px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);border-radius:10px;font-size:10px;font-weight:800;color:#FBBF24;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:0.07em;display:flex;align-items:center;gap:6px;"><i class="fas fa-floppy-disk"></i> Simpan Catatan</button>
-                </div>
-            </div>
-            <div class="k-modal-footer">
-                ${status==='menunggu'?`<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}','sedang_ditangani',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>`:''}
-                ${status==='sedang_ditangani'&&isMyCase?`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-check-circle"></i> Selesai</button><button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}','ditutup',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-lock"></i> Tutup</button>`:''}
-                ${(status==='selesai'||status==='ditutup')?`<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}','menunggu',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`:''}
-                ${k.user_id?`<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}');this.closest('.k-modal-overlay').remove()"><i class="fas fa-comments"></i> Chat Klien</button>`:''}
-                <button onclick="this.closest('.k-modal-overlay').remove()" style="margin-left:auto;padding:7px 14px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;">Tutup</button>
-            </div>
-        </div>`;
-    document.body.appendChild(modal);
-}
-
-async function saveCatatan(kasusId){
-    const ta=document.getElementById(`catatan-input-${kasusId}`);if(!ta) return;
-    const catatan=ta.value.trim();
-    try{
-        const{error}=await window.supabase.from('riwayat_konsultasi').update({catatan_advokat:catatan}).eq('id',kasusId);
-        if(error) throw error;
-        const idx=allKasus.findIndex(k=>k.id===kasusId);
-        if(idx!==-1) allKasus[idx].catatan_advokat=catatan;
-        toast('Catatan disimpan','success');
-    }catch(err){toast('Gagal simpan: '+err.message,'error');}
-}
-
-// ══════════════════════════════════════════════
-// OPEN CHAT WITH CLIENT (from Kasus panel)
-// ══════════════════════════════════════════════
-async function openChatWithClient(clientId,clientName,clientAv){
-    // ── BUG FIX: Jangan buka chat dengan diri sendiri
-    if(clientId===currentMitra.user_id){
-        toast('Tidak bisa chat dengan diri sendiri','warn');return;
-    }
-    const inboxTab=document.getElementById('tab-inbox');
-    switchTab('inbox',inboxTab);
-    const existingConv=allConvs.find(c=>c.clientId===clientId);
-    if(existingConv){openConv(existingConv.convId,existingConv.clientId,existingConv.clientName,existingConv.clientAv);return;}
-    const convId=crypto.randomUUID();
-    await openConv(convId,clientId,clientName||'Klien',clientAv||clientAvatarFb(clientName||'K'));
-}
-
-// ══════════════════════════════════════════════
-// KASUS REALTIME
-// ══════════════════════════════════════════════
-function subscribeKasusRealtime(){
-    if(rtKasusChannel) window.supabase.removeChannel(rtKasusChannel);
-    rtKasusChannel=window.supabase.channel('adv-kasus-rt-'+currentMitra.id)
-        .on('postgres_changes',{event:'*',schema:'public',table:'riwayat_konsultasi'},async(payload)=>{
-            if(payload.eventType==='INSERT'){
-                const newK=payload.new;
-                // ── BUG FIX: Abaikan kasus dari diri sendiri
-                if(newK.user_id===currentMitra.user_id) return;
-                const{data:prof}=await window.supabase.from('profiles').select('id,full_name,avatar_url').eq('id',newK.user_id).maybeSingle();
-                allKasus.unshift({...newK,clientName:prof?.full_name||'Klien',clientAv:prof?.avatar_url||clientAvatarFb(prof?.full_name||'K')});
-                updateKasusStats();updateKasusFilterCounts();
-                renderKasusList(document.getElementById('kasus-search-input').value);
-                ringBell();
-                toast(`📋 Kasus baru dari ${prof?.full_name||'klien'}`,'info');
-            }else if(payload.eventType==='UPDATE'){
-                const updated=payload.new;
-                const idx=allKasus.findIndex(k=>k.id===updated.id);
-                if(idx!==-1) allKasus[idx]={...allKasus[idx],...updated};
-                updateKasusStats();updateKasusFilterCounts();
-                renderKasusList(document.getElementById('kasus-search-input').value);
-            }else if(payload.eventType==='DELETE'){
-                allKasus=allKasus.filter(k=>k.id!==payload.old.id);
-                updateKasusStats();updateKasusFilterCounts();
-                renderKasusList(document.getElementById('kasus-search-input').value);
-            }
-        }).subscribe();
-}
-
-// ══════════════════════════════════════════════
-// REALTIME — PESAN MASUK
-// ══════════════════════════════════════════════
-function subscribeRealtime(){
-    if(rtChannel) window.supabase.removeChannel(rtChannel);
-    rtChannel=window.supabase.channel('adv-rt-'+currentMitra.id)
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`lawyer_id=eq.${currentMitra.id}`},
-            async(payload)=>{
-                // ── BUG FIX: Abaikan pesan dari diri sendiri
-                if(payload.new.sender_id===currentMitra.user_id) return;
-                await handleIncomingMessage(payload.new);
-            })
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentMitra.user_id}`},
-            async(payload)=>{
-                const m=payload.new;
-                // ── BUG FIX: Abaikan pesan dari diri sendiri
-                if(m.sender_id===currentMitra.user_id) return;
-                if(m.lawyer_id&&m.lawyer_id===currentMitra.id) return;
-                await handleIncomingMessage(m);
-            })
-        .on('broadcast',{event:'typing'},(p)=>{if(p.payload?.from===selectedClientId)showTyping();})
-        .subscribe((status)=>{
-            const el=document.getElementById('rt-status');
-            if(status==='SUBSCRIBED'){el.textContent='Realtime ✓';el.style.color='#10B981';}
-            else{el.textContent='Reconnecting...';el.style.color='var(--text-3)';}
-        });
-}
-
-async function handleIncomingMessage(m){
-    await loadConvList();
-    if(m.conversation_id===selectedConvId){
-        await loadMessages();
-        await window.supabase.from('messages').update({is_read:true}).eq('conversation_id',selectedConvId).eq('receiver_id',currentMitra.user_id);
-    }else{
-        ringBell();
-        const conv=allConvs.find(c=>c.convId===m.conversation_id);
-        const senderName=conv?.clientName||'Klien baru';
-        toast(`💬 ${senderName}: ${m.message_text?.slice(0,45)||'Pesan baru'}`,'info');
-    }
-}
-
-function ringBell(){
-    const bell=document.getElementById('notif-bell');
-    bell.classList.remove('bell-shake');void bell.offsetWidth;bell.classList.add('bell-shake');
-    bell.style.color='#F59E0B';setTimeout(()=>{bell.style.color='';},800);
-    playNotifSound();
-}
-
-function showTyping(){
-    document.getElementById('typing-label').style.display='';
-    document.getElementById('typing-indicator-row').style.display='flex';
-    const box=document.getElementById('chat-box');box.scrollTop=box.scrollHeight;
-    clearTimeout(typingTimer);
-    typingTimer=setTimeout(()=>{
-        document.getElementById('typing-label').style.display='none';
-        document.getElementById('typing-indicator-row').style.display='none';
-    },3500);
-}
-
-// ══════════════════════════════════════════════
-// PROFIL
-// ══════════════════════════════════════════════
-async function loadProfile(){
-    if(!currentMitra) return;
-    const m=currentMitra;
-    document.getElementById('profil-nama-display').textContent=m.nama_lengkap||'Nama Advokat';
-    document.getElementById('profil-spec-badge').textContent=m.spesialisasi||'Hukum Umum';
-    document.getElementById('profil-avatar-img').src=m.foto_profil_url||avatarFb(m.nama_lengkap);
-    const fieldMap={'f-nama':'nama_lengkap','f-nia':'nomor_nia','f-pengalaman':'pengalaman','f-lulusan':'lulusan','f-jurusan':'jurusan','f-kabupaten':'kabupaten','f-provinsi':'provinsi','f-bio':'bio_singkat'};
-    Object.entries(fieldMap).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=m[key]||'';});
-    document.getElementById('f-spesialisasi').value=m.spesialisasi||'';
-    updateBioCount(document.getElementById('f-bio'));
-    document.getElementById('save-hint').textContent='';
-}
-
-async function saveProfile(){
-    const btn=document.getElementById('save-btn');const hint=document.getElementById('save-hint');
-    const updates={nama_lengkap:document.getElementById('f-nama').value.trim(),nomor_nia:document.getElementById('f-nia').value.trim(),spesialisasi:document.getElementById('f-spesialisasi').value,pengalaman:parseInt(document.getElementById('f-pengalaman').value)||0,lulusan:document.getElementById('f-lulusan').value.trim(),jurusan:document.getElementById('f-jurusan').value.trim(),kabupaten:document.getElementById('f-kabupaten').value.trim(),provinsi:document.getElementById('f-provinsi').value.trim(),bio_singkat:document.getElementById('f-bio').value.trim()};
-    if(!updates.nama_lengkap){hint.textContent='⚠️ Nama lengkap wajib diisi!';hint.style.color='#F87171';return;}
-    btn.disabled=true;btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
-    try{
-        const{data:{session}}=await window.supabase.auth.getSession();
-        const res=await fetch(SUPA_URL+'/rest/v1/mitra_ahli?id=eq.'+encodeURIComponent(currentMitra.id),{method:'PATCH',headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(updates)});
-        if(!res.ok){const errText=await res.text();throw new Error(JSON.parse(errText)?.message||'HTTP '+res.status);}
-        const rows=await res.json();const saved=(Array.isArray(rows)&&rows.length)?rows[0]:updates;
-        currentMitra={...currentMitra,...saved};updateSidebarUI();
-        document.getElementById('profil-nama-display').textContent=updates.nama_lengkap;
-        document.getElementById('profil-spec-badge').textContent=updates.spesialisasi||'Hukum Umum';
-        hint.textContent='✓ Tersimpan pada '+new Date().toLocaleTimeString('id-ID');hint.style.color='#34D399';
-        toast('Profil berhasil diperbarui','success');
-    }catch(e){hint.textContent='❌ Gagal: '+e.message;hint.style.color='#F87171';toast('Gagal simpan: '+e.message,'error');}
-    finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-floppy-disk"></i> Simpan Perubahan';}
-}
-
-async function uploadAvatar(input){
-    const file=input.files[0];if(!file) return;
-    if(file.size>3*1024*1024){toast('File maksimal 3MB','warn');return;}
-    const btn=document.querySelector('.profil-avatar-upload');btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i>';
-    try{
-        const ext=file.name.split('.').pop();const path=`mitra/${currentMitra.id}/avatar-${Date.now()}.${ext}`;
-        const{error:upErr}=await window.supabase.storage.from('avatars').upload(path,file,{upsert:true});if(upErr) throw upErr;
-        const{data:urlData}=window.supabase.storage.from('avatars').getPublicUrl(path);const publicUrl=urlData.publicUrl;
-        const{error:dbErr}=await window.supabase.from('mitra_ahli').update({foto_profil_url:publicUrl}).eq('id',currentMitra.id);if(dbErr) throw dbErr;
-        currentMitra.foto_profil_url=publicUrl;
-        document.getElementById('profil-avatar-img').src=publicUrl;
-        const sa2=document.getElementById('side-avatar');if(sa2)sa2.src=publicUrl;
-        toast('Foto profil berhasil diperbarui','success');
-    }catch(e){toast('Upload gagal: '+e.message,'error');}
-    finally{btn.innerHTML='<i class="fas fa-camera"></i>';input.value='';}
-}
-
-function updateAvailUI(){
-    const toggle=document.getElementById('avail-toggle');const label=document.getElementById('avail-label');const sub=document.getElementById('avail-sub');
-    if(isAvailable){toggle.classList.remove('off');label.textContent='Menerima Klien Baru';label.style.color='#10B981';sub.textContent='Profil Anda terlihat di direktori mitra';}
-    else{toggle.classList.add('off');label.textContent='Tidak Menerima Klien';label.style.color='var(--text-3)';sub.textContent='Profil Anda disembunyikan dari direktori';}
-}
-function updateBioCount(el){document.getElementById('bio-count').textContent=`${el.value.length}/500`;}
-
-// ══════════════════════════════════════════════
-// SOUND
-// ══════════════════════════════════════════════
-let audioCtx=null;
-function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
-function playNotifSound(){
-    try{
-        const ctx=getAudioCtx();
-        [0,0.12,0.24].forEach((t,i)=>{
-            const osc=ctx.createOscillator();const gain=ctx.createGain();
-            osc.connect(gain);gain.connect(ctx.destination);
-            osc.frequency.value=[880,1100,1320][i];
-            gain.gain.setValueAtTime(0.22,ctx.currentTime+t);
-            gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.1);
-            osc.start(ctx.currentTime+t);osc.stop(ctx.currentTime+t+0.12);
-        });
-    }catch(e){}
-}
-
-// ══════════════════════════════════════════════
-// LOGOUT
-// ══════════════════════════════════════════════
-async function handleLogout(){
-    await window.supabase.auth.signOut();location.href='login.html';
-}
-
-// ══════════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════════
-init().catch(err=>{
-    console.error('[Dashboard Advokat] Fatal:',err);
-    document.getElementById('load-overlay').innerHTML=`
-        <div style="text-align:center;padding:40px;max-width:360px;">
-            <div class="empty-icon" style="margin:0 auto 16px;"><i class="fas fa-triangle-exclamation" style="color:#F59E0B;"></i></div>
-            <p style="font-size:14px;font-weight:700;color:var(--text-1);margin:0 0 8px;">Gagal Memuat Dashboard</p>
-            <p style="font-size:12px;color:var(--text-3);margin:0 0 20px;">${err.message}</p>
-            <button onclick="location.reload()" class="btn-primary">Coba Lagi</button>
-        </div>`;
 });
 </script>
 </body>
