@@ -256,13 +256,23 @@
     .msg-av-init { width: 26px; height: 26px; border-radius: 8px; background: var(--accent-dark); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .msg-av-space { width: 26px; flex-shrink: 0; }
 
-    .msg-bubble-box { max-width: 72%; min-width: 0; }
+    /* ══ BUG FIX: Bubble sizing ══ */
+    .msg-bubble-box { max-width: 72%; min-width: 0; display: flex; flex-direction: column; }
     @media (max-width: 768px) { .msg-bubble-box { max-width: 84%; } }
-    .msg-bubble { padding: 10px 14px; font-size: 14px; line-height: 1.6; word-break: break-word; }
+    .msg-bubble {
+        padding: 10px 14px;
+        font-size: 14px;
+        line-height: 1.6;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        width: fit-content;
+        max-width: 100%;
+        min-width: 52px;
+    }
     .msg-bubble p { margin: 0; }
     .bubble-in { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px 16px 16px 3px; color: var(--text-1); }
     body.light .bubble-in { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
-    .bubble-out { background: linear-gradient(135deg, #2563EB, #1D4ED8); border-radius: 16px 16px 3px 16px; color: #fff; }
+    .bubble-out { background: linear-gradient(135deg, #2563EB, #1D4ED8); border-radius: 16px 16px 3px 16px; color: #fff; margin-left: auto; }
     .msg-meta { display: flex; align-items: center; gap: 4px; margin-top: 3px; padding: 0 4px; font-size: 9.5px; color: var(--text-3); font-weight: 500; opacity: 0; transition: opacity 0.2s; }
     .msg-row:hover .msg-meta { opacity: 1; }
 
@@ -748,7 +758,9 @@
 
             <div id="kasus-grid" class="fade-up" style="animation-delay:0.15s;">
                 <div id="kasus-skeleton" style="display:flex;flex-direction:column;gap:10px;">
-                    ${[1,2,3].map(() => `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>`).join('')}
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>
                 </div>
                 <div id="kasus-list-content" style="display:none;"></div>
             </div>
@@ -1000,8 +1012,6 @@ async function loadConvList(){
     const icon=document.getElementById('refresh-icon');
     icon.style.animation='loaderSpin 0.8s linear infinite';
 
-    // ── BUG FIX: Hanya ambil pesan dari/ke currentMitra.user_id
-    // Exclude pesan di mana sender dan receiver adalah diri sendiri
     const[byLawyer,bySender,byReceiver]=await Promise.all([
         window.supabase.from('messages').select('*').eq('lawyer_id',currentMitra.id).neq('sender_id',currentMitra.user_id).order('created_at',{ascending:false}),
         window.supabase.from('messages').select('*').eq('sender_id',currentMitra.user_id).neq('receiver_id',currentMitra.user_id).order('created_at',{ascending:false}),
@@ -1021,7 +1031,6 @@ async function loadConvList(){
     for(const m of messages){if(!convMap.has(m.conversation_id))convMap.set(m.conversation_id,m);}
     const uniqueConvs=[...convMap.values()];
 
-    // ── BUG FIX: Filter klient yang bukan diri sendiri
     const clientIds=[...new Set(uniqueConvs.map(m=>{
         const otherId=m.sender_id===currentMitra.user_id?m.receiver_id:m.sender_id;
         return otherId;
@@ -1040,12 +1049,12 @@ async function loadConvList(){
     allConvs=uniqueConvs.map(msg=>{
         const isMe=msg.sender_id===currentMitra.user_id;
         const cid=isMe?msg.receiver_id:msg.sender_id;
-        if(cid===currentMitra.user_id) return null; // ── BUG FIX: Skip self
+        if(cid===currentMitra.user_id) return null;
         const prof=profMap[cid];
         const name=prof?.full_name||'Klien';
         const av=prof?.avatar_url||clientAvatarFb(name);
         return{convId:msg.conversation_id,clientId:cid,clientName:name,clientAv:av,lastMsg:msg.message_text||'',lastTime:msg.created_at,isMe,unread:unreadMap[msg.conversation_id]||0};
-    }).filter(Boolean); // ── Remove nulls
+    }).filter(Boolean);
 
     totalUnread=allConvs.reduce((s,c)=>s+c.unread,0);
     updateUnreadBadges();
@@ -1109,7 +1118,6 @@ function updateUnreadBadges(){
 // OPEN CONVERSATION
 // ══════════════════════════════════════════════
 async function openConv(convId,clientId,clientName,clientAv){
-    // ── BUG FIX: Jangan buka chat dengan diri sendiri
     if(clientId===currentMitra.user_id){toast('Tidak bisa membuka chat dengan diri sendiri','warn');return;}
 
     selectedConvId=convId;selectedClientId=clientId;selectedClientName=clientName;selectedClientAv=clientAv;
@@ -1145,7 +1153,6 @@ async function loadMessages(){
             .order('created_at',{ascending:true});
         msgs=fallback;
     }
-    // ── BUG FIX: Filter pesan self-to-self
     msgs=(msgs||[]).filter(m=>m.sender_id!==m.receiver_id);
 
     const box=document.getElementById('chat-box');box.innerHTML='';
@@ -1165,12 +1172,6 @@ async function loadMessages(){
         const sameAsPrev=prevSender===m.sender_id;prevSender=m.sender_id;
         const showAvatar=!sameAsPrev;
         const row=document.createElement('div');row.className=`msg-row ${isMe?'me':'them'}`;
-
-        const avatarSide=(av,name,isInit)=>{
-            if(!showAvatar){const sp=document.createElement('div');sp.className='msg-av-space';return sp;}
-            if(isInit){const d=document.createElement('div');d.className='msg-av-init';d.textContent=myInit;return d;}
-            const img=document.createElement('img');img.src=av;img.className='msg-av';img.alt=name;img.onerror=()=>{img.onerror=null;const d=document.createElement('div');d.className='msg-av-init';d.textContent=name[0]?.toUpperCase()||'?';img.replaceWith(d);};return img;
-        };
 
         if(!isMe){
             const img=document.createElement('img');img.src=selectedClientAv;img.className='msg-av';img.alt=selectedClientName;
@@ -1199,7 +1200,6 @@ async function sendMessage(){
     const inp=document.getElementById('msg-textarea');
     const text=inp.value.trim();
     if(!text||!selectedConvId) return;
-    // ── BUG FIX: Jangan kirim ke diri sendiri
     if(selectedClientId===currentMitra.user_id){toast('Tidak bisa mengirim pesan ke diri sendiri','warn');return;}
     const btn=document.getElementById('send-btn');btn.disabled=true;inp.value='';inp.style.height='auto';
     try{
@@ -1259,11 +1259,10 @@ async function loadAllKasus(){
     document.getElementById('kasus-list-content').style.display='none';
 
     try{
-        // ── BUG FIX: Exclude kasus dari akun advokat sendiri (self-generated)
         const{data:kasusData,error}=await window.supabase
             .from('riwayat_konsultasi')
             .select('*')
-            .neq('user_id',currentMitra.user_id) // ← FIX UTAMA: filter kasus milik diri sendiri
+            .neq('user_id',currentMitra.user_id)
             .order('created_at',{ascending:false});
 
         if(error) throw error;
@@ -1328,7 +1327,6 @@ function renderKasusList(searchQ=''){
     if(kasusFilterMode!=='semua'){
         filtered=allKasus.filter(k=>{
             const status=k.handling_status||'menunggu';
-            // ── FIX: "Ditangani Saya" hanya tampilkan kasus yang ditangani advokat ini
             if(kasusFilterMode==='sedang_ditangani'){
                 return status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id;
             }
@@ -1359,13 +1357,10 @@ function buildKasusCard(k,i){
     const dateStr=new Date(k.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const title=(k.query||k.topik_kasus||k.kronologi||'Konsultasi AI').substring(0,70);
     const content=(k.response||k.hasil_analisis||'').substring(0,150);
-
-    // ── BUG FIX: Cek apakah klien adalah diri sendiri (harusnya tidak terjadi tapi sebagai safety)
     const isSelf=k.user_id===currentMitra.user_id;
 
     let actions='';
     if(isSelf){
-        // Ini seharusnya tidak muncul karena sudah difilter di query, tapi fallback safety
         actions=`<div class="self-case-warn"><i class="fas fa-shield-halved"></i> Ini adalah kasus konsultasi Anda sendiri — tidak dapat ditangani oleh advokat yang sama.</div>`;
     }else{
         if(status==='menunggu'){
@@ -1515,7 +1510,6 @@ async function saveCatatan(kasusId){
 // OPEN CHAT WITH CLIENT (from Kasus panel)
 // ══════════════════════════════════════════════
 async function openChatWithClient(clientId,clientName,clientAv){
-    // ── BUG FIX: Jangan buka chat dengan diri sendiri
     if(clientId===currentMitra.user_id){
         toast('Tidak bisa chat dengan diri sendiri','warn');return;
     }
@@ -1536,7 +1530,6 @@ function subscribeKasusRealtime(){
         .on('postgres_changes',{event:'*',schema:'public',table:'riwayat_konsultasi'},async(payload)=>{
             if(payload.eventType==='INSERT'){
                 const newK=payload.new;
-                // ── BUG FIX: Abaikan kasus dari diri sendiri
                 if(newK.user_id===currentMitra.user_id) return;
                 const{data:prof}=await window.supabase.from('profiles').select('id,full_name,avatar_url').eq('id',newK.user_id).maybeSingle();
                 allKasus.unshift({...newK,clientName:prof?.full_name||'Klien',clientAv:prof?.avatar_url||clientAvatarFb(prof?.full_name||'K')});
@@ -1566,14 +1559,12 @@ function subscribeRealtime(){
     rtChannel=window.supabase.channel('adv-rt-'+currentMitra.id)
         .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`lawyer_id=eq.${currentMitra.id}`},
             async(payload)=>{
-                // ── BUG FIX: Abaikan pesan dari diri sendiri
                 if(payload.new.sender_id===currentMitra.user_id) return;
                 await handleIncomingMessage(payload.new);
             })
         .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentMitra.user_id}`},
             async(payload)=>{
                 const m=payload.new;
-                // ── BUG FIX: Abaikan pesan dari diri sendiri
                 if(m.sender_id===currentMitra.user_id) return;
                 if(m.lawyer_id&&m.lawyer_id===currentMitra.id) return;
                 await handleIncomingMessage(m);
