@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Advokat Dashboard — Lawyers AI</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,88 +15,38 @@
 
     <style>
     :root {
-        --bg-base: #060A12;
-        --bg-sidebar: #0C1220;
-        --bg-card: #111827;
-        --bg-input: #1A2235;
-        --bg-hover: #1E2940;
-        --border: rgba(255,255,255,0.06);
-        --border-hover: rgba(255,255,255,0.12);
-        --text-1: #F1F5F9;
-        --text-2: #94A3B8;
-        --text-3: #475569;
-        --text-4: #2D3748;
-        --accent: #3B82F6;
-        --accent-dark: #2563EB;
-        --emerald: #10B981;
-        --gold: #F59E0B;
-        --shadow: rgba(0,0,0,0.3);
-        --sidebar-w: 240px;
-        --radius: 16px;
+        --bg-base: #060A12; --bg-sidebar: #0C1220; --bg-card: #111827;
+        --bg-input: #1A2235; --bg-hover: #1E2940;
+        --border: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
+        --text-1: #F1F5F9; --text-2: #94A3B8; --text-3: #475569; --text-4: #2D3748;
+        --accent: #3B82F6; --accent-dark: #2563EB;
+        --emerald: #10B981; --gold: #F59E0B; --red: #EF4444;
+        --shadow: rgba(0,0,0,0.3); --sidebar-w: 240px; --radius: 16px;
     }
     body.light {
-        --bg-base: #EEF2F7;
-        --bg-sidebar: #FFFFFF;
-        --bg-card: #FFFFFF;
-        --bg-input: #F1F5F9;
-        --bg-hover: #E2E8F0;
-        --border: rgba(0,0,0,0.07);
-        --border-hover: rgba(0,0,0,0.14);
-        --text-1: #0F172A;
-        --text-2: #334155;
-        --text-3: #64748B;
-        --text-4: #CBD5E1;
+        --bg-base: #EEF2F7; --bg-sidebar: #FFFFFF; --bg-card: #FFFFFF;
+        --bg-input: #F1F5F9; --bg-hover: #E2E8F0;
+        --border: rgba(0,0,0,0.07); --border-hover: rgba(0,0,0,0.14);
+        --text-1: #0F172A; --text-2: #334155; --text-3: #64748B; --text-4: #CBD5E1;
         --shadow: rgba(0,0,0,0.08);
     }
-
     *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html { height: 100%; }
-    body {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        background: var(--bg-base);
-        color: var(--text-1);
-        margin: 0; padding: 0;
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-        transition: background 0.3s, color 0.3s;
-    }
-
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-base); color: var(--text-1); margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; transition: background 0.3s, color 0.3s; }
     ::-webkit-scrollbar { width: 3px; height: 3px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
 
     /* ══ SIDEBAR ══ */
-    #sidebar {
-        width: var(--sidebar-w);
-        flex-shrink: 0;
-        background: var(--bg-sidebar);
-        border-right: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        z-index: 200;
-        transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
-    }
-    @media (max-width: 1024px) {
-        #sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: none; }
-        #sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.5); }
-    }
+    #sidebar { width: var(--sidebar-w); flex-shrink: 0; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; z-index: 200; transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); }
+    @media (max-width: 1024px) { #sidebar { position: fixed; height: 100%; transform: translateX(-100%); } #sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.5); } }
     .sidebar-logo { padding: 20px 18px 14px; border-bottom: 1px solid var(--border); }
     .sidebar-logo h1 { font-size: 20px; font-weight: 900; font-style: italic; color: var(--text-1); margin: 0; letter-spacing: -0.5px; }
     .sidebar-logo h1 span { color: var(--accent); }
     .sidebar-online { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
     .sidebar-online-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); animation: pulseDot 2s infinite; }
     @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
-    .sidebar-online-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
-    .sidebar-nav { flex: 1; padding: 12px 10px; }
-    .nav-link {
-        display: flex; align-items: center; gap: 9px;
-        padding: 10px 10px; border-radius: 12px;
-        font-size: 12.5px; font-weight: 600; color: var(--text-2);
-        text-decoration: none; transition: all 0.15s; cursor: pointer;
-        min-height: 42px; margin-bottom: 2px;
-    }
+    .nav-link { display: flex; align-items: center; gap: 9px; padding: 10px 10px; border-radius: 12px; font-size: 12.5px; font-weight: 600; color: var(--text-2); text-decoration: none; transition: all 0.15s; cursor: pointer; min-height: 42px; margin-bottom: 2px; }
     .nav-link:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
     .nav-link.active { background: rgba(59,130,246,0.12); color: #60A5FA; }
     .nav-icon { width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
@@ -105,64 +54,36 @@
     body.light .nav-link:hover { background: rgba(0,0,0,0.04); }
     body.light .nav-link.active { background: rgba(59,130,246,0.1); color: #2563EB; }
     body.light .nav-icon { background: rgba(0,0,0,0.05); }
-
-    .sidebar-profile {
-        margin: 8px 10px 12px;
-        padding: 12px;
-        border-radius: 14px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid var(--border);
-    }
+    .sidebar-nav { flex: 1; padding: 12px 10px; }
+    .sidebar-profile { margin: 8px 10px 12px; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
     body.light .sidebar-profile { background: rgba(0,0,0,0.03); }
     .profile-av { width: 38px; height: 38px; border-radius: 11px; object-fit: cover; border: 1.5px solid var(--border); flex-shrink: 0; }
     .rt-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--emerald); animation: aiPulse 2.5s infinite; flex-shrink: 0; }
     @keyframes aiPulse { 0%,100%{box-shadow:0 0 0 2px rgba(16,185,129,0.3)} 50%{box-shadow:0 0 0 4px rgba(16,185,129,0.1)} }
 
+    /* ══ PERFORMANCE CARD IN SIDEBAR ══ */
+    .perf-sidebar { margin: 0 10px 10px; padding: 12px; border-radius: 14px; background: linear-gradient(135deg,rgba(59,130,246,0.08),rgba(29,78,216,0.12)); border: 1px solid rgba(59,130,246,0.2); }
+    .perf-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .perf-item { text-align: center; }
+    .perf-num { font-size: 18px; font-weight: 900; font-style: italic; color: var(--text-1); line-height: 1; }
+    .perf-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); margin-top: 2px; }
+    .rating-stars { display: flex; gap: 1px; }
+    .rating-stars i { font-size: 8px; color: var(--gold); }
+
     /* ══ APP ══ */
-    #adv-app {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        min-width: 0;
-    }
+    #adv-app { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
     /* ══ TOPBAR ══ */
-    #topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 18px;
-        height: 54px;
-        border-bottom: 1px solid var(--border);
-        background: var(--bg-sidebar);
-        flex-shrink: 0;
-        gap: 12px;
-    }
+    #topbar { display: flex; align-items: center; justify-content: space-between; padding: 0 18px; height: 54px; border-bottom: 1px solid var(--border); background: var(--bg-sidebar); flex-shrink: 0; gap: 12px; }
     body.light #topbar { background: #FFFFFF; }
     @media (max-width: 1024px) { #topbar { padding-left: 58px; } }
-
     .topbar-tabs { display: flex; gap: 3px; }
-    .tab-btn {
-        display: flex; align-items: center; gap: 6px;
-        padding: 6px 14px; border-radius: 10px;
-        font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-        color: var(--text-3); background: none; border: none; cursor: pointer; font-family: inherit;
-        height: 34px; transition: all 0.15s;
-    }
+    .tab-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 10px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); background: none; border: none; cursor: pointer; font-family: inherit; height: 34px; transition: all 0.15s; }
     .tab-btn:hover { background: var(--bg-input); color: var(--text-2); }
     .tab-btn.active { background: rgba(59,130,246,0.12); color: var(--accent); }
-    .tab-badge {
-        min-width: 16px; height: 16px; padding: 0 4px;
-        background: #EF4444; color: #fff;
-        font-size: 8px; font-weight: 900; border-radius: 8px;
-        display: none; align-items: center; justify-content: center;
-    }
+    .tab-badge { min-width: 16px; height: 16px; padding: 0 4px; background: #EF4444; color: #fff; font-size: 8px; font-weight: 900; border-radius: 8px; display: none; align-items: center; justify-content: center; }
     .tab-badge.show { display: flex; }
-    @media (max-width: 768px) {
-        .tab-btn .tab-label { display: none; }
-        .tab-btn { padding: 6px 10px; }
-    }
+    @media (max-width: 768px) { .tab-btn .tab-label { display: none; } .tab-btn { padding: 6px 10px; } }
 
     /* ══ PANELS ══ */
     .panel { display: none; flex: 1; overflow: hidden; min-height: 0; }
@@ -170,47 +91,23 @@
     #panel-inbox { flex-direction: row; position: relative; overflow: hidden; }
     #panel-kasus { flex-direction: column; overflow-y: auto; }
     #panel-profil { flex-direction: column; overflow-y: auto; }
+    #panel-stats { flex-direction: column; overflow-y: auto; }
 
     /* ══ CONV SIDEBAR ══ */
-    #conv-sidebar {
-        width: 290px; flex-shrink: 0;
-        border-right: 1px solid var(--border);
-        display: flex; flex-direction: column;
-        background: var(--bg-sidebar); overflow: hidden;
-    }
+    #conv-sidebar { width: 290px; flex-shrink: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg-sidebar); overflow: hidden; }
     body.light #conv-sidebar { background: #FFFFFF; }
-    @media (max-width: 1024px) {
-        #conv-sidebar {
-            position: absolute; inset: 0; width: 100%; z-index: 10;
-            transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-        }
-        #conv-sidebar.mobile-hidden { transform: translateX(-100%); pointer-events: none; }
-    }
+    @media (max-width: 1024px) { #conv-sidebar { position: absolute; inset: 0; width: 100%; z-index: 10; transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); } #conv-sidebar.mobile-hidden { transform: translateX(-100%); pointer-events: none; } }
     .conv-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .conv-search { position: relative; margin-top: 9px; }
-    .conv-search input {
-        width: 100%; padding: 8px 12px 8px 30px;
-        background: var(--bg-input); border: 1px solid var(--border);
-        border-radius: 10px; font-size: 12px; font-weight: 500;
-        color: var(--text-1); font-family: inherit; outline: none; transition: border-color 0.2s;
-    }
+    .conv-search input { width: 100%; padding: 8px 12px 8px 30px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 500; color: var(--text-1); font-family: inherit; outline: none; transition: border-color 0.2s; }
     .conv-search input:focus { border-color: var(--accent); }
     .conv-search input::placeholder { color: var(--text-3); }
     .conv-search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 10px; }
     .conv-filter { display: flex; gap: 5px; margin-top: 8px; }
-    .conv-filter-btn {
-        flex: 1; padding: 5px 8px; border-radius: 8px;
-        font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
-        background: var(--bg-input); border: 1px solid var(--border); color: var(--text-3); cursor: pointer; font-family: inherit;
-    }
+    .conv-filter-btn { flex: 1; padding: 5px 8px; border-radius: 8px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-3); cursor: pointer; font-family: inherit; }
     .conv-filter-btn.active { background: rgba(59,130,246,0.12); color: var(--accent); border-color: rgba(59,130,246,0.25); }
     .conv-list { flex: 1; overflow-y: auto; }
-    .conv-item {
-        display: flex; align-items: center; gap: 11px;
-        padding: 12px 16px; cursor: pointer;
-        border-bottom: 1px solid var(--border); position: relative;
-        transition: background 0.12s;
-    }
+    .conv-item { display: flex; align-items: center; gap: 11px; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border); position: relative; transition: background 0.12s; }
     .conv-item:hover { background: var(--bg-input); }
     .conv-item.active { background: rgba(59,130,246,0.07); }
     .conv-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0; }
@@ -221,60 +118,44 @@
     #chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
     #chat-view { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
     #chat-empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 40px; text-align: center; }
-
-    #chat-top {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 12px 16px; border-bottom: 1px solid var(--border);
-        background: var(--bg-sidebar); flex-shrink: 0;
-    }
+    #chat-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg-sidebar); flex-shrink: 0; }
     body.light #chat-top { background: #FFFFFF; }
     .chat-adv-avatar { width: 38px; height: 38px; border-radius: 11px; object-fit: cover; border: 1.5px solid var(--border); }
     .online-ring { position: relative; flex-shrink: 0; }
-    .online-ring::after {
-        content: ''; position: absolute; bottom: -2px; right: -2px;
-        width: 10px; height: 10px; border-radius: 50%;
-        background: var(--text-3); border: 2px solid var(--bg-sidebar);
-        transition: background 0.4s;
-    }
+    .online-ring::after { content: ''; position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background: var(--text-3); border: 2px solid var(--bg-sidebar); transition: background 0.4s; }
     .online-ring.status-online::after { background: var(--emerald) !important; animation: clientPulse 2.5s infinite; }
     .online-ring.status-away::after { background: var(--gold) !important; }
     @keyframes clientPulse { 0%,100%{box-shadow:0 0 0 2px rgba(16,185,129,0.2)} 50%{box-shadow:0 0 0 4px rgba(16,185,129,0.08)} }
 
-    #chat-box {
-        flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
-        padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0;
-    }
+    #chat-box { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
     body.light #chat-box { background: #EEF2F7; }
-
     .date-sep { display: flex; align-items: center; gap: 10px; margin: 14px 0 10px; }
     .date-sep::before, .date-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     .date-sep span { font-size: 9.5px; font-weight: 600; color: var(--text-3); padding: 3px 10px; background: var(--bg-input); border-radius: 20px; border: 1px solid var(--border); }
-
     .msg-row { display: flex; align-items: flex-end; gap: 8px; }
     .msg-row.me { justify-content: flex-end; }
     .msg-av { width: 26px; height: 26px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
     .msg-av-init { width: 26px; height: 26px; border-radius: 8px; background: var(--accent-dark); color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .msg-av-space { width: 26px; flex-shrink: 0; }
-
-    /* ══ BUG FIX: Bubble sizing ══ */
     .msg-bubble-box { max-width: 72%; min-width: 0; display: flex; flex-direction: column; }
     @media (max-width: 768px) { .msg-bubble-box { max-width: 84%; } }
-    .msg-bubble {
-        padding: 10px 14px;
-        font-size: 14px;
-        line-height: 1.6;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        width: fit-content;
-        max-width: 100%;
-        min-width: 52px;
-    }
+    .msg-bubble { padding: 10px 14px; font-size: 14px; line-height: 1.6; word-break: break-word; overflow-wrap: break-word; width: fit-content; max-width: 100%; min-width: 52px; }
     .msg-bubble p { margin: 0; }
     .bubble-in { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px 16px 16px 3px; color: var(--text-1); }
     body.light .bubble-in { background: #FFFFFF; border-color: #E2E8F0; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
     .bubble-out { background: linear-gradient(135deg, #2563EB, #1D4ED8); border-radius: 16px 16px 3px 16px; color: #fff; margin-left: auto; }
     .msg-meta { display: flex; align-items: center; gap: 4px; margin-top: 3px; padding: 0 4px; font-size: 9.5px; color: var(--text-3); font-weight: 500; opacity: 0; transition: opacity 0.2s; }
     .msg-row:hover .msg-meta { opacity: 1; }
+
+    /* ── CASE REQUEST BUBBLE ── */
+    .case-request-bubble { background: linear-gradient(135deg,rgba(245,158,11,0.08),rgba(245,158,11,0.04)); border: 1px solid rgba(245,158,11,0.25); border-radius: 14px; padding: 14px 16px; max-width: 85%; margin: 8px 0; }
+    .case-request-bubble.approved { background: linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.04)); border-color: rgba(16,185,129,0.25); }
+    .case-request-bubble.rejected { background: linear-gradient(135deg,rgba(239,68,68,0.08),rgba(239,68,68,0.04)); border-color: rgba(239,68,68,0.2); }
+    .case-action-btns { display: flex; gap: 8px; margin-top: 12px; }
+    .case-accept-btn { flex: 1; padding: 8px 12px; border-radius: 10px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34D399; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s; }
+    .case-accept-btn:hover { background: rgba(16,185,129,0.25); }
+    .case-reject-btn { flex: 1; padding: 8px 12px; border-radius: 10px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #F87171; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s; }
+    .case-reject-btn:hover { background: rgba(239,68,68,0.18); }
 
     #typing-indicator-row { display: none; align-items: flex-end; gap: 8px; padding: 0 16px 10px; }
     .typing-dots { display: flex; gap: 3px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px 16px 16px 3px; padding: 10px 14px; }
@@ -283,24 +164,18 @@
     .t-dot:nth-child(3) { animation-delay: 0.3s; }
     @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-5px);opacity:1} }
 
-    #chat-input-area {
-        flex-shrink: 0;
-        padding: 12px 16px;
-        padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
-        border-top: 1px solid var(--border);
-        background: var(--bg-sidebar);
-    }
+    /* ── SLA TIMER BAR ── */
+    #sla-bar { display: none; padding: 6px 16px; background: rgba(245,158,11,0.06); border-bottom: 1px solid rgba(245,158,11,0.15); flex-shrink: 0; }
+    #sla-bar.critical { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); }
+    .sla-inner { display: flex; align-items: center; gap: 10px; }
+    .sla-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .sla-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 1s linear; }
+    .sla-fill.critical { background: #EF4444; }
+
+    #chat-input-area { flex-shrink: 0; padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)); border-top: 1px solid var(--border); background: var(--bg-sidebar); }
     body.light #chat-input-area { background: #FFFFFF; }
     .input-row { display: flex; align-items: flex-end; gap: 10px; }
-    #msg-textarea {
-        flex: 1; min-width: 0;
-        background: var(--bg-input); border: 1.5px solid var(--border);
-        border-radius: 14px; padding: 10px 14px;
-        font-size: 14px; font-weight: 500; color: var(--text-1);
-        font-family: inherit; outline: none; resize: none;
-        height: 44px; max-height: 120px; overflow-y: auto; line-height: 1.5;
-        transition: border-color 0.2s;
-    }
+    #msg-textarea { flex: 1; min-width: 0; background: var(--bg-input); border: 1.5px solid var(--border); border-radius: 14px; padding: 10px 14px; font-size: 14px; font-weight: 500; color: var(--text-1); font-family: inherit; outline: none; resize: none; height: 44px; max-height: 120px; overflow-y: auto; line-height: 1.5; transition: border-color 0.2s; }
     #msg-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
     #msg-textarea::placeholder { color: var(--text-3); }
     body.light #msg-textarea { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
@@ -309,119 +184,107 @@
     .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     /* ══ KASUS PANEL ══ */
-    .kasus-inner { max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; }
+    .kasus-inner { max-width: 1060px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; }
     @media (max-width: 768px) { .kasus-inner { padding: 16px 14px 80px; } }
-
-    .kasus-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
-    @media (max-width: 768px) { .kasus-stats { grid-template-columns: repeat(2, 1fr); } }
-
-    .stat-card {
-        background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-        padding: 16px 18px; position: relative; overflow: hidden; transition: transform 0.2s, border-color 0.2s;
-        cursor: default;
-    }
+    .kasus-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px; }
+    @media (max-width: 1024px) { .kasus-stats { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 600px) { .kasus-stats { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; transition: transform 0.2s, border-color 0.2s; cursor: default; }
     .stat-card:hover { transform: translateY(-2px); border-color: var(--border-hover); }
     .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
     .stat-card.s-total::before { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
     .stat-card.s-menunggu::before { background: linear-gradient(90deg, #64748B, #94A3B8); }
     .stat-card.s-ditangani::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
     .stat-card.s-selesai::before { background: linear-gradient(90deg, #10B981, #34D399); }
+    .stat-card.s-menolak::before { background: linear-gradient(90deg, #EF4444, #F87171); }
     body.light .stat-card { background: #FFFFFF; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     .stat-number { font-size: 30px; font-weight: 900; font-style: italic; color: var(--text-1); line-height: 1; margin-bottom: 4px; }
     .stat-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
 
     .kasus-filter-strip { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
-    .kf-btn {
-        display: flex; align-items: center; gap: 5px;
-        padding: 6px 14px; border-radius: 20px;
-        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
-        background: var(--bg-input); border: 1px solid var(--border); color: var(--text-3);
-        cursor: pointer; transition: all 0.15s; font-family: inherit;
-    }
+    .kf-btn { display: flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-3); cursor: pointer; transition: all 0.15s; font-family: inherit; }
     .kf-btn:hover { border-color: rgba(59,130,246,0.3); color: var(--text-2); }
     .kf-btn.active { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.3); color: #60A5FA; }
-    .kf-btn.f-menunggu.active { background: rgba(100,116,139,0.12); border-color: rgba(100,116,139,0.3); color: #94A3B8; }
-    .kf-btn.f-sedang.active { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: #FBBF24; }
+    .kf-btn.f-menunggu.active { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #FBBF24; }
+    .kf-btn.f-sedang.active { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.3); color: #60A5FA; }
     .kf-btn.f-selesai.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: #34D399; }
-    .kf-btn.f-ditutup.active { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: #F87171; }
+    .kf-btn.f-ditolak.active { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: #F87171; }
     .kf-count { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--bg-base); font-size: 8px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
-
     .kasus-search { position: relative; flex: 1; min-width: 160px; max-width: 300px; margin-left: auto; }
     .kasus-search input { width: 100%; padding: 7px 12px 7px 30px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 500; color: var(--text-1); font-family: inherit; outline: none; transition: border-color 0.2s; }
     .kasus-search input:focus { border-color: var(--accent); }
     .kasus-search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 10px; }
 
+    /* ── PRIORITY BADGE ── */
+    .priority-tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 6px; font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+    .priority-urgent { background: rgba(239,68,68,0.15); color: #F87171; border: 1px solid rgba(239,68,68,0.3); }
+    .priority-high { background: rgba(245,158,11,0.12); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
+    .priority-normal { background: rgba(59,130,246,0.1); color: #60A5FA; border: 1px solid rgba(59,130,246,0.2); }
+
     /* ── Kasus Card ── */
-    .kasus-card {
-        background: var(--bg-card); border: 1px solid var(--border);
-        border-radius: 20px; padding: 18px 20px;
-        transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-        position: relative; overflow: hidden;
-    }
+    .kasus-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 18px 20px; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; }
     .kasus-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 20px 0 0 20px; }
-    .kasus-card.k-menunggu::before { background: #64748B; }
-    .kasus-card.k-sedang_ditangani::before { background: #F59E0B; }
-    .kasus-card.k-selesai::before { background: #10B981; }
-    .kasus-card.k-ditutup::before { background: #EF4444; }
+    .kasus-card.k-menunggu::before { background: #F59E0B; }
+    .kasus-card.k-menunggu_persetujuan::before { background: #3B82F6; animation: borderPulse 2s ease-in-out infinite; }
+    @keyframes borderPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .kasus-card.k-sedang_ditangani::before { background: #10B981; }
+    .kasus-card.k-selesai::before { background: #10B981; opacity: 0.5; }
+    .kasus-card.k-ditolak::before { background: #EF4444; }
+    .kasus-card.k-ditutup::before { background: #475569; }
     .kasus-card:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: 0 6px 20px var(--shadow); }
     body.light .kasus-card { background: #FFFFFF; box-shadow: 0 1px 8px rgba(0,0,0,0.06); }
 
-    .ks-badge {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 3px 10px; border-radius: 20px;
-        font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap;
-    }
-    .ks-badge.b-menunggu { background: rgba(100,116,139,0.12); color: #94A3B8; border: 1px solid rgba(100,116,139,0.2); }
-    .ks-badge.b-sedang_ditangani { background: rgba(245,158,11,0.12); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); animation: pulseBadge 2s ease-in-out infinite; }
-    .ks-badge.b-selesai { background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-    .ks-badge.b-ditutup { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
-    @keyframes pulseBadge { 0%,100%{opacity:1} 50%{opacity:0.55} }
+    /* ── NEW CASE INDICATOR ── */
+    .kasus-card.is-new { border-color: rgba(59,130,246,0.35); }
+    .kasus-card.is-new::after { content: 'BARU'; position: absolute; top: 12px; right: 14px; background: var(--accent); color: #fff; font-size: 7px; font-weight: 900; padding: 2px 7px; border-radius: 6px; letter-spacing: 0.1em; }
+
+    .ks-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+    .ks-badge.b-menunggu { background: rgba(245,158,11,0.12); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
+    .ks-badge.b-menunggu_persetujuan { background: rgba(59,130,246,0.12); color: #60A5FA; border: 1px solid rgba(59,130,246,0.25); animation: pulseBadge 2s ease-in-out infinite; }
+    .ks-badge.b-sedang_ditangani { background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.25); animation: pulseBadge 2s ease-in-out infinite; }
+    .ks-badge.b-selesai { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.2); }
+    .ks-badge.b-ditolak { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
+    .ks-badge.b-ditutup { background: rgba(100,116,139,0.12); color: #94A3B8; border: 1px solid rgba(100,116,139,0.2); }
+    @keyframes pulseBadge { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
     .kasus-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-    .kbtn {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 7px 13px; border-radius: 10px;
-        font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
-        border: none; cursor: pointer; font-family: inherit; transition: all 0.15s;
-    }
-    .kbtn-tangani { background: rgba(245,158,11,0.12); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
-    .kbtn-tangani:hover { background: rgba(245,158,11,0.22); }
-    .kbtn-selesai { background: rgba(16,185,129,0.12); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-    .kbtn-selesai:hover { background: rgba(16,185,129,0.22); }
-    .kbtn-tutup { background: rgba(239,68,68,0.08); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
-    .kbtn-tutup:hover { background: rgba(239,68,68,0.16); }
-    .kbtn-detail { background: rgba(59,130,246,0.1); color: #60A5FA; border: 1px solid rgba(59,130,246,0.2); }
-    .kbtn-detail:hover { background: rgba(59,130,246,0.2); }
+    .kbtn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; border-radius: 10px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .kbtn-accept { background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3); }
+    .kbtn-accept:hover { background: rgba(16,185,129,0.25); transform: scale(1.03); }
+    .kbtn-reject { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
+    .kbtn-reject:hover { background: rgba(239,68,68,0.2); }
+    .kbtn-selesai { background: rgba(59,130,246,0.1); color: #60A5FA; border: 1px solid rgba(59,130,246,0.2); }
+    .kbtn-selesai:hover { background: rgba(59,130,246,0.2); }
+    .kbtn-tutup { background: rgba(100,116,139,0.1); color: #94A3B8; border: 1px solid rgba(100,116,139,0.2); }
+    .kbtn-tutup:hover { background: rgba(100,116,139,0.18); }
+    .kbtn-detail { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.2); }
+    .kbtn-detail:hover { background: rgba(245,158,11,0.2); }
     .kbtn-chat { background: rgba(99,102,241,0.1); color: #818CF8; border: 1px solid rgba(99,102,241,0.2); }
     .kbtn-chat:hover { background: rgba(99,102,241,0.2); }
     .kbtn-reset { background: rgba(100,116,139,0.1); color: #94A3B8; border: 1px solid rgba(100,116,139,0.2); }
     .kbtn-reset:hover { background: rgba(100,116,139,0.18); }
     .kbtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+    /* ── APPROVAL ACTION STRIP ── */
+    .approval-strip { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.04)); border: 1px solid rgba(59,130,246,0.25); margin-bottom: 14px; }
+    .approval-strip .accept-big { flex: 1; padding: 11px; border-radius: 12px; background: rgba(16,185,129,0.15); border: 1.5px solid rgba(16,185,129,0.35); color: #34D399; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s; }
+    .approval-strip .accept-big:hover { background: rgba(16,185,129,0.3); transform: scale(1.02); }
+    .approval-strip .reject-big { flex: 1; padding: 11px; border-radius: 12px; background: rgba(239,68,68,0.1); border: 1.5px solid rgba(239,68,68,0.3); color: #F87171; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s; }
+    .approval-strip .reject-big:hover { background: rgba(239,68,68,0.2); }
+
     .client-info-row { display: flex; align-items: center; gap: 10px; }
     .client-mini-av { width: 34px; height: 34px; border-radius: 10px; object-fit: cover; border: 1.5px solid var(--border); flex-shrink: 0; }
 
-    /* ── Self-case warning ── */
-    .self-case-warn {
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 12px; border-radius: 10px;
-        background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.18);
-        font-size: 11px; font-weight: 600; color: #F87171;
-    }
+    /* ── CASE TIMER ── */
+    .case-timer { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-weight: 700; color: var(--text-3); padding: 2px 8px; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border); }
+    .case-timer.urgent { color: #F87171; background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); }
 
     /* ── Detail Modal ── */
     .k-modal-overlay { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
     .k-modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); }
-    .k-modal-box {
-        position: relative; z-index: 1;
-        background: var(--bg-sidebar); border: 1px solid var(--border);
-        border-radius: 24px; width: 100%; max-width: 680px;
-        max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
-        box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-        animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
-    }
+    .k-modal-box { position: relative; z-index: 1; background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 24px; width: 100%; max-width: 700px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 80px rgba(0,0,0,0.5); animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1); }
     @keyframes modalIn { from{transform:translateY(30px) scale(0.95);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
-    body.light .k-modal-box { background: #FFFFFF; box-shadow: 0 24px 80px rgba(0,0,0,0.15); }
+    body.light .k-modal-box { background: #FFFFFF; }
     .k-modal-head { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
     .k-modal-body { overflow-y: auto; padding: 20px 22px; flex: 1; }
     .k-modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-shrink: 0; flex-wrap: wrap; align-items: center; }
@@ -432,39 +295,41 @@
     .catatan-area:focus { border-color: var(--accent); }
     body.light .catatan-area { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
 
-    /* ── Skeleton ── */
-    .skel { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-input) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: skelPulse 1.4s ease-in-out infinite; border-radius: 10px; }
-    @keyframes skelPulse { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    /* ── REJECTION MODAL ── */
+    .reject-modal-overlay { position: fixed; inset: 0; z-index: 600; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .reject-modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
+    .reject-modal-box { position: relative; z-index: 1; background: var(--bg-sidebar); border: 1px solid rgba(239,68,68,0.3); border-radius: 20px; width: 100%; max-width: 420px; padding: 24px; animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    body.light .reject-modal-box { background: #FFFFFF; }
 
-    .kasus-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px 20px; text-align: center; opacity: 0.45; }
+    /* ══ STATS PANEL ══ */
+    .stats-inner { max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr; } }
+    .stats-big-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; }
+    body.light .stats-big-card { background: #FFFFFF; }
+    .completion-ring { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+    .completion-ring svg { transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: var(--border); stroke-width: 8; }
+    .ring-fill { fill: none; stroke: #10B981; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 226; transition: stroke-dashoffset 1s ease; }
+    .ring-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; font-style: italic; color: var(--text-1); }
 
-    /* ══ PROFIL ══ */
+    /* ══ PROFIL PANEL ══ */
     .profil-inner { max-width: 820px; margin: 0 auto; padding: 28px 24px 60px; width: 100%; }
-    @media (max-width: 768px) { .profil-inner { padding: 16px 14px 80px; } }
     .profil-banner { width: 100%; height: 160px; border-radius: 20px; background: linear-gradient(135deg, #0B1628, #1E3A6E, #2563EB); position: relative; overflow: visible; margin-bottom: 72px; flex-shrink: 0; }
-    .profil-banner::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 70% 50%, rgba(99,102,241,0.35), transparent 55%); border-radius: inherit; }
     @media (max-width: 768px) { .profil-banner { height: 120px; margin-bottom: 58px; } }
     .profil-avatar-zone { position: absolute; bottom: -46px; left: 28px; }
     .profil-avatar { width: 90px; height: 90px; border-radius: 22px; object-fit: cover; border: 3px solid var(--bg-base); box-shadow: 0 10px 32px rgba(0,0,0,0.5); display: block; }
     body.light .profil-avatar { border-color: #EEF2F7; }
     .profil-avatar-upload { position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--accent-dark); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; color: #fff; border: 2px solid var(--bg-base); transition: background 0.15s; }
-    .profil-avatar-upload:hover { background: #1D4ED8; }
-    body.light .profil-avatar-upload { border-color: #EEF2F7; }
     .badge-verified { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(16,185,129,0.12); color: #34D399; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
     .badge-spec { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; background: rgba(59,130,246,0.1); color: #60A5FA; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); }
-    .field {
-        padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border);
-        border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500;
-        color: var(--text-1); outline: none; transition: border-color 0.2s;
-        width: 100%;
-    }
+    .field { padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--text-1); outline: none; transition: border-color 0.2s; width: 100%; }
     .field:focus { border-color: var(--accent); background: var(--bg-hover); }
     body.light .field { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
-    body.light .field:focus { border-color: #3B82F6; background: #FAFAFA; }
     .form-select { width: 100%; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text-1); outline: none; appearance: none; cursor: pointer; transition: border-color 0.2s; }
     .form-select:focus { border-color: var(--accent); }
     body.light .form-select { background: #FFFFFF; border-color: #E2E8F0; color: #0F172A; }
@@ -474,54 +339,37 @@
     .section-heading { font-size: 13px; font-weight: 800; font-style: italic; color: var(--text-1); margin: 0 0 14px; }
     .section-heading span { color: var(--accent); }
     .section-divider { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
-    .avail-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; }
-    body.light .avail-toggle-row { background: #FFFFFF; }
-    .avail-toggle { width: 44px; height: 24px; border-radius: 12px; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.3); cursor: pointer; position: relative; flex-shrink: 0; }
-    .avail-toggle.off { background: var(--bg-input); border-color: var(--border); }
-    .avail-toggle-knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #10B981; transition: transform 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-    .avail-toggle.off .avail-toggle-knob { transform: translateX(20px); background: var(--text-3); }
     .save-bar { position: sticky; bottom: 0; padding: 16px 0; background: var(--bg-base); margin-top: 24px; border-top: 1px solid var(--border); }
     body.light .save-bar { background: #EEF2F7; }
 
     /* ══ MISC ══ */
+    .skel { background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-input) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: skelPulse 1.4s ease-in-out infinite; border-radius: 10px; }
+    @keyframes skelPulse { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .kasus-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 80px 20px; text-align: center; opacity: 0.45; }
+
     #load-overlay { position: fixed; inset: 0; z-index: 9999; background: var(--bg-base); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: opacity 0.4s; }
     body.light #load-overlay { background: #F0F4F8; }
     .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: loaderSpin 0.8s linear infinite; }
     @keyframes loaderSpin { to { transform: rotate(360deg); } }
-
     #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; display: none; backdrop-filter: blur(4px); }
     #sidebar-overlay.show { display: block; }
-
-    #menu-btn {
-        position: fixed; top: 10px; left: 12px; z-index: 150;
-        width: 34px; height: 34px; border-radius: 9px;
-        background: var(--bg-card); border: 1px solid var(--border);
-        display: none; align-items: center; justify-content: center;
-        cursor: pointer; color: var(--text-2); font-size: 13px;
-    }
+    #menu-btn { position: fixed; top: 10px; left: 12px; z-index: 150; width: 34px; height: 34px; border-radius: 9px; background: var(--bg-card); border: 1px solid var(--border); display: none; align-items: center; justify-content: center; cursor: pointer; color: var(--text-2); font-size: 13px; }
     @media (max-width: 1024px) { #menu-btn { display: flex; } }
 
-    /* Toast */
     #toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
     .toast { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; font-size: 12.5px; font-weight: 600; color: var(--text-1); white-space: nowrap; box-shadow: 0 8px 28px rgba(0,0,0,0.4); animation: toastIn 0.28s cubic-bezier(0.34,1.56,0.64,1); pointer-events: auto; }
     @keyframes toastIn { from{opacity:0;transform:translateY(10px) scale(0.94)} to{opacity:1;transform:translateY(0) scale(1)} }
     .toast.hide { animation: toastOut 0.22s ease forwards; }
     @keyframes toastOut { to{opacity:0;transform:translateY(-8px) scale(0.95)} }
 
-    /* Theme toggle */
     .theme-toggle { width: 44px; height: 24px; border-radius: 12px; background: var(--bg-input); border: 1px solid var(--border); cursor: pointer; position: relative; flex-shrink: 0; }
     body.light .theme-toggle { background: #BFDBFE !important; border-color: #93C5FD !important; }
     .theme-toggle .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #64748B; transition: all 0.35s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; justify-content: center; font-size: 9px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
     body.light .theme-toggle .knob { transform: translateX(20px) !important; background: #F59E0B !important; }
 
-    /* Bell */
     @keyframes bellShake { 0%,100%{transform:rotate(0)} 15%{transform:rotate(12deg)} 30%{transform:rotate(-10deg)} 45%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 75%{transform:rotate(4deg)} }
     .bell-shake { animation: bellShake 0.7s; }
-
-    /* Empty state prettier */
     .empty-icon { width: 60px; height: 60px; border-radius: 18px; background: var(--bg-input); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--text-3); }
-
-    /* Fade animations */
     .fade-up { animation: fadeUp 0.5s ease forwards; opacity: 0; }
     .fade-up-1 { animation-delay: 0.06s; }
     .fade-up-2 { animation-delay: 0.12s; }
@@ -530,23 +378,25 @@
     .fade-up-5 { animation-delay: 0.3s; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
-    /* Quick reply bar */
     #adv-qr-bar { gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; }
     #adv-qr-bar::-webkit-scrollbar { display: none; }
     .qr-chip { flex-shrink: 0; padding: 6px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 600; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); cursor: pointer; white-space: nowrap; transition: all 0.15s; min-height: 32px; display: flex; align-items: center; }
     .qr-chip:hover { color: #60A5FA; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.06); }
 
-    /* Btn styles */
     .btn-primary { display: inline-flex; align-items: center; gap: 7px; padding: 11px 18px; border-radius: 12px; background: var(--accent-dark); color: #fff; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .btn-primary:hover { background: #1D4ED8; }
     .btn-ghost { display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 10px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; cursor: pointer; font-family: inherit; transition: all 0.15s; }
     .btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); }
+
+    /* ── ACTIVITY FEED ── */
+    .activity-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .activity-item:last-child { border-bottom: none; }
+    .act-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
     </style>
 </head>
 <body>
 
 <div id="toast-container"></div>
-
 <div id="load-overlay">
     <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);display:flex;align-items:center;justify-content:center;font-size:22px;font-style:italic;font-weight:800;color:#fff;letter-spacing:-1px">L</div>
     <div class="spin" style="margin-top:4px;"></div>
@@ -562,22 +412,42 @@
         <h1>Lawyers<span>AI</span></h1>
         <div class="sidebar-online">
             <span class="sidebar-online-dot"></span>
-            <span class="sidebar-online-label">Advokat Online</span>
+            <span style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-3)">Advokat Online</span>
         </div>
     </div>
     <nav class="sidebar-nav">
-        <a href="index.html" class="nav-link">
-            <span class="nav-icon"><i class="fas fa-house"></i></span>Mode Klien
-        </a>
-        <a href="#" class="nav-link active" onclick="return false;">
-            <span class="nav-icon"><i class="fas fa-scale-balanced"></i></span>Advokat Panel
-        </a>
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-3);padding:0 8px;margin:6px 0 5px;">Menu</div>
+        <a href="index.html" class="nav-link"><span class="nav-icon"><i class="fas fa-house"></i></span>Mode Klien</a>
+        <a href="#" class="nav-link active" onclick="return false;"><span class="nav-icon"><i class="fas fa-scale-balanced"></i></span>Advokat Panel</a>
     </nav>
+
+    <!-- Performance summary in sidebar -->
+    <div class="perf-sidebar">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+            <i class="fas fa-chart-line" style="color:var(--accent);font-size:10px;"></i>
+            <span style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-3);">Performa Bulan Ini</span>
+        </div>
+        <div class="perf-row">
+            <div class="perf-item">
+                <div class="perf-num" id="perf-total">0</div>
+                <div class="perf-lbl">Kasus</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-num" id="perf-selesai">0</div>
+                <div class="perf-lbl">Selesai</div>
+            </div>
+            <div class="perf-item">
+                <div class="perf-num" id="perf-rating">—</div>
+                <div class="perf-lbl">Rating</div>
+            </div>
+        </div>
+        <div id="perf-stars" class="rating-stars" style="justify-content:center;margin-top:4px;"></div>
+    </div>
+
     <div class="sidebar-profile">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
             <div style="position:relative;flex-shrink:0;">
-                <img id="side-avatar" src="https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA&bold=true"
-                     class="profile-av" alt="Foto">
+                <img id="side-avatar" src="https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA&bold=true" class="profile-av" alt="Foto">
                 <span class="rt-dot" style="position:absolute;bottom:-2px;right:-2px;border:2px solid var(--bg-sidebar);"></span>
             </div>
             <div style="overflow:hidden;flex:1;">
@@ -586,9 +456,7 @@
             </div>
         </div>
         <div style="display:flex;gap:6px;">
-            <button onclick="handleLogout()" class="btn-ghost" style="flex:1;padding:8px 10px;font-size:10px;justify-content:center;">
-                <i class="fas fa-right-from-bracket"></i> Logout
-            </button>
+            <button onclick="handleLogout()" class="btn-ghost" style="flex:1;padding:8px 10px;font-size:10px;justify-content:center;"><i class="fas fa-right-from-bracket"></i> Logout</button>
             <button onclick="window.toggleTheme?.()" class="theme-toggle"><div class="knob">🌙</div></button>
         </div>
     </div>
@@ -596,8 +464,6 @@
 
 <!-- ══════════ APP ══════════ -->
 <div id="adv-app">
-
-    <!-- Topbar -->
     <div id="topbar">
         <div class="topbar-tabs">
             <button class="tab-btn active" onclick="switchTab('inbox', this)" id="tab-inbox">
@@ -609,6 +475,10 @@
                 <i class="fas fa-scale-balanced"></i>
                 <span class="tab-label">Kasus</span>
                 <span class="tab-badge" id="kasus-badge">0</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('stats', this)" id="tab-stats">
+                <i class="fas fa-chart-line"></i>
+                <span class="tab-label">Statistik</span>
             </button>
             <button class="tab-btn" onclick="switchTab('profil', this)" id="tab-profil">
                 <i class="fas fa-id-card"></i>
@@ -635,23 +505,17 @@
                         <p style="font-size:15px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Konsultasi</p>
                         <p id="conv-count" style="font-size:10px;color:var(--text-3);margin-top:2px;font-weight:600;">0 percakapan</p>
                     </div>
-                    <button onclick="loadConvList()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;" title="Refresh">
-                        <i class="fas fa-rotate-right" id="refresh-icon"></i>
-                    </button>
+                    <button onclick="loadConvList()" style="width:28px;height:28px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;" title="Refresh"><i class="fas fa-rotate-right" id="refresh-icon"></i></button>
                 </div>
-                <div class="conv-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Cari klien atau pesan..." oninput="filterConvs(this.value)" id="conv-search-input">
-                </div>
+                <div class="conv-search"><i class="fas fa-search"></i><input type="text" placeholder="Cari klien atau pesan..." oninput="filterConvs(this.value)"></div>
                 <div class="conv-filter">
                     <button class="conv-filter-btn active" onclick="setFilter('all',this)">Semua</button>
                     <button class="conv-filter-btn" onclick="setFilter('unread',this)">Belum Dibaca</button>
+                    <button class="conv-filter-btn" onclick="setFilter('pending',this)">Perlu Aksi</button>
                 </div>
             </div>
             <div class="conv-list" id="conv-list">
-                <div style="display:flex;align-items:center;justify-content:center;padding:50px 20px;opacity:0.5;">
-                    <div class="spin" style="width:24px;height:24px;border-width:2px;"></div>
-                </div>
+                <div style="display:flex;align-items:center;justify-content:center;padding:50px 20px;opacity:0.5;"><div class="spin" style="width:24px;height:24px;border-width:2px;"></div></div>
             </div>
         </div>
 
@@ -667,46 +531,49 @@
             <div id="chat-view">
                 <div id="chat-top">
                     <div style="display:flex;align-items:center;gap:11px;flex:1;min-width:0;">
-                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;flex-shrink:0;">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
+                        <button id="back-btn" onclick="backToConvList()" style="display:none;width:30px;height:30px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:12px;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-chevron-left"></i></button>
                         <div class="online-ring status-offline" id="client-avatar-ring" style="flex-shrink:0;">
                             <img id="active-client-av" src="" class="chat-adv-avatar" alt="Klien">
                         </div>
                         <div style="min-width:0;flex:1;">
-                            <span id="active-client-name" style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">Klien</span>
+                            <div style="display:flex;align-items:center;gap:7px;">
+                                <span id="active-client-name" style="font-size:15px;font-weight:800;font-style:italic;color:var(--text-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">Klien</span>
+                                <span id="active-case-badge" style="display:none;" class="ks-badge b-menunggu_persetujuan">Menunggu Persetujuan</span>
+                            </div>
                             <div style="display:flex;align-items:center;gap:6px;margin-top:1px;">
                                 <span id="client-online-status" style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">● Offline</span>
                                 <span id="typing-label" style="display:none;font-size:10px;font-weight:600;color:var(--accent);">• mengetik...</span>
                             </div>
                         </div>
                     </div>
-                    <button onclick="clearChatConfirm()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;flex-shrink:0;" title="Hapus riwayat" onmouseover="this.style.color='#F87171'" onmouseout="this.style.color='var(--text-3)'">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-
-                <div id="chat-box"></div>
-
-                <div id="typing-indicator-row">
-                    <img id="typing-av" src="" class="msg-av" alt="">
-                    <div class="typing-dots">
-                        <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
+                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                        <button id="btn-view-case" onclick="viewLinkedCase()" style="display:none;padding:6px 12px;border-radius:9px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);color:#FBBF24;cursor:pointer;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;display:none;align-items:center;gap:5px;"><i class="fas fa-scale-balanced"></i> Lihat Kasus</button>
+                        <button onclick="clearChatConfirm()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:color 0.15s;flex-shrink:0;" title="Hapus riwayat"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
 
+                <!-- SLA TIMER BAR -->
+                <div id="sla-bar">
+                    <div class="sla-inner">
+                        <i class="fas fa-clock" style="font-size:10px;color:var(--gold);flex-shrink:0;"></i>
+                        <span id="sla-label" style="font-size:10px;font-weight:700;color:var(--text-2);flex-shrink:0;"></span>
+                        <div class="sla-track"><div class="sla-fill" id="sla-fill"></div></div>
+                        <span id="sla-time" style="font-size:10px;font-weight:800;color:var(--gold);flex-shrink:0;"></span>
+                    </div>
+                </div>
+
+                <div id="chat-box"></div>
+                <div id="typing-indicator-row">
+                    <img id="typing-av" src="" class="msg-av" alt="">
+                    <div class="typing-dots"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
+                </div>
                 <div id="adv-qr-bar" style="display:none;padding:8px 14px;border-top:1px solid var(--border);background:var(--bg-sidebar);flex-shrink:0;">
                     <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);flex-shrink:0;white-space:nowrap;">Template:</span>
                 </div>
-
                 <div id="chat-input-area">
                     <div class="input-row">
-                        <textarea id="msg-textarea" rows="1" placeholder="Ketik balasan hukum Anda..."
-                            oninput="autoResize(this); notifyTyping();"
-                            onkeydown="handleMsgKey(event)"></textarea>
-                        <button id="send-btn" class="send-btn" onclick="sendMessage()">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+                        <textarea id="msg-textarea" rows="1" placeholder="Ketik balasan hukum Anda..." oninput="autoResize(this); notifyTyping();" onkeydown="handleMsgKey(event)"></textarea>
+                        <button id="send-btn" class="send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
             </div>
@@ -722,47 +589,115 @@
                     <h2 style="font-size:24px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;">Kasus <span style="color:#F59E0B;">Masuk</span></h2>
                     <p style="font-size:10px;color:var(--text-3);font-weight:600;margin-top:5px;text-transform:uppercase;letter-spacing:0.12em;">Semua kasus konsultasi AI dari klien</p>
                 </div>
-                <button onclick="loadAllKasus()" class="btn-ghost" style="gap:6px;">
-                    <i class="fas fa-rotate-right" id="kasus-refresh-icon"></i> Refresh
-                </button>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button onclick="loadAllKasus()" class="btn-ghost" style="gap:6px;"><i class="fas fa-rotate-right" id="kasus-refresh-icon"></i> Refresh</button>
+                </div>
             </header>
 
             <div class="kasus-stats fade-up" style="animation-delay:0.05s;" id="kasus-stats">
                 <div class="stat-card s-total"><div class="stat-number" id="stat-total">—</div><div class="stat-label">Total Kasus</div></div>
-                <div class="stat-card s-menunggu"><div class="stat-number" id="stat-menunggu">—</div><div class="stat-label">Menunggu</div></div>
-                <div class="stat-card s-ditangani"><div class="stat-number" id="stat-ditangani">—</div><div class="stat-label">Ditangani Saya</div></div>
-                <div class="stat-card s-selesai"><div class="stat-number" id="stat-selesai">—</div><div class="stat-label">Selesai</div></div>
+                <div class="stat-card s-menunggu" style="cursor:pointer;" onclick="setKasusFilterByBtn('menunggu')"><div class="stat-number" id="stat-menunggu">—</div><div class="stat-label">Menunggu</div></div>
+                <div class="stat-card s-ditangani" style="cursor:pointer;" onclick="setKasusFilterByBtn('sedang_ditangani')"><div class="stat-number" id="stat-ditangani">—</div><div class="stat-label">Saya Tangani</div></div>
+                <div class="stat-card s-selesai" style="cursor:pointer;" onclick="setKasusFilterByBtn('selesai')"><div class="stat-number" id="stat-selesai">—</div><div class="stat-label">Selesai</div></div>
+                <div class="stat-card s-menolak" style="cursor:pointer;" onclick="setKasusFilterByBtn('ditolak')"><div class="stat-number" id="stat-ditolak">—</div><div class="stat-label">Ditolak</div></div>
+            </div>
+
+            <!-- PENDING APPROVALS ALERT -->
+            <div id="pending-alert" style="display:none;padding:14px 18px;border-radius:16px;background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(59,130,246,0.05));border:1px solid rgba(59,130,246,0.3);margin-bottom:18px;" class="fade-up">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-bell" style="color:#60A5FA;font-size:14px;animation:pulseDot 1.5s infinite;"></i></div>
+                    <div style="flex:1;">
+                        <p style="font-size:13px;font-weight:800;color:#60A5FA;margin:0 0 2px;" id="pending-alert-text">Ada kasus menunggu persetujuan Anda</p>
+                        <p style="font-size:11px;color:var(--text-3);margin:0;">Tinjau dan putuskan apakah Anda dapat menangani kasus tersebut.</p>
+                    </div>
+                    <button onclick="setKasusFilterByBtn('menunggu_persetujuan')" style="padding:8px 14px;border-radius:10px;background:var(--accent-dark);color:#fff;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;border:none;cursor:pointer;font-family:inherit;white-space:nowrap;">Tinjau Sekarang</button>
+                </div>
             </div>
 
             <div class="kasus-filter-strip fade-up" style="animation-delay:0.1s;">
-                <button class="kf-btn active" onclick="setKasusFilter('semua', this)">
-                    <i class="fas fa-layer-group" style="font-size:9px;"></i> Semua <span class="kf-count" id="kf-c-semua">0</span>
-                </button>
-                <button class="kf-btn f-menunggu" onclick="setKasusFilter('menunggu', this)">
-                    <i class="fas fa-clock" style="font-size:9px;"></i> Menunggu <span class="kf-count" id="kf-c-menunggu">0</span>
-                </button>
-                <button class="kf-btn f-sedang" onclick="setKasusFilter('sedang_ditangani', this)">
-                    <i class="fas fa-scale-balanced" style="font-size:9px;"></i> Ditangani Saya <span class="kf-count" id="kf-c-sedang">0</span>
-                </button>
-                <button class="kf-btn f-selesai" onclick="setKasusFilter('selesai', this)">
-                    <i class="fas fa-check-circle" style="font-size:9px;"></i> Selesai <span class="kf-count" id="kf-c-selesai">0</span>
-                </button>
-                <button class="kf-btn f-ditutup" onclick="setKasusFilter('ditutup', this)">
-                    <i class="fas fa-lock" style="font-size:9px;"></i> Ditutup <span class="kf-count" id="kf-c-ditutup">0</span>
-                </button>
-                <div class="kasus-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Cari kasus, klien..." oninput="filterKasus(this.value)" id="kasus-search-input">
-                </div>
+                <button class="kf-btn active" id="kf-semua" onclick="setKasusFilter('semua', this)"><i class="fas fa-layer-group" style="font-size:9px;"></i> Semua <span class="kf-count" id="kf-c-semua">0</span></button>
+                <button class="kf-btn f-menunggu" id="kf-menunggu" onclick="setKasusFilter('menunggu', this)"><i class="fas fa-clock" style="font-size:9px;"></i> Menunggu <span class="kf-count" id="kf-c-menunggu">0</span></button>
+                <button class="kf-btn" id="kf-persetujuan" onclick="setKasusFilter('menunggu_persetujuan', this)" style="background:rgba(59,130,246,0.06);border-color:rgba(59,130,246,0.2);color:#60A5FA;"><i class="fas fa-handshake" style="font-size:9px;"></i> Persetujuan <span class="kf-count" id="kf-c-persetujuan" style="background:rgba(59,130,246,0.15);">0</span></button>
+                <button class="kf-btn f-sedang" id="kf-sedang" onclick="setKasusFilter('sedang_ditangani', this)"><i class="fas fa-scale-balanced" style="font-size:9px;"></i> Saya Tangani <span class="kf-count" id="kf-c-sedang">0</span></button>
+                <button class="kf-btn f-selesai" id="kf-selesai" onclick="setKasusFilter('selesai', this)"><i class="fas fa-check-circle" style="font-size:9px;"></i> Selesai <span class="kf-count" id="kf-c-selesai">0</span></button>
+                <button class="kf-btn f-ditolak" id="kf-ditolak" onclick="setKasusFilter('ditolak', this)"><i class="fas fa-ban" style="font-size:9px;"></i> Ditolak <span class="kf-count" id="kf-c-ditolak">0</span></button>
+                <div class="kasus-search"><i class="fas fa-search"></i><input type="text" placeholder="Cari kasus, klien..." oninput="filterKasus(this.value)" id="kasus-search-input"></div>
             </div>
 
             <div id="kasus-grid" class="fade-up" style="animation-delay:0.15s;">
                 <div id="kasus-skeleton" style="display:flex;flex-direction:column;gap:10px;">
                     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>
-                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div><div class="skel" style="height:10px;width:70%;"></div></div>
+                    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:18px 20px;"><div class="skel" style="height:14px;width:60%;margin-bottom:10px;"></div><div class="skel" style="height:10px;width:40%;margin-bottom:14px;"></div><div class="skel" style="height:10px;width:90%;margin-bottom:6px;"></div></div>
                 </div>
                 <div id="kasus-list-content" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ PANEL: STATISTIK ══ -->
+    <div class="panel" id="panel-stats">
+        <div class="stats-inner">
+            <header style="margin-bottom:24px;" class="fade-up">
+                <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Overview</p>
+                <h2 style="font-size:24px;font-weight:900;color:var(--text-1);margin:0;font-style:italic;">Statistik <span style="color:var(--accent);">Performa</span></h2>
+            </header>
+
+            <div class="stats-grid fade-up fade-up-1">
+                <!-- Completion Rate -->
+                <div class="stats-big-card">
+                    <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-3);margin:0 0 16px;"><i class="fas fa-bullseye" style="color:var(--emerald);margin-right:5px;"></i>Tingkat Penyelesaian</p>
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <div class="completion-ring">
+                            <svg viewBox="0 0 80 80" width="80" height="80">
+                                <circle class="ring-track" cx="40" cy="40" r="36"/>
+                                <circle class="ring-fill" id="ring-fill" cx="40" cy="40" r="36" stroke-dashoffset="226"/>
+                            </svg>
+                            <div class="ring-center" id="ring-pct">0%</div>
+                        </div>
+                        <div>
+                            <p style="font-size:28px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;" id="stat-rate-big">0%</p>
+                            <p style="font-size:11px;color:var(--text-3);margin:4px 0 0;font-weight:500;">dari total kasus yang ditangani berhasil diselesaikan</p>
+                            <div style="display:flex;gap:10px;margin-top:10px;">
+                                <div><div style="font-size:14px;font-weight:900;color:#34D399;" id="rate-selesai">0</div><div style="font-size:9px;color:var(--text-3);text-transform:uppercase;font-weight:700;">Selesai</div></div>
+                                <div><div style="font-size:14px;font-weight:900;color:#FBBF24;" id="rate-aktif">0</div><div style="font-size:9px;color:var(--text-3);text-transform:uppercase;font-weight:700;">Aktif</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response Rate -->
+                <div class="stats-big-card">
+                    <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-3);margin:0 0 16px;"><i class="fas fa-bolt" style="color:var(--gold);margin-right:5px;"></i>Tingkat Penerimaan</p>
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                            <span style="font-size:11px;font-weight:600;color:var(--text-2);">Diterima</span>
+                            <span style="font-size:11px;font-weight:800;color:#34D399;" id="accept-pct">0%</span>
+                        </div>
+                        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#10B981,#34D399);border-radius:3px;transition:width 1s ease;" id="accept-bar" style="width:0%"></div></div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                            <span style="font-size:11px;font-weight:600;color:var(--text-2);">Ditolak</span>
+                            <span style="font-size:11px;font-weight:800;color:#F87171;" id="reject-pct">0%</span>
+                        </div>
+                        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#EF4444,#F87171);border-radius:3px;transition:width 1s ease;" id="reject-bar" style="width:0%"></div></div>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-3);margin:0;font-weight:500;">Total <strong id="stat-total-req" style="color:var(--text-1);">0</strong> permintaan masuk</p>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="stats-big-card">
+                    <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-3);margin:0 0 12px;"><i class="fas fa-clock-rotate-left" style="color:var(--accent);margin-right:5px;"></i>Aktivitas Terbaru</p>
+                    <div id="activity-feed">
+                        <div style="text-align:center;padding:20px;opacity:0.4;"><div class="spin" style="width:20px;height:20px;border-width:2px;margin:0 auto;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly breakdown -->
+            <div class="stats-big-card fade-up fade-up-2" style="margin-top:0;">
+                <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-3);margin:0 0 16px;"><i class="fas fa-calendar" style="color:var(--accent);margin-right:5px;"></i>Kasus per Status</p>
+                <div id="status-bars" style="display:flex;flex-direction:column;gap:10px;"></div>
             </div>
         </div>
     </div>
@@ -773,10 +708,7 @@
             <div class="profil-banner fade-up">
                 <div class="profil-avatar-zone">
                     <img id="profil-avatar-img" src="https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA&bold=true" class="profil-avatar" alt="Foto Profil">
-                    <label class="profil-avatar-upload" title="Ganti foto">
-                        <i class="fas fa-camera"></i>
-                        <input type="file" id="avatar-file-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
-                    </label>
+                    <label class="profil-avatar-upload" title="Ganti foto"><i class="fas fa-camera"></i><input type="file" id="avatar-file-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)"></label>
                 </div>
             </div>
             <div class="fade-up fade-up-1" style="margin-bottom:22px;">
@@ -804,6 +736,8 @@
                         </select>
                     </div>
                     <div class="form-group"><label class="form-label">Pengalaman (Tahun)</label><input type="number" class="field" id="f-pengalaman" placeholder="Contoh: 10" min="0" max="60"></div>
+                    <div class="form-group"><label class="form-label">Tarif Konsultasi (Rp)</label><input type="number" class="field" id="f-tarif" placeholder="Contoh: 500000" min="0"></div>
+                    <div class="form-group"><label class="form-label">Maks. Kasus Bersamaan</label><input type="number" class="field" id="f-max-kasus" placeholder="Contoh: 5" min="1" max="50"></div>
                 </div>
             </div>
             <hr class="section-divider fade-up fade-up-3">
@@ -825,19 +759,6 @@
                     <p id="bio-count" style="font-size:9px;font-weight:600;color:var(--text-3);text-align:right;margin:0;">0/500</p>
                 </div>
             </div>
-            <hr class="section-divider fade-up fade-up-5">
-            <div class="fade-up fade-up-5">
-                <p class="section-heading">Status <span>Ketersediaan</span></p>
-                <div class="avail-toggle-row">
-                    <div>
-                        <p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0 0 3px;" id="avail-label">Menerima Klien Baru</p>
-                        <p style="font-size:11px;font-weight:500;color:var(--text-3);margin:0;" id="avail-sub">Profil Anda terlihat di direktori mitra</p>
-                    </div>
-                    <div class="avail-toggle" id="avail-toggle" onclick="toast('Fitur segera hadir','info')">
-                        <div class="avail-toggle-knob"></div>
-                    </div>
-                </div>
-            </div>
             <div class="save-bar fade-up">
                 <div style="display:flex;align-items:center;gap:10px;">
                     <button class="btn-primary" onclick="saveProfile()" id="save-btn" style="flex:1;justify-content:center;"><i class="fas fa-floppy-disk"></i> Simpan Perubahan</button>
@@ -847,7 +768,48 @@
             </div>
         </div>
     </div>
+</div>
 
+<!-- ══ REJECT REASON MODAL ══ -->
+<div id="reject-modal" style="display:none;" class="reject-modal-overlay">
+    <div class="reject-modal-bg" onclick="closeRejectModal()"></div>
+    <div class="reject-modal-box">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-ban" style="color:#F87171;font-size:14px;"></i></div>
+            <div>
+                <h3 style="font-size:15px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Tolak Kasus</h3>
+                <p style="font-size:11px;color:var(--text-3);margin:2px 0 0;" id="reject-kasus-name">Alasan penolakan akan dikirim ke klien</p>
+            </div>
+        </div>
+        <p style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-3);margin:0 0 8px;">Pilih Alasan Penolakan</p>
+        <div id="reject-reasons" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+                <input type="radio" name="reject-reason" value="Kasus di luar spesialisasi saya" style="accent-color:#EF4444;">
+                <span style="font-size:12px;font-weight:600;color:var(--text-1);">Di luar spesialisasi saya</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+                <input type="radio" name="reject-reason" value="Kapasitas penuh saat ini" style="accent-color:#EF4444;">
+                <span style="font-size:12px;font-weight:600;color:var(--text-1);">Kapasitas penuh saat ini</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+                <input type="radio" name="reject-reason" value="Konflik kepentingan" style="accent-color:#EF4444;">
+                <span style="font-size:12px;font-weight:600;color:var(--text-1);">Konflik kepentingan</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+                <input type="radio" name="reject-reason" value="Informasi kasus tidak lengkap" style="accent-color:#EF4444;">
+                <span style="font-size:12px;font-weight:600;color:var(--text-1);">Informasi kasus tidak lengkap</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer;" onmouseover="this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.borderColor='var(--border)'">
+                <input type="radio" name="reject-reason" value="other" style="accent-color:#EF4444;">
+                <span style="font-size:12px;font-weight:600;color:var(--text-1);">Alasan lain...</span>
+            </label>
+        </div>
+        <textarea id="reject-custom-reason" placeholder="Tulis alasan lainnya (opsional)..." style="width:100%;padding:10px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-1);outline:none;resize:none;height:60px;line-height:1.5;transition:border-color 0.2s;margin-bottom:14px;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div style="display:flex;gap:8px;">
+            <button onclick="closeRejectModal()" style="flex:1;padding:11px;border-radius:11px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;font-family:inherit;">Batal</button>
+            <button onclick="confirmReject()" style="flex:2;padding:11px;border-radius:11px;background:#DC2626;color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="fas fa-ban"></i> Konfirmasi Tolak</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -865,8 +827,9 @@ let selectedClientAv = '';
 let filterMode = 'all';
 let rtChannel = null, rtKasusChannel = null, rtClientOnlineChannel = null;
 let typingTimer = null, typingDebounce = null;
-let isAvailable = true, totalUnread = 0;
+let totalUnread = 0;
 let clientStatusInterval = null;
+let rejectTargetId = null;
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
@@ -884,6 +847,13 @@ function fmtTime(iso) {
     if(df<604800000) return ['Min','Sen','Sel','Rab','Kam','Jum','Sab'][d.getDay()];
     return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
 }
+function timeAgo(iso) {
+    if(!iso) return '';
+    const d=new Date(iso), df=Date.now()-d;
+    if(df<60000) return 'Baru saja'; if(df<3600000) return Math.floor(df/60000)+' menit lalu';
+    if(df<86400000) return Math.floor(df/3600000)+' jam lalu';
+    return Math.floor(df/86400000)+' hari lalu';
+}
 function avatarFb(name){ return `https://ui-avatars.com/api/?name=${encodeURIComponent(name||'K')}&background=1E3A5F&color=60A5FA&bold=true`; }
 function clientAvatarFb(name){ return `https://ui-avatars.com/api/?name=${encodeURIComponent(name||'K')}&background=EFF6FF&color=2563EB&bold=true`; }
 
@@ -896,12 +866,20 @@ function toast(msg, type='info') {
     setTimeout(()=>{el.classList.add('hide');setTimeout(()=>el.remove(),250);},3500);
 }
 
-// STATUS CONFIG
+function getPriority(kasus) {
+    const hours = (Date.now() - new Date(kasus.created_at).getTime()) / 3600000;
+    if(hours > 48) return 'urgent';
+    if(hours > 24) return 'high';
+    return 'normal';
+}
+
 const STATUS_CFG = {
-    menunggu:         { label:'Menunggu',         icon:'fa-clock',          cls:'b-menunggu' },
+    menunggu: { label:'Menunggu', icon:'fa-clock', cls:'b-menunggu' },
+    menunggu_persetujuan: { label:'Menunggu Persetujuan', icon:'fa-handshake', cls:'b-menunggu_persetujuan' },
     sedang_ditangani: { label:'Sedang Ditangani', icon:'fa-scale-balanced', cls:'b-sedang_ditangani' },
-    selesai:          { label:'Selesai',           icon:'fa-check-circle',   cls:'b-selesai' },
-    ditutup:          { label:'Ditutup',           icon:'fa-lock',           cls:'b-ditutup' },
+    selesai: { label:'Selesai', icon:'fa-check-circle', cls:'b-selesai' },
+    ditolak: { label:'Ditolak', icon:'fa-ban', cls:'b-ditolak' },
+    ditutup: { label:'Ditutup', icon:'fa-lock', cls:'b-ditutup' },
 };
 function renderKsBadge(status){
     const c=STATUS_CFG[status]||STATUS_CFG.menunggu;
@@ -950,6 +928,33 @@ function subscribeClientOnlineRealtime(clientId){
 }
 
 // ══════════════════════════════════════════════
+// SLA TIMER
+// ══════════════════════════════════════════════
+let slaInterval=null;
+function startSlaTimer(kasus){
+    clearInterval(slaInterval);
+    const bar=document.getElementById('sla-bar');
+    const fill=document.getElementById('sla-fill');
+    const label=document.getElementById('sla-label');
+    const timeEl=document.getElementById('sla-time');
+    if(!kasus||kasus.handling_status!=='sedang_ditangani'){bar.style.display='none';return;}
+    const SLA_HOURS=48;
+    bar.style.display='block';
+    const update=()=>{
+        const elapsed=(Date.now()-new Date(kasus.updated_at||kasus.created_at).getTime())/3600000;
+        const pct=Math.min(100,Math.round((elapsed/SLA_HOURS)*100));
+        const remaining=Math.max(0,SLA_HOURS-elapsed);
+        const hrs=Math.floor(remaining);const mins=Math.floor((remaining%1)*60);
+        fill.style.width=pct+'%';
+        timeEl.textContent=`${hrs}j ${mins}m tersisa`;
+        if(pct>75){fill.classList.add('critical');bar.classList.add('critical');label.textContent='⚠️ SLA Hampir Habis:';}
+        else{fill.classList.remove('critical');bar.classList.remove('critical');label.textContent='SLA Penyelesaian (48j):';}
+    };
+    update();
+    slaInterval=setInterval(update,30000);
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
 async function init(){
@@ -957,17 +962,11 @@ async function init(){
     if(!session){location.href='login.html';return;}
 
     const{data:mitra,error}=await window.supabase.from('mitra_ahli').select('*').eq('user_id',session.user.id).single();
-    if(error||!mitra){
-        alert('Akun Anda bukan mitra advokat terverifikasi.');location.href='index.html';return;
-    }
-    if(mitra.status_verifikasi!=='verified'){
-        alert('Akun mitra Anda masih dalam proses verifikasi admin.');location.href='index.html';return;
-    }
+    if(error||!mitra){alert('Akun Anda bukan mitra advokat terverifikasi.');location.href='index.html';return;}
+    if(mitra.status_verifikasi!=='verified'){alert('Akun mitra Anda masih dalam proses verifikasi admin.');location.href='index.html';return;}
 
     currentMitra=mitra;
-    isAvailable=true;
     updateSidebarUI();
-    updateAvailUI();
     startLastSeenUpdater();
     setupQuickReplies();
 
@@ -986,6 +985,18 @@ function updateSidebarUI(){
     const ss=document.getElementById('side-spec');if(ss)ss.textContent=currentMitra.spesialisasi||'Advokat';
 }
 
+function updatePerfSidebar(){
+    const total=allKasus.filter(k=>k.assigned_lawyer_id===currentMitra.id).length;
+    const selesai=allKasus.filter(k=>k.assigned_lawyer_id===currentMitra.id&&k.handling_status==='selesai').length;
+    document.getElementById('perf-total').textContent=total;
+    document.getElementById('perf-selesai').textContent=selesai;
+    // Simulated rating (would come from ratings table)
+    document.getElementById('perf-rating').textContent='4.8';
+    const stars=document.getElementById('perf-stars');
+    stars.innerHTML='';
+    for(let i=1;i<=5;i++){const s=document.createElement('i');s.className=`fas fa-star`;s.style.color=i<=4?'var(--gold)':'rgba(245,158,11,0.3)';stars.appendChild(s);}
+}
+
 // ══════════════════════════════════════════════
 // SIDEBAR MOBILE
 // ══════════════════════════════════════════════
@@ -1002,11 +1013,12 @@ function switchTab(tab,btn){
     document.getElementById('panel-'+tab).classList.add('active');
     if(tab==='profil') loadProfile();
     if(tab==='kasus') loadAllKasus();
+    if(tab==='stats') loadStats();
     closeSidebar();
 }
 
 // ══════════════════════════════════════════════
-// INBOX — LOAD CONVERSATIONS
+// INBOX
 // ══════════════════════════════════════════════
 async function loadConvList(){
     const icon=document.getElementById('refresh-icon');
@@ -1022,8 +1034,7 @@ async function loadConvList(){
 
     const allRaw=[...(byLawyer.data||[]),...(bySender.data||[]),...(byReceiver.data||[])];
     const seenIds=new Set();
-    const messages=allRaw.filter(m=>{if(seenIds.has(m.id))return false;seenIds.add(m.id);return true;})
-        .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    const messages=allRaw.filter(m=>{if(seenIds.has(m.id))return false;seenIds.add(m.id);return true;}).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
 
     if(!messages.length){renderEmptyConvList();document.getElementById('conv-count').textContent='0 percakapan';return;}
 
@@ -1053,13 +1064,15 @@ async function loadConvList(){
         const prof=profMap[cid];
         const name=prof?.full_name||'Klien';
         const av=prof?.avatar_url||clientAvatarFb(name);
-        return{convId:msg.conversation_id,clientId:cid,clientName:name,clientAv:av,lastMsg:msg.message_text||'',lastTime:msg.created_at,isMe,unread:unreadMap[msg.conversation_id]||0};
+        // check if has pending case
+        const hasPending=allKasus.some(k=>k.user_id===cid&&k.handling_status==='menunggu_persetujuan'&&k.assigned_lawyer_id===currentMitra.id);
+        return{convId:msg.conversation_id,clientId:cid,clientName:name,clientAv:av,lastMsg:msg.message_text||'',lastTime:msg.created_at,isMe,unread:unreadMap[msg.conversation_id]||0,hasPending};
     }).filter(Boolean);
 
     totalUnread=allConvs.reduce((s,c)=>s+c.unread,0);
     updateUnreadBadges();
     document.getElementById('conv-count').textContent=`${allConvs.length} percakapan`;
-    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
+    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):filterMode==='pending'?allConvs.filter(c=>c.hasPending):allConvs);
 }
 
 function renderEmptyConvList(errMsg){
@@ -1067,26 +1080,25 @@ function renderEmptyConvList(errMsg){
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 24px;gap:12px;text-align:center;opacity:0.4;">
             <div class="empty-icon"><i class="fas fa-${errMsg?'wifi-slash':'inbox'}"></i></div>
             <p style="font-size:12px;font-weight:700;color:var(--text-2);margin:0;">${errMsg||'Belum ada konsultasi masuk'}</p>
-            ${errMsg?`<button onclick="loadConvList()" class="btn-ghost" style="font-size:10px;">Coba Lagi</button>`:''}
         </div>`;
 }
 
 function renderConvList(convs){
     if(!convs.length){renderEmptyConvList();return;}
     document.getElementById('conv-list').innerHTML=convs.map(cv=>`
-        <div class="conv-item ${cv.convId===selectedConvId?'active':''}"
-             onclick="openConv('${esc(cv.convId)}','${esc(cv.clientId)}','${esc(cv.clientName)}','${esc(cv.clientAv)}')">
+        <div class="conv-item ${cv.convId===selectedConvId?'active':''}" onclick="openConv('${esc(cv.convId)}','${esc(cv.clientId)}','${esc(cv.clientName)}','${esc(cv.clientAv)}')">
             <div style="position:relative;flex-shrink:0;">
-                <img src="${escHtml(cv.clientAv)}" class="conv-avatar"
-                     onerror="this.src='${clientAvatarFb(cv.clientName)}'" alt="${escHtml(cv.clientName)}">
+                <img src="${escHtml(cv.clientAv)}" class="conv-avatar" onerror="this.src='${clientAvatarFb(cv.clientName)}'" alt="${escHtml(cv.clientName)}">
                 ${cv.unread>0?`<span style="position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:var(--accent);border-radius:50%;border:2px solid var(--bg-sidebar);"></span>`:''}
+                ${cv.hasPending?`<span style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:#F59E0B;border-radius:50%;border:2px solid var(--bg-sidebar);animation:pulseDot 1.5s infinite;"></span>`:''}
             </div>
             <div style="flex:1;min-width:0;">
                 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
                     <span style="font-size:13px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(cv.clientName)}</span>
                     <span style="font-size:9.5px;color:var(--text-3);flex-shrink:0;font-weight:500;">${fmtTime(cv.lastTime)}</span>
                 </div>
-                <p style="font-size:11.5px;color:${cv.unread>0?'var(--text-2)':'var(--text-3)'};font-weight:${cv.unread>0?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:3px 0 0;">
+                ${cv.hasPending?`<p style="font-size:9.5px;color:#FBBF24;font-weight:700;margin:1px 0 1px;"><i class="fas fa-handshake" style="margin-right:3px;"></i>Menunggu persetujuan kasus</p>`:''}
+                <p style="font-size:11.5px;color:${cv.unread>0?'var(--text-2)':'var(--text-3)'};font-weight:${cv.unread>0?600:400};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:${cv.hasPending?0:'3px'} 0 0;">
                     ${cv.isMe?'<span style="color:var(--accent);font-weight:700;">Anda: </span>':''}${escHtml(cv.lastMsg.slice(0,55))}
                 </p>
             </div>
@@ -1096,7 +1108,7 @@ function renderConvList(convs){
 
 function filterConvs(q){
     const ql=q.toLowerCase();
-    const base=filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs;
+    const base=filterMode==='unread'?allConvs.filter(c=>c.unread>0):filterMode==='pending'?allConvs.filter(c=>c.hasPending):allConvs;
     renderConvList(ql?base.filter(c=>c.clientName.toLowerCase().includes(ql)||c.lastMsg.toLowerCase().includes(ql)):base);
 }
 
@@ -1104,7 +1116,7 @@ function setFilter(mode,btn){
     filterMode=mode;
     document.querySelectorAll('.conv-filter-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    renderConvList(mode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
+    renderConvList(mode==='unread'?allConvs.filter(c=>c.unread>0):mode==='pending'?allConvs.filter(c=>c.hasPending):allConvs);
 }
 
 function updateUnreadBadges(){
@@ -1119,7 +1131,6 @@ function updateUnreadBadges(){
 // ══════════════════════════════════════════════
 async function openConv(convId,clientId,clientName,clientAv){
     if(clientId===currentMitra.user_id){toast('Tidak bisa membuka chat dengan diri sendiri','warn');return;}
-
     selectedConvId=convId;selectedClientId=clientId;selectedClientName=clientName;selectedClientAv=clientAv;
     document.getElementById('active-client-name').textContent=clientName;
     const avEl=document.getElementById('active-client-av');
@@ -1128,7 +1139,22 @@ async function openConv(convId,clientId,clientName,clientAv){
     document.getElementById('chat-empty-state').style.display='none';
     const cv=document.getElementById('chat-view');cv.style.display='flex';
     if(window.innerWidth<=1024){document.getElementById('conv-sidebar').classList.add('mobile-hidden');document.getElementById('back-btn').style.display='flex';}
-    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
+    renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):filterMode==='pending'?allConvs.filter(c=>c.hasPending):allConvs);
+
+    // Check for linked pending case
+    const linkedCase=allKasus.find(k=>k.user_id===clientId&&(k.handling_status==='menunggu_persetujuan'||k.handling_status==='sedang_ditangani')&&k.assigned_lawyer_id===currentMitra.id);
+    const caseBadge=document.getElementById('active-case-badge');
+    const viewCaseBtn=document.getElementById('btn-view-case');
+    if(linkedCase){
+        caseBadge.style.display='';caseBadge.className=`ks-badge ${STATUS_CFG[linkedCase.handling_status]?.cls||'b-menunggu'}`;caseBadge.textContent=STATUS_CFG[linkedCase.handling_status]?.label||'';
+        viewCaseBtn.style.display='flex';viewCaseBtn.onclick=()=>openKasusDetail(linkedCase.id);
+        startSlaTimer(linkedCase);
+    }else{
+        caseBadge.style.display='none';viewCaseBtn.style.display='none';
+        document.getElementById('sla-bar').style.display='none';
+        clearInterval(slaInterval);
+    }
+
     await loadMessages();
     clearInterval(clientStatusInterval);
     subscribeClientOnlineRealtime(clientId);
@@ -1136,9 +1162,10 @@ async function openConv(convId,clientId,clientName,clientAv){
     clientStatusInterval=setInterval(()=>checkClientOnlineStatus(clientId),15000);
     await window.supabase.from('messages').update({is_read:true}).eq('conversation_id',selectedConvId).eq('receiver_id',currentMitra.user_id);
     const conv=allConvs.find(c=>c.convId===convId);
-    if(conv){totalUnread=Math.max(0,totalUnread-conv.unread);conv.unread=0;updateUnreadBadges();renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);}
+    if(conv){totalUnread=Math.max(0,totalUnread-conv.unread);conv.unread=0;updateUnreadBadges();renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):filterMode==='pending'?allConvs.filter(c=>c.hasPending):allConvs);}
 }
 
+function viewLinkedCase(){}
 function backToConvList(){document.getElementById('conv-sidebar').classList.remove('mobile-hidden');document.getElementById('back-btn').style.display='none';}
 
 // ══════════════════════════════════════════════
@@ -1154,14 +1181,11 @@ async function loadMessages(){
         msgs=fallback;
     }
     msgs=(msgs||[]).filter(m=>m.sender_id!==m.receiver_id);
-
     const box=document.getElementById('chat-box');box.innerHTML='';
     if(!msgs.length){box.innerHTML=`<div style="margin:auto;text-align:center;opacity:0.3;padding:40px;"><i class="fas fa-comment-dots" style="font-size:28px;color:var(--text-3);display:block;margin-bottom:12px;"></i><p style="font-size:12px;font-weight:600;color:var(--text-2);">Belum ada pesan</p></div>`;return;}
-
     const myAv=currentMitra.foto_profil_url||avatarFb(currentMitra.nama_lengkap);
     const myInit=(currentMitra.nama_lengkap||'A')[0].toUpperCase();
     let lastDate='',prevSender='';
-
     msgs.forEach(m=>{
         const isMe=m.sender_id===currentMitra.user_id;
         const d=new Date(m.created_at);
@@ -1172,22 +1196,13 @@ async function loadMessages(){
         const sameAsPrev=prevSender===m.sender_id;prevSender=m.sender_id;
         const showAvatar=!sameAsPrev;
         const row=document.createElement('div');row.className=`msg-row ${isMe?'me':'them'}`;
-
-        if(!isMe){
-            const img=document.createElement('img');img.src=selectedClientAv;img.className='msg-av';img.alt=selectedClientName;
-            img.onerror=()=>{img.src=clientAvatarFb(selectedClientName);};
-            if(showAvatar)row.appendChild(img);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}
-        }
+        if(!isMe){const img=document.createElement('img');img.src=selectedClientAv;img.className='msg-av';img.alt=selectedClientName;img.onerror=()=>{img.src=clientAvatarFb(selectedClientName);};if(showAvatar)row.appendChild(img);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}}
         const wrap=document.createElement('div');wrap.className='msg-bubble-box';
         const bubble=document.createElement('div');bubble.className=`msg-bubble ${isMe?'bubble-out':'bubble-in'}`;bubble.innerHTML=`<p>${txt}</p>`;
         const meta=document.createElement('div');meta.className='msg-meta';meta.style.justifyContent=isMe?'flex-end':'flex-start';
         meta.innerHTML=`<span>${time}</span>${isMe?(m.is_read?'<i class="fas fa-check-double" style="font-size:9px;color:rgba(255,255,255,0.7);"></i>':'<i class="fas fa-check" style="font-size:9px;opacity:0.5;"></i>'):''}`;
         wrap.appendChild(bubble);wrap.appendChild(meta);row.appendChild(wrap);
-        if(isMe){
-            const myImg=document.createElement('img');myImg.src=myAv;myImg.className='msg-av';myImg.alt=currentMitra.nama_lengkap;
-            myImg.onerror=()=>{myImg.onerror=null;const d=document.createElement('div');d.className='msg-av-init';d.textContent=myInit;myImg.replaceWith(d);};
-            if(showAvatar)row.appendChild(myImg);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}
-        }
+        if(isMe){const myImg=document.createElement('img');myImg.src=myAv;myImg.className='msg-av';myImg.alt=currentMitra.nama_lengkap;myImg.onerror=()=>{myImg.onerror=null;const d2=document.createElement('div');d2.className='msg-av-init';d2.textContent=myInit;myImg.replaceWith(d2);};if(showAvatar)row.appendChild(myImg);else{const sp=document.createElement('div');sp.className='msg-av-space';row.appendChild(sp);}}
         box.appendChild(row);
     });
     box.scrollTop=box.scrollHeight;
@@ -1208,33 +1223,29 @@ async function sendMessage(){
         await loadMessages();
         const conv=allConvs.find(c=>c.convId===selectedConvId);
         if(conv){conv.lastMsg=text;conv.isMe=true;conv.lastTime=new Date().toISOString();}
-        renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):allConvs);
+        renderConvList(filterMode==='unread'?allConvs.filter(c=>c.unread>0):filterMode==='pending'?allConvs.filter(c=>c.hasPending):allConvs);
     }catch(e){toast('Gagal kirim: '+e.message,'error');}
     finally{btn.disabled=false;inp.focus();}
 }
 
 function handleMsgKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
-
 function notifyTyping(){
     if(!selectedConvId||!rtChannel) return;
     clearTimeout(typingDebounce);
     typingDebounce=setTimeout(()=>{rtChannel.send({type:'broadcast',event:'typing',payload:{from:currentMitra.user_id}});},350);
 }
-
 async function clearChatConfirm(){
     if(!selectedConvId) return;
     if(!confirm(`Hapus semua pesan dengan ${selectedClientName}?`)) return;
     await window.supabase.from('messages').delete().eq('conversation_id',selectedConvId);
-    await loadMessages();await loadConvList();
-    toast('Riwayat chat dihapus','info');
+    await loadMessages();await loadConvList();toast('Riwayat chat dihapus','info');
 }
 
 // ══════════════════════════════════════════════
 // QUICK REPLIES
 // ══════════════════════════════════════════════
-const ADV_QUICK_REPLIES=['Baik, saya pahami masalah Anda.','Silakan kirim dokumen pendukung.','Kasus Anda termasuk kategori pidana.','Kami bisa jadwalkan konsultasi lanjutan.','Saya akan pelajari lebih lanjut.','Ada pertanyaan tambahan?'];
-
+const ADV_QUICK_REPLIES=['Baik, saya pahami masalah Anda.','Silakan kirim dokumen pendukung.','Kasus Anda termasuk kategori pidana.','Kami bisa jadwalkan konsultasi lanjutan.','Saya akan pelajari lebih lanjut.','Ada pertanyaan tambahan?','Saya bersedia menangani kasus ini.','Terima kasih atas kepercayaannya.'];
 function setupQuickReplies(){
     const qrBar=document.getElementById('adv-qr-bar');
     ADV_QUICK_REPLIES.forEach(r=>{
@@ -1257,32 +1268,21 @@ async function loadAllKasus(){
     if(icon) icon.style.animation='loaderSpin 0.8s linear infinite';
     document.getElementById('kasus-skeleton').style.display='flex';
     document.getElementById('kasus-list-content').style.display='none';
-
     try{
-        const{data:kasusData,error}=await window.supabase
-            .from('riwayat_konsultasi')
-            .select('*')
-            .neq('user_id',currentMitra.user_id)
-            .order('created_at',{ascending:false});
-
+        const{data:kasusData,error}=await window.supabase.from('riwayat_konsultasi').select('*').neq('user_id',currentMitra.user_id).order('created_at',{ascending:false});
         if(error) throw error;
-
         const userIds=[...new Set((kasusData||[]).map(k=>k.user_id).filter(Boolean))];
         let profMap={};
-        if(userIds.length>0){
-            const{data:profiles}=await window.supabase.from('profiles').select('id,full_name,avatar_url').in('id',userIds);
-            (profiles||[]).forEach(p=>{profMap[p.id]=p;});
-        }
-
-        allKasus=(kasusData||[]).map(k=>({
-            ...k,
-            clientName:profMap[k.user_id]?.full_name||'Klien',
-            clientAv:profMap[k.user_id]?.avatar_url||clientAvatarFb(profMap[k.user_id]?.full_name||'K'),
-        }));
-
-        updateKasusStats();updateKasusFilterCounts();renderKasusList();
+        if(userIds.length>0){const{data:profiles}=await window.supabase.from('profiles').select('id,full_name,avatar_url').in('id',userIds);(profiles||[]).forEach(p=>{profMap[p.id]=p;});}
+        allKasus=(kasusData||[]).map(k=>({...k,clientName:profMap[k.user_id]?.full_name||'Klien',clientAv:profMap[k.user_id]?.avatar_url||clientAvatarFb(profMap[k.user_id]?.full_name||'K'),}));
+        updateKasusStats();updateKasusFilterCounts();renderKasusList();updatePerfSidebar();
+        // Show pending alert
+        const pendingCount=allKasus.filter(k=>k.handling_status==='menunggu_persetujuan'&&k.assigned_lawyer_id===currentMitra.id).length;
+        const alert=document.getElementById('pending-alert');
+        if(pendingCount>0){alert.style.display='block';document.getElementById('pending-alert-text').textContent=`${pendingCount} kasus menunggu persetujuan Anda`;}
+        else{alert.style.display='none';}
     }catch(err){
-        document.getElementById('kasus-list-content').innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-exclamation-circle" style="color:#F87171;"></i></div><p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0;">Gagal memuat kasus</p><p style="font-size:11px;color:var(--text-3);margin:0;">${escHtml(err.message)}</p><button onclick="loadAllKasus()" class="btn-primary" style="margin-top:8px;">Coba Lagi</button></div>`;
+        document.getElementById('kasus-list-content').innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-exclamation-circle" style="color:#F87171;"></i></div><p style="font-size:13px;font-weight:700;color:var(--text-1);margin:0;">Gagal memuat kasus</p><button onclick="loadAllKasus()" class="btn-primary" style="margin-top:8px;">Coba Lagi</button></div>`;
         document.getElementById('kasus-list-content').style.display='block';
     }finally{
         document.getElementById('kasus-skeleton').style.display='none';
@@ -1295,20 +1295,23 @@ function updateKasusStats(){
     document.getElementById('stat-total').textContent=allKasus.length;
     document.getElementById('stat-menunggu').textContent=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
     document.getElementById('stat-ditangani').textContent=allKasus.filter(k=>k.handling_status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id).length;
-    document.getElementById('stat-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai').length;
-
+    document.getElementById('stat-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai'&&k.assigned_lawyer_id===currentMitra.id).length;
+    document.getElementById('stat-ditolak').textContent=allKasus.filter(k=>k.handling_status==='ditolak'&&k.assigned_lawyer_id===currentMitra.id).length;
     const menungguCount=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
+    const pendingApprovalCount=allKasus.filter(k=>k.handling_status==='menunggu_persetujuan'&&k.assigned_lawyer_id===currentMitra.id).length;
+    const totalBadge=menungguCount+pendingApprovalCount;
     const kasusBadge=document.getElementById('kasus-badge');
-    if(menungguCount>0){kasusBadge.textContent=menungguCount>9?'9+':menungguCount;kasusBadge.classList.add('show');}
+    if(totalBadge>0){kasusBadge.textContent=totalBadge>9?'9+':totalBadge;kasusBadge.classList.add('show');}
     else{kasusBadge.classList.remove('show');}
 }
 
 function updateKasusFilterCounts(){
     document.getElementById('kf-c-semua').textContent=allKasus.length;
     document.getElementById('kf-c-menunggu').textContent=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length;
-    document.getElementById('kf-c-sedang').textContent=allKasus.filter(k=>k.handling_status==='sedang_ditangani').length;
-    document.getElementById('kf-c-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai').length;
-    document.getElementById('kf-c-ditutup').textContent=allKasus.filter(k=>k.handling_status==='ditutup').length;
+    document.getElementById('kf-c-persetujuan').textContent=allKasus.filter(k=>k.handling_status==='menunggu_persetujuan'&&k.assigned_lawyer_id===currentMitra.id).length;
+    document.getElementById('kf-c-sedang').textContent=allKasus.filter(k=>k.handling_status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id).length;
+    document.getElementById('kf-c-selesai').textContent=allKasus.filter(k=>k.handling_status==='selesai'&&k.assigned_lawyer_id===currentMitra.id).length;
+    document.getElementById('kf-c-ditolak').textContent=allKasus.filter(k=>k.handling_status==='ditolak'&&k.assigned_lawyer_id===currentMitra.id).length;
 }
 
 function setKasusFilter(mode,btn){
@@ -1318,36 +1321,31 @@ function setKasusFilter(mode,btn){
     renderKasusList(document.getElementById('kasus-search-input').value);
 }
 
+function setKasusFilterByBtn(mode){
+    kasusFilterMode=mode;
+    document.querySelectorAll('.kf-btn').forEach(b=>b.classList.remove('active'));
+    const map={semua:'kf-semua',menunggu:'kf-menunggu',menunggu_persetujuan:'kf-persetujuan',sedang_ditangani:'kf-sedang',selesai:'kf-selesai',ditolak:'kf-ditolak'};
+    const el=document.getElementById(map[mode]);if(el)el.classList.add('active');
+    renderKasusList('');
+    document.getElementById('kasus-search-input').value='';
+    // switch to kasus tab if not there
+    const kasusTab=document.getElementById('tab-kasus');
+    switchTab('kasus',kasusTab);
+}
+
 function filterKasus(q){renderKasusList(q);}
 
 function renderKasusList(searchQ=''){
-    const ql=searchQ.toLowerCase();
+    const ql=(searchQ||'').toLowerCase();
     let filtered=allKasus;
-
-    if(kasusFilterMode!=='semua'){
-        filtered=allKasus.filter(k=>{
-            const status=k.handling_status||'menunggu';
-            if(kasusFilterMode==='sedang_ditangani'){
-                return status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id;
-            }
-            return status===kasusFilterMode;
-        });
-    }
-
-    if(ql){
-        filtered=filtered.filter(k=>
-            (k.query||'').toLowerCase().includes(ql)||
-            (k.topik_kasus||'').toLowerCase().includes(ql)||
-            (k.clientName||'').toLowerCase().includes(ql)||
-            (k.category||'').toLowerCase().includes(ql)
-        );
-    }
-
+    if(kasusFilterMode==='menunggu') filtered=allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu');
+    else if(kasusFilterMode==='menunggu_persetujuan') filtered=allKasus.filter(k=>k.handling_status==='menunggu_persetujuan'&&k.assigned_lawyer_id===currentMitra.id);
+    else if(kasusFilterMode==='sedang_ditangani') filtered=allKasus.filter(k=>k.handling_status==='sedang_ditangani'&&k.assigned_lawyer_id===currentMitra.id);
+    else if(kasusFilterMode==='selesai') filtered=allKasus.filter(k=>k.handling_status==='selesai'&&k.assigned_lawyer_id===currentMitra.id);
+    else if(kasusFilterMode==='ditolak') filtered=allKasus.filter(k=>k.handling_status==='ditolak'&&k.assigned_lawyer_id===currentMitra.id);
+    if(ql) filtered=filtered.filter(k=>(k.query||'').toLowerCase().includes(ql)||(k.topik_kasus||'').toLowerCase().includes(ql)||(k.clientName||'').toLowerCase().includes(ql)||(k.category||'').toLowerCase().includes(ql));
     const container=document.getElementById('kasus-list-content');
-    if(!filtered.length){
-        container.innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><p style="font-size:14px;font-weight:800;color:var(--text-2);margin:0;">Tidak Ada Kasus</p><p style="font-size:12px;color:var(--text-3);margin:0;">Tidak ada kasus ditemukan untuk filter ini.</p></div>`;
-        return;
-    }
+    if(!filtered.length){container.innerHTML=`<div class="kasus-empty"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><p style="font-size:14px;font-weight:800;color:var(--text-2);margin:0;">Tidak Ada Kasus</p><p style="font-size:12px;color:var(--text-3);margin:0;">Tidak ada kasus ditemukan untuk filter ini.</p></div>`;return;}
     container.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;">'+filtered.map((k,i)=>buildKasusCard(k,i)).join('')+'</div>';
 }
 
@@ -1357,91 +1355,174 @@ function buildKasusCard(k,i){
     const dateStr=new Date(k.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const title=(k.query||k.topik_kasus||k.kronologi||'Konsultasi AI').substring(0,70);
     const content=(k.response||k.hasil_analisis||'').substring(0,150);
-    const isSelf=k.user_id===currentMitra.user_id;
-
-    let actions='';
-    if(isSelf){
-        actions=`<div class="self-case-warn"><i class="fas fa-shield-halved"></i> Ini adalah kasus konsultasi Anda sendiri — tidak dapat ditangani oleh advokat yang sama.</div>`;
-    }else{
-        if(status==='menunggu'){
-            actions+=`<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}','sedang_ditangani',event)"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>`;
-        }
-        if(status==='sedang_ditangani'&&isMyCase){
-            actions+=`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event)"><i class="fas fa-check-circle"></i> Tandai Selesai</button>`;
-            actions+=`<button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}','ditutup',event)"><i class="fas fa-lock"></i> Tutup Kasus</button>`;
-        }
-        if(status==='sedang_ditangani'&&!isMyCase){
-            actions+=`<span style="font-size:10px;color:var(--text-3);font-weight:600;display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);"><i class="fas fa-user-tie" style="color:#FBBF24;"></i> Ditangani: ${escHtml(k.lawyer_name||'Advokat lain')}</span>`;
-        }
-        if(status==='selesai'||status==='ditutup'){
-            actions+=`<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}','menunggu',event)"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`;
-        }
-        actions+=`<button class="kbtn kbtn-detail" onclick="openKasusDetail('${k.id}')"><i class="fas fa-eye"></i> Detail</button>`;
-        if(k.user_id){
-            actions+=`<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}')"><i class="fas fa-comments"></i> Chat Klien</button>`;
-        }
+    const prio=getPriority(k);
+    const isNew=(Date.now()-new Date(k.created_at).getTime())<3600000;
+    
+    let approvalHtml='';
+    if(status==='menunggu_persetujuan'&&isMyCase){
+        approvalHtml=`<div class="approval-strip">
+            <div>
+                <p style="font-size:10px;font-weight:800;color:#60A5FA;margin:0 0 2px;text-transform:uppercase;letter-spacing:0.08em;"><i class="fas fa-handshake"></i> Klien Meminta Anda Menangani Kasus Ini</p>
+                <p style="font-size:11px;color:var(--text-3);margin:0;">Tinjau detail kasus dan putuskan apakah Anda bersedia menangani.</p>
+            </div>
+            <button class="accept-big" onclick="approveKasus('${k.id}',event)"><i class="fas fa-check-circle"></i> Terima & Tangani</button>
+            <button class="reject-big" onclick="openRejectModal('${k.id}','${esc(k.clientName)}',event)"><i class="fas fa-ban"></i> Tolak</button>
+        </div>`;
     }
 
-    return `<div class="kasus-card k-${status}" style="animation:fadeUp 0.4s ease ${i*0.04}s both;">
+    let actions='';
+    if(status==='menunggu'){
+        actions+=`<button class="kbtn kbtn-accept" onclick="requestApproval('${k.id}',event)"><i class="fas fa-scale-balanced"></i> Ajukan Penanganan</button>`;
+    }
+    if(status==='sedang_ditangani'&&isMyCase){
+        actions+=`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event)"><i class="fas fa-check-circle"></i> Tandai Selesai</button>`;
+        actions+=`<button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}','ditutup',event)"><i class="fas fa-lock"></i> Tutup</button>`;
+    }
+    if(status==='sedang_ditangani'&&!isMyCase){
+        actions+=`<span style="font-size:10px;color:var(--text-3);font-weight:600;display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);"><i class="fas fa-user-tie" style="color:#FBBF24;"></i> Ditangani: ${escHtml(k.lawyer_name||'Advokat lain')}</span>`;
+    }
+    if(status==='selesai'||status==='ditutup'||status==='ditolak'){
+        if(isMyCase) actions+=`<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}','menunggu',event)"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`;
+    }
+    actions+=`<button class="kbtn kbtn-detail" onclick="openKasusDetail('${k.id}')"><i class="fas fa-eye"></i> Detail</button>`;
+    if(k.user_id) actions+=`<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}')"><i class="fas fa-comments"></i> Chat Klien</button>`;
+
+    return `<div class="kasus-card k-${status} ${isNew?'is-new':''}" style="animation:fadeUp 0.4s ease ${i*0.04}s both;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
             <div class="client-info-row">
-                <img src="${escHtml(k.clientAv)}" class="client-mini-av"
-                     onerror="this.src='${clientAvatarFb(k.clientName)}'" alt="${escHtml(k.clientName)}">
+                <img src="${escHtml(k.clientAv)}" class="client-mini-av" onerror="this.src='${clientAvatarFb(k.clientName)}'" alt="${escHtml(k.clientName)}">
                 <div>
                     <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0;">${escHtml(k.clientName)}</p>
                     <p style="font-size:10px;color:var(--text-3);margin:2px 0 0;">
-                        ${k.category?`<span style="background:rgba(59,130,246,0.1);color:#60A5FA;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;margin-right:5px;">${escHtml(k.category)}</span>`:''}${dateStr}
+                        ${k.category?`<span style="background:rgba(59,130,246,0.1);color:#60A5FA;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;margin-right:5px;">${escHtml(k.category)}</span>`:''}
+                        ${dateStr}
                     </p>
                 </div>
             </div>
-            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex-shrink:0;">
                 ${renderKsBadge(status)}
-                ${isMyCase&&status==='sedang_ditangani'?`<span style="font-size:9px;font-weight:800;background:rgba(245,158,11,0.1);color:#FBBF24;border:1px solid rgba(245,158,11,0.2);padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:0.07em;"><i class="fas fa-user-check"></i> Kasus Saya</span>`:''}
+                <span class="priority-tag priority-${prio}"><i class="fas fa-${prio==='urgent'?'fire':prio==='high'?'arrow-up':'minus'}" style="font-size:7px;"></i>${prio==='urgent'?'Mendesak':prio==='high'?'Prioritas':'Normal'}</span>
+                <span class="case-timer ${prio==='urgent'?'urgent':''}"><i class="fas fa-clock" style="font-size:8px;"></i>${timeAgo(k.created_at)}</span>
             </div>
         </div>
+        ${approvalHtml}
         <p style="font-size:13.5px;font-weight:700;color:var(--text-1);margin:0 0 6px;line-height:1.5;">${escHtml(title)}${title.length>=70?'...':''}</p>
         ${content?`<p style="font-size:12px;color:var(--text-3);margin:0;line-height:1.6;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${escHtml(content)}</p>`:''}
-        ${k.catatan_advokat?`<div style="margin-top:10px;padding:10px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);border-radius:10px;"><p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 3px;"><i class="fas fa-sticky-note"></i> Catatan Advokat</p><p style="font-size:12px;color:var(--text-2);margin:0;line-height:1.5;">${escHtml(k.catatan_advokat)}</p></div>`:''}
+        ${k.catatan_advokat?`<div style="margin-top:10px;padding:10px 12px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.15);border-radius:10px;"><p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 3px;"><i class="fas fa-sticky-note"></i> Catatan</p><p style="font-size:12px;color:var(--text-2);margin:0;line-height:1.5;">${escHtml(k.catatan_advokat)}</p></div>`:''}
+        ${status==='ditolak'&&k.rejection_reason?`<div style="margin-top:10px;padding:10px 12px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;"><p style="font-size:9px;font-weight:800;color:#F87171;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 3px;"><i class="fas fa-ban"></i> Alasan Penolakan</p><p style="font-size:12px;color:var(--text-2);margin:0;">${escHtml(k.rejection_reason)}</p></div>`:''}
         <div class="kasus-actions">${actions}</div>
     </div>`;
 }
 
 // ══════════════════════════════════════════════
-// UPDATE STATUS KASUS
+// CASE APPROVAL FLOW
 // ══════════════════════════════════════════════
-async function updateKasusStatus(kasusId,newStatus,event){
+async function requestApproval(kasusId, event){
+    // Advokat mengajukan diri untuk menangani kasus (status menjadi menunggu_persetujuan, menunggu konfirmasi klien)
+    const btn=event?.currentTarget;
+    if(btn){btn.disabled=true;btn.innerHTML=`<i class="fas fa-circle-notch fa-spin"></i> Mengajukan...`;}
+    try{
+        const{error}=await window.supabase.from('riwayat_konsultasi').update({handling_status:'menunggu_persetujuan',assigned_lawyer_id:currentMitra.id,lawyer_name:currentMitra.nama_lengkap}).eq('id',kasusId);
+        if(error) throw error;
+        // Notify client via message
+        const kasus=allKasus.find(k=>k.id===kasusId);
+        if(kasus?.user_id){
+            const convId=crypto.randomUUID();
+            await window.supabase.from('messages').insert([{sender_id:currentMitra.user_id,receiver_id:kasus.user_id,lawyer_id:currentMitra.id,conversation_id:convId,message_text:`Halo ${escHtml(kasus.clientName)}, saya ${currentMitra.nama_lengkap} (${currentMitra.spesialisasi||'Advokat'}). Saya melihat kasus Anda dan bersedia untuk membantu. Mohon konfirmasi agar saya dapat segera menangani kasus Anda. 🤝`,is_read:false}]);
+        }
+        const idx=allKasus.findIndex(k=>k.id===kasusId);
+        if(idx!==-1){allKasus[idx].handling_status='menunggu_persetujuan';allKasus[idx].assigned_lawyer_id=currentMitra.id;allKasus[idx].lawyer_name=currentMitra.nama_lengkap;}
+        updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
+        toast('✅ Pengajuan berhasil! Menunggu konfirmasi klien.','success');
+    }catch(err){toast('Gagal: '+err.message,'error');if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-scale-balanced"></i> Ajukan Penanganan';}}
+}
+
+async function approveKasus(kasusId, event){
+    // Advokat menerima/konfirmasi kasus (setelah klien setuju dari sisi klien, atau dari dashboard ini)
     const btn=event?.currentTarget;
     if(btn){btn.disabled=true;btn.innerHTML=`<i class="fas fa-circle-notch fa-spin"></i> Memproses...`;}
+    try{
+        const{error}=await window.supabase.from('riwayat_konsultasi').update({handling_status:'sedang_ditangani',assigned_lawyer_id:currentMitra.id,lawyer_name:currentMitra.nama_lengkap}).eq('id',kasusId);
+        if(error) throw error;
+        const kasus=allKasus.find(k=>k.id===kasusId);
+        if(kasus?.user_id){
+            const convs=allConvs.filter(c=>c.clientId===kasus.user_id);
+            const convId=convs[0]?.convId||crypto.randomUUID();
+            await window.supabase.from('messages').insert([{sender_id:currentMitra.user_id,receiver_id:kasus.user_id,lawyer_id:currentMitra.id,conversation_id:convId,message_text:`✅ Saya resmi mulai menangani kasus Anda. Kami akan bekerja sama untuk menyelesaikan masalah hukum Anda. Silakan lengkapi dokumen pendukung jika ada.`,is_read:false}]);
+        }
+        const idx=allKasus.findIndex(k=>k.id===kasusId);
+        if(idx!==-1){allKasus[idx]={...allKasus[idx],handling_status:'sedang_ditangani',assigned_lawyer_id:currentMitra.id,lawyer_name:currentMitra.nama_lengkap};}
+        updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
+        toast('⚖️ Kasus resmi ditangani!','success');
+    }catch(err){toast('Gagal: '+err.message,'error');}
+}
 
+// ══════════════════════════════════════════════
+// REJECT FLOW
+// ══════════════════════════════════════════════
+function openRejectModal(kasusId, clientName, event){
+    event?.stopPropagation();
+    rejectTargetId=kasusId;
+    document.getElementById('reject-kasus-name').textContent=`Kasus dari ${clientName}`;
+    document.querySelectorAll('input[name="reject-reason"]').forEach(r=>r.checked=false);
+    document.getElementById('reject-custom-reason').value='';
+    document.getElementById('reject-modal').style.display='flex';
+}
+function closeRejectModal(){document.getElementById('reject-modal').style.display='none';rejectTargetId=null;}
+async function confirmReject(){
+    if(!rejectTargetId) return;
+    const selected=document.querySelector('input[name="reject-reason"]:checked');
+    const custom=document.getElementById('reject-custom-reason').value.trim();
+    const reason=selected?.(selected.value==='other'?custom:selected.value)||custom:'Tidak dapat menangani kasus ini saat ini.';
+    try{
+        const{error}=await window.supabase.from('riwayat_konsultasi').update({handling_status:'ditolak',assigned_lawyer_id:currentMitra.id,lawyer_name:currentMitra.nama_lengkap,rejection_reason:reason}).eq('id',rejectTargetId);
+        if(error) throw error;
+        const kasus=allKasus.find(k=>k.id===rejectTargetId);
+        if(kasus?.user_id){
+            const convId=crypto.randomUUID();
+            await window.supabase.from('messages').insert([{sender_id:currentMitra.user_id,receiver_id:kasus.user_id,lawyer_id:currentMitra.id,conversation_id:convId,message_text:`Terima kasih atas kepercayaan Anda. Mohon maaf, saat ini saya tidak dapat menangani kasus ini karena: ${reason}. Anda dapat mencari advokat lain yang lebih sesuai melalui direktori kami.`,is_read:false}]);
+        }
+        const idx=allKasus.findIndex(k=>k.id===rejectTargetId);
+        if(idx!==-1){allKasus[idx]={...allKasus[idx],handling_status:'ditolak',rejection_reason:reason};}
+        closeRejectModal();
+        updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
+        toast('Kasus berhasil ditolak dengan alasan.','info');
+    }catch(err){toast('Gagal tolak: '+err.message,'error');}
+}
+
+async function updateKasusStatus(kasusId,newStatus,event){
+    const btn=event?.currentTarget;
+    if(btn){btn.disabled=true;btn.innerHTML=`<i class="fas fa-circle-notch fa-spin"></i>`;}
     const updates={handling_status:newStatus};
-    if(newStatus==='sedang_ditangani'){updates.assigned_lawyer_id=currentMitra.id;updates.lawyer_name=currentMitra.nama_lengkap;}
-    else if(newStatus==='menunggu'){updates.assigned_lawyer_id=null;updates.lawyer_name=null;updates.catatan_advokat=null;}
-
+    if(newStatus==='menunggu'){updates.assigned_lawyer_id=null;updates.lawyer_name=null;updates.catatan_advokat=null;updates.rejection_reason=null;}
     try{
         const{error}=await window.supabase.from('riwayat_konsultasi').update(updates).eq('id',kasusId);
         if(error) throw error;
         const idx=allKasus.findIndex(k=>k.id===kasusId);
         if(idx!==-1) allKasus[idx]={...allKasus[idx],...updates};
         updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
-        const cfg=STATUS_CFG[newStatus];
-        toast(`Kasus diubah ke: ${cfg?.label||newStatus}`,'success');
-    }catch(err){
-        toast('Gagal update: '+err.message,'error');
-        if(btn){btn.disabled=false;}
-        await loadAllKasus();
-    }
+        const cfg=STATUS_CFG[newStatus];toast(`Status diubah: ${cfg?.label||newStatus}`,'success');
+    }catch(err){toast('Gagal update: '+err.message,'error');if(btn){btn.disabled=false;}}
 }
 
 // ══════════════════════════════════════════════
-// KASUS DETAIL MODAL
+// DETAIL MODAL
 // ══════════════════════════════════════════════
 function openKasusDetail(kasusId){
     const k=allKasus.find(x=>x.id===kasusId);if(!k) return;
     const status=k.handling_status||'menunggu';
     const isMyCase=k.assigned_lawyer_id===currentMitra.id;
     const dateStr=new Date(k.created_at).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
-
     const modal=document.createElement('div');modal.className='k-modal-overlay';
+    const approvalSection=status==='menunggu_persetujuan'&&isMyCase?`
+        <div style="padding:14px 16px;border-radius:14px;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.04));border:1px solid rgba(59,130,246,0.3);margin-bottom:12px;">
+            <p style="font-size:10px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 6px;"><i class="fas fa-handshake"></i> Keputusan Diperlukan</p>
+            <p style="font-size:12px;color:var(--text-2);margin:0 0 10px;">Klien meminta Anda menangani kasus ini. Terima untuk mulai menangani, atau tolak dengan alasan yang jelas.</p>
+            <div style="display:flex;gap:8px;">
+                <button onclick="approveKasus('${k.id}',event);this.closest('.k-modal-overlay').remove()" style="flex:1;padding:10px;border-radius:10px;background:rgba(16,185,129,0.15);border:1.5px solid rgba(16,185,129,0.35);color:#34D399;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="fas fa-check-circle"></i> Terima & Tangani</button>
+                <button onclick="openRejectModal('${k.id}','${esc(k.clientName)}',event);this.closest('.k-modal-overlay').remove()" style="flex:1;padding:10px;border-radius:10px;background:rgba(239,68,68,0.1);border:1.5px solid rgba(239,68,68,0.3);color:#F87171;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="fas fa-ban"></i> Tolak Kasus</button>
+            </div>
+        </div>`:''
     modal.innerHTML=`
         <div class="k-modal-bg" onclick="this.closest('.k-modal-overlay').remove()"></div>
         <div class="k-modal-box">
@@ -1451,11 +1532,13 @@ function openKasusDetail(kasusId){
                     <div style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap;">
                         <span style="font-size:10px;color:var(--text-3);">${dateStr}</span>
                         ${renderKsBadge(status)}
+                        <span class="priority-tag priority-${getPriority(k)}">Prioritas: ${getPriority(k)==='urgent'?'Mendesak':getPriority(k)==='high'?'Tinggi':'Normal'}</span>
                     </div>
                 </div>
                 <button onclick="this.closest('.k-modal-overlay').remove()" style="width:32px;height:32px;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-2);font-size:12px;"><i class="fas fa-times"></i></button>
             </div>
             <div class="k-modal-body">
+                ${approvalSection}
                 <div class="detail-block">
                     <p class="detail-label" style="color:#60A5FA;"><i class="fas fa-user"></i> Klien</p>
                     <div style="display:flex;align-items:center;gap:10px;">
@@ -1476,7 +1559,7 @@ function openKasusDetail(kasusId){
                     <p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;white-space:pre-wrap;">${escHtml((k.response||k.hasil_analisis||'-').substring(0,800))}${(k.response||k.hasil_analisis||'').length>800?'...':''}</p>
                 </div>
                 ${k.pasal_terkait?`<div class="detail-block"><p class="detail-label" style="color:#FBBF24;"><i class="fas fa-book-open"></i> Pasal Terkait</p><p style="font-size:13px;color:var(--text-1);margin:0;line-height:1.7;">${escHtml(k.pasal_terkait)}</p></div>`:''}
-                ${status==='sedang_ditangani'&&k.lawyer_name?`<div style="padding:12px 14px;background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);border-radius:12px;margin-bottom:12px;"><p style="font-size:9px;font-weight:800;color:#FBBF24;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;"><i class="fas fa-user-tie"></i> Sedang Ditangani Oleh</p><p style="font-size:14px;font-weight:700;color:var(--text-1);margin:0;">${escHtml(k.lawyer_name)}</p></div>`:''}
+                ${k.rejection_reason?`<div class="detail-block" style="border-color:rgba(239,68,68,0.25);"><p class="detail-label" style="color:#F87171;"><i class="fas fa-ban"></i> Alasan Penolakan</p><p style="font-size:13px;color:var(--text-1);margin:0;">${escHtml(k.rejection_reason)}</p></div>`:''}
                 <div class="detail-block">
                     <p class="detail-label" style="color:#FBBF24;"><i class="fas fa-sticky-note"></i> Catatan Advokat (Internal)</p>
                     <textarea class="catatan-area" id="catatan-input-${k.id}" placeholder="Tambahkan catatan internal...">${escHtml(k.catatan_advokat||'')}</textarea>
@@ -1484,9 +1567,8 @@ function openKasusDetail(kasusId){
                 </div>
             </div>
             <div class="k-modal-footer">
-                ${status==='menunggu'?`<button class="kbtn kbtn-tangani" onclick="updateKasusStatus('${k.id}','sedang_ditangani',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-scale-balanced"></i> Tangani Kasus</button>`:''}
-                ${status==='sedang_ditangani'&&isMyCase?`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-check-circle"></i> Selesai</button><button class="kbtn kbtn-tutup" onclick="updateKasusStatus('${k.id}','ditutup',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-lock"></i> Tutup</button>`:''}
-                ${(status==='selesai'||status==='ditutup')?`<button class="kbtn kbtn-reset" onclick="updateKasusStatus('${k.id}','menunggu',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-rotate-left"></i> Buka Kembali</button>`:''}
+                ${status==='menunggu'?`<button class="kbtn kbtn-accept" onclick="requestApproval('${k.id}',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-scale-balanced"></i> Ajukan Penanganan</button>`:''}
+                ${status==='sedang_ditangani'&&isMyCase?`<button class="kbtn kbtn-selesai" onclick="updateKasusStatus('${k.id}','selesai',event);this.closest('.k-modal-overlay').remove()"><i class="fas fa-check-circle"></i> Selesai</button>`:''}
                 ${k.user_id?`<button class="kbtn kbtn-chat" onclick="openChatWithClient('${k.user_id}','${esc(k.clientName)}','${esc(k.clientAv)}');this.closest('.k-modal-overlay').remove()"><i class="fas fa-comments"></i> Chat Klien</button>`:''}
                 <button onclick="this.closest('.k-modal-overlay').remove()" style="margin-left:auto;padding:7px 14px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:10px;font-weight:700;font-family:inherit;">Tutup</button>
             </div>
@@ -1500,25 +1582,90 @@ async function saveCatatan(kasusId){
     try{
         const{error}=await window.supabase.from('riwayat_konsultasi').update({catatan_advokat:catatan}).eq('id',kasusId);
         if(error) throw error;
-        const idx=allKasus.findIndex(k=>k.id===kasusId);
-        if(idx!==-1) allKasus[idx].catatan_advokat=catatan;
+        const idx=allKasus.findIndex(k=>k.id===kasusId);if(idx!==-1) allKasus[idx].catatan_advokat=catatan;
         toast('Catatan disimpan','success');
     }catch(err){toast('Gagal simpan: '+err.message,'error');}
 }
 
 // ══════════════════════════════════════════════
-// OPEN CHAT WITH CLIENT (from Kasus panel)
+// OPEN CHAT WITH CLIENT
 // ══════════════════════════════════════════════
 async function openChatWithClient(clientId,clientName,clientAv){
-    if(clientId===currentMitra.user_id){
-        toast('Tidak bisa chat dengan diri sendiri','warn');return;
-    }
-    const inboxTab=document.getElementById('tab-inbox');
-    switchTab('inbox',inboxTab);
+    if(clientId===currentMitra.user_id){toast('Tidak bisa chat dengan diri sendiri','warn');return;}
+    const inboxTab=document.getElementById('tab-inbox');switchTab('inbox',inboxTab);
     const existingConv=allConvs.find(c=>c.clientId===clientId);
     if(existingConv){openConv(existingConv.convId,existingConv.clientId,existingConv.clientName,existingConv.clientAv);return;}
     const convId=crypto.randomUUID();
     await openConv(convId,clientId,clientName||'Klien',clientAv||clientAvatarFb(clientName||'K'));
+}
+
+// ══════════════════════════════════════════════
+// STATS PANEL
+// ══════════════════════════════════════════════
+async function loadStats(){
+    const myKasus=allKasus.filter(k=>k.assigned_lawyer_id===currentMitra.id);
+    const selesai=myKasus.filter(k=>k.handling_status==='selesai').length;
+    const aktif=myKasus.filter(k=>k.handling_status==='sedang_ditangani').length;
+    const totalHandled=myKasus.length;
+    const pct=totalHandled>0?Math.round((selesai/totalHandled)*100):0;
+    
+    document.getElementById('ring-pct').textContent=pct+'%';
+    document.getElementById('stat-rate-big').textContent=pct+'%';
+    document.getElementById('rate-selesai').textContent=selesai;
+    document.getElementById('rate-aktif').textContent=aktif;
+    
+    const offset=226-(226*(pct/100));
+    document.getElementById('ring-fill').style.strokeDashoffset=offset;
+
+    const totalReq=myKasus.length;
+    const accepted=myKasus.filter(k=>k.handling_status!=='ditolak').length;
+    const rejected=myKasus.filter(k=>k.handling_status==='ditolak').length;
+    const acceptPct=totalReq>0?Math.round((accepted/totalReq)*100):0;
+    const rejectPct=totalReq>0?Math.round((rejected/totalReq)*100):0;
+    document.getElementById('accept-pct').textContent=acceptPct+'%';
+    document.getElementById('reject-pct').textContent=rejectPct+'%';
+    document.getElementById('accept-bar').style.width=acceptPct+'%';
+    document.getElementById('reject-bar').style.width=rejectPct+'%';
+    document.getElementById('stat-total-req').textContent=totalReq;
+
+    // Activity feed
+    const recent=allKasus.filter(k=>k.assigned_lawyer_id===currentMitra.id).slice(0,5);
+    const actFeed=document.getElementById('activity-feed');
+    if(!recent.length){actFeed.innerHTML='<p style="font-size:12px;color:var(--text-3);text-align:center;padding:20px;margin:0;">Belum ada aktivitas</p>';return;}
+    actFeed.innerHTML=recent.map(k=>{
+        const status=k.handling_status||'menunggu';
+        const cfg=STATUS_CFG[status];
+        const colors={menunggu:'#94A3B8',menunggu_persetujuan:'#60A5FA',sedang_ditangani:'#34D399',selesai:'#10B981',ditolak:'#F87171',ditutup:'#64748B'};
+        return `<div class="activity-item">
+            <div class="act-icon" style="background:${colors[status]}22;"><i class="fas ${cfg?.icon||'fa-circle'}" style="color:${colors[status]};font-size:11px;"></i></div>
+            <div style="flex:1;min-width:0;">
+                <p style="font-size:12px;font-weight:700;color:var(--text-1);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml((k.query||k.topik_kasus||'Kasus').substring(0,40))}</p>
+                <p style="font-size:10px;color:var(--text-3);margin:2px 0 0;">${escHtml(k.clientName)} • ${timeAgo(k.updated_at||k.created_at)}</p>
+            </div>
+            <span class="ks-badge ${cfg?.cls||'b-menunggu'}" style="font-size:8px;">${cfg?.label||status}</span>
+        </div>`;
+    }).join('');
+
+    // Status bars
+    const statusBar=document.getElementById('status-bars');
+    const statusData=[
+        {label:'Menunggu',count:allKasus.filter(k=>!k.handling_status||k.handling_status==='menunggu').length,color:'#F59E0B',total:allKasus.length},
+        {label:'Saya Tangani',count:myKasus.filter(k=>k.handling_status==='sedang_ditangani').length,color:'#10B981',total:allKasus.length},
+        {label:'Selesai',count:myKasus.filter(k=>k.handling_status==='selesai').length,color:'#3B82F6',total:allKasus.length},
+        {label:'Ditolak',count:myKasus.filter(k=>k.handling_status==='ditolak').length,color:'#EF4444',total:allKasus.length},
+    ];
+    statusBar.innerHTML=statusData.map(s=>{
+        const pct=s.total>0?Math.round((s.count/s.total)*100):0;
+        return `<div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:11px;font-weight:600;color:var(--text-2);">${s.label}</span>
+                <span style="font-size:11px;font-weight:800;color:${s.color};">${s.count} <span style="color:var(--text-3);font-weight:400;">(${pct}%)</span></span>
+            </div>
+            <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+                <div style="height:100%;background:${s.color};border-radius:4px;width:${pct}%;transition:width 1s ease;opacity:0.85;"></div>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 // ══════════════════════════════════════════════
@@ -1533,20 +1680,21 @@ function subscribeKasusRealtime(){
                 if(newK.user_id===currentMitra.user_id) return;
                 const{data:prof}=await window.supabase.from('profiles').select('id,full_name,avatar_url').eq('id',newK.user_id).maybeSingle();
                 allKasus.unshift({...newK,clientName:prof?.full_name||'Klien',clientAv:prof?.avatar_url||clientAvatarFb(prof?.full_name||'K')});
-                updateKasusStats();updateKasusFilterCounts();
-                renderKasusList(document.getElementById('kasus-search-input').value);
-                ringBell();
-                toast(`📋 Kasus baru dari ${prof?.full_name||'klien'}`,'info');
+                updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
+                ringBell();toast(`📋 Kasus baru dari ${prof?.full_name||'klien'}`,'info');
             }else if(payload.eventType==='UPDATE'){
                 const updated=payload.new;
                 const idx=allKasus.findIndex(k=>k.id===updated.id);
-                if(idx!==-1) allKasus[idx]={...allKasus[idx],...updated};
-                updateKasusStats();updateKasusFilterCounts();
-                renderKasusList(document.getElementById('kasus-search-input').value);
+                if(idx!==-1){const prof={clientName:allKasus[idx].clientName,clientAv:allKasus[idx].clientAv};allKasus[idx]={...allKasus[idx],...updated,...prof};}
+                updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
+                // Update pending alert
+                const pendingCount=allKasus.filter(k=>k.handling_status==='menunggu_persetujuan'&&k.assigned_lawyer_id===currentMitra.id).length;
+                const alert=document.getElementById('pending-alert');
+                if(pendingCount>0){alert.style.display='block';document.getElementById('pending-alert-text').textContent=`${pendingCount} kasus menunggu persetujuan Anda`;}
+                else{alert.style.display='none';}
             }else if(payload.eventType==='DELETE'){
                 allKasus=allKasus.filter(k=>k.id!==payload.old.id);
-                updateKasusStats();updateKasusFilterCounts();
-                renderKasusList(document.getElementById('kasus-search-input').value);
+                updateKasusStats();updateKasusFilterCounts();renderKasusList(document.getElementById('kasus-search-input').value);
             }
         }).subscribe();
 }
@@ -1557,18 +1705,8 @@ function subscribeKasusRealtime(){
 function subscribeRealtime(){
     if(rtChannel) window.supabase.removeChannel(rtChannel);
     rtChannel=window.supabase.channel('adv-rt-'+currentMitra.id)
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`lawyer_id=eq.${currentMitra.id}`},
-            async(payload)=>{
-                if(payload.new.sender_id===currentMitra.user_id) return;
-                await handleIncomingMessage(payload.new);
-            })
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentMitra.user_id}`},
-            async(payload)=>{
-                const m=payload.new;
-                if(m.sender_id===currentMitra.user_id) return;
-                if(m.lawyer_id&&m.lawyer_id===currentMitra.id) return;
-                await handleIncomingMessage(m);
-            })
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`lawyer_id=eq.${currentMitra.id}`},async(payload)=>{if(payload.new.sender_id===currentMitra.user_id) return;await handleIncomingMessage(payload.new);})
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`receiver_id=eq.${currentMitra.user_id}`},async(payload)=>{const m=payload.new;if(m.sender_id===currentMitra.user_id) return;if(m.lawyer_id&&m.lawyer_id===currentMitra.id) return;await handleIncomingMessage(m);})
         .on('broadcast',{event:'typing'},(p)=>{if(p.payload?.from===selectedClientId)showTyping();})
         .subscribe((status)=>{
             const el=document.getElementById('rt-status');
@@ -1617,7 +1755,7 @@ async function loadProfile(){
     document.getElementById('profil-nama-display').textContent=m.nama_lengkap||'Nama Advokat';
     document.getElementById('profil-spec-badge').textContent=m.spesialisasi||'Hukum Umum';
     document.getElementById('profil-avatar-img').src=m.foto_profil_url||avatarFb(m.nama_lengkap);
-    const fieldMap={'f-nama':'nama_lengkap','f-nia':'nomor_nia','f-pengalaman':'pengalaman','f-lulusan':'lulusan','f-jurusan':'jurusan','f-kabupaten':'kabupaten','f-provinsi':'provinsi','f-bio':'bio_singkat'};
+    const fieldMap={'f-nama':'nama_lengkap','f-nia':'nomor_nia','f-pengalaman':'pengalaman','f-lulusan':'lulusan','f-jurusan':'jurusan','f-kabupaten':'kabupaten','f-provinsi':'provinsi','f-bio':'bio_singkat','f-tarif':'tarif_konsultasi','f-max-kasus':'max_kasus'};
     Object.entries(fieldMap).forEach(([id,key])=>{const el=document.getElementById(id);if(el)el.value=m[key]||'';});
     document.getElementById('f-spesialisasi').value=m.spesialisasi||'';
     updateBioCount(document.getElementById('f-bio'));
@@ -1660,11 +1798,6 @@ async function uploadAvatar(input){
     finally{btn.innerHTML='<i class="fas fa-camera"></i>';input.value='';}
 }
 
-function updateAvailUI(){
-    const toggle=document.getElementById('avail-toggle');const label=document.getElementById('avail-label');const sub=document.getElementById('avail-sub');
-    if(isAvailable){toggle.classList.remove('off');label.textContent='Menerima Klien Baru';label.style.color='#10B981';sub.textContent='Profil Anda terlihat di direktori mitra';}
-    else{toggle.classList.add('off');label.textContent='Tidak Menerima Klien';label.style.color='var(--text-3)';sub.textContent='Profil Anda disembunyikan dari direktori';}
-}
 function updateBioCount(el){document.getElementById('bio-count').textContent=`${el.value.length}/500`;}
 
 // ══════════════════════════════════════════════
@@ -1689,9 +1822,7 @@ function playNotifSound(){
 // ══════════════════════════════════════════════
 // LOGOUT
 // ══════════════════════════════════════════════
-async function handleLogout(){
-    await window.supabase.auth.signOut();location.href='login.html';
-}
+async function handleLogout(){await window.supabase.auth.signOut();location.href='login.html';}
 
 // ══════════════════════════════════════════════
 // BOOT
@@ -1706,6 +1837,8 @@ init().catch(err=>{
             <button onclick="location.reload()" class="btn-primary">Coba Lagi</button>
         </div>`;
 });
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeRejectModal();});
 </script>
 </body>
 </html>
