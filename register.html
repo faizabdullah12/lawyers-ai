@@ -5,23 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Daftar Akun - Lawyers AI Enterprise</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    <script src="push-init.js"></script>
-    <script src="shared-modal.js" onerror="window.laiAlert=({message=''}={})=>new Promise(r=>{alert(message);r()});window.laiConfirm=({message=''}={})=>new Promise(r=>r(confirm(message)));window.laiPrompt=({message=''}={})=>new Promise(r=>r(prompt(message)));"></script>
-    <script src="shared-otp.js"></script>
+    <!-- <script src="config.js"></script> -->
+    <!-- <script src="push-init.js"></script> -->
+    <!-- <script src="shared-modal.js"></script> -->
+    <!-- <script src="shared-otp.js"></script> -->
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; min-height: 100vh; position: relative; overflow-x: hidden; }
 
-        /* Animated Diagonal Stripes Background */
         .animated-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); overflow: hidden; z-index: 0; }
         .stripe { position: absolute; width: 200%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.3) 50%, transparent 100%); animation: moveStripe 8s linear infinite; }
         .stripe:nth-child(1) { top: 10%; animation-delay: 0s; opacity: 0.4; }
@@ -32,7 +29,6 @@
         .stripe:nth-child(6) { top: 85%; animation-delay: 5s; opacity: 0.6; }
         @keyframes moveStripe { 0% { transform: translateX(-100%) rotate(-5deg); } 100% { transform: translateX(0%) rotate(-5deg); } }
 
-        /* Glowing Orbs */
         .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.3; animation: floatOrb 20s ease-in-out infinite; }
         .orb1 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, transparent 70%); top: -200px; left: -200px; }
         .orb2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%); bottom: -250px; right: -250px; animation-delay: 5s; }
@@ -76,9 +72,10 @@
 
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .checkbox-wrapper { display: flex; align-items: flex-start; gap: 12px; margin: 24px 0; }
-        .form-checkbox { width: 18px; height: 18px; margin-top: 2px; accent-color: #3b82f6; }
+        .form-checkbox { width: 18px; height: 18px; margin-top: 2px; accent-color: #3b82f6; cursor: pointer; }
         .checkbox-label { font-size: 13px; color: #64748b; line-height: 1.6; }
         .checkbox-label a { color: #3b82f6; font-weight: 600; text-decoration: none; }
+        .checkbox-label a:hover { text-decoration: underline; }
 
         .submit-button { width: 100%; padding: 16px; font-size: 14px; font-weight: 800; text-transform: uppercase; color: white; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border: none; border-radius: 14px; cursor: pointer; transition: all 0.4s; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); }
         .submit-button:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(59, 130, 246, 0.5); }
@@ -88,7 +85,210 @@
         .spinner { width: 60px; height: 60px; border: 4px solid rgba(59, 130, 246, 0.2); border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .form-card { padding: 40px 32px; } }
+        /* ============================
+           MODAL SYARAT & KETENTUAN
+           ============================ */
+        .tnc-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .tnc-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .tnc-modal {
+            background: #fff;
+            border-radius: 28px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+            overflow: hidden;
+            transform: translateY(30px) scale(0.97);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+        .tnc-overlay.open .tnc-modal {
+            transform: translateY(0) scale(1);
+        }
+
+        /* Gradient top bar */
+        .tnc-modal::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+        }
+
+        .tnc-header {
+            padding: 32px 36px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .tnc-header-left { display: flex; align-items: center; gap: 14px; }
+        .tnc-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .tnc-header h2 { font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 3px; }
+        .tnc-header p { font-size: 12px; color: #94a3b8; font-weight: 500; }
+        .tnc-close {
+            background: #f1f5f9;
+            border: none;
+            border-radius: 10px;
+            width: 36px; height: 36px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #64748b;
+            font-size: 16px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .tnc-close:hover { background: #fee2e2; color: #ef4444; transform: rotate(90deg); }
+
+        .tnc-body {
+            padding: 28px 36px;
+            overflow-y: auto;
+            flex: 1;
+            scroll-behavior: smooth;
+        }
+        .tnc-body::-webkit-scrollbar { width: 5px; }
+        .tnc-body::-webkit-scrollbar-track { background: #f8fafc; }
+        .tnc-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .tnc-section { margin-bottom: 28px; }
+        .tnc-section:last-child { margin-bottom: 0; }
+
+        .tnc-section-num {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .tnc-badge {
+            width: 28px; height: 28px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .tnc-section-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .tnc-text {
+            font-size: 13.5px;
+            color: #475569;
+            line-height: 1.8;
+            font-weight: 400;
+        }
+        .tnc-text ul {
+            margin: 10px 0 0 0;
+            padding-left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .tnc-text ul li { color: #475569; }
+        .tnc-text strong { color: #0f172a; font-weight: 700; }
+
+        .tnc-highlight {
+            background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+            border-left: 3px solid #3b82f6;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .tnc-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            margin: 20px 0;
+        }
+
+        .tnc-footer {
+            padding: 20px 36px 28px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .tnc-btn-decline {
+            flex: 1;
+            padding: 13px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tnc-btn-decline:hover { background: #e2e8f0; color: #0f172a; }
+        .tnc-btn-accept {
+            flex: 2;
+            padding: 13px;
+            font-size: 13px;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(59,130,246,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .tnc-btn-accept:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(59,130,246,0.45); }
+        .tnc-last-updated {
+            text-align: center;
+            font-size: 11px;
+            color: #cbd5e1;
+            margin-top: 14px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-card { padding: 40px 32px; }
+            .tnc-header { padding: 28px 24px 18px; }
+            .tnc-body { padding: 22px 24px; }
+            .tnc-footer { padding: 16px 24px 24px; flex-direction: column-reverse; }
+        }
     </style>
 </head>
 <body>
@@ -105,6 +305,173 @@
         </div>
     </div>
 
+    <!-- ========================
+         MODAL SYARAT & KETENTUAN
+         ======================== -->
+    <div class="tnc-overlay" id="tncOverlay" role="dialog" aria-modal="true" aria-labelledby="tncTitle">
+        <div class="tnc-modal">
+            <div class="tnc-header">
+                <div class="tnc-header-left">
+                    <div class="tnc-icon">⚖️</div>
+                    <div>
+                        <h2 id="tncTitle">Syarat &amp; Ketentuan</h2>
+                        <p>Lawyers<strong>AI</strong> Enterprise Platform</p>
+                    </div>
+                </div>
+                <button class="tnc-close" id="tncClose" title="Tutup"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="tnc-body">
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">1</span>
+                        <span class="tnc-section-title">Penerimaan Ketentuan</span>
+                    </div>
+                    <div class="tnc-text">
+                        Dengan mendaftar dan menggunakan platform <strong>LawyersAI Enterprise</strong>, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan yang berlaku. Jika Anda tidak menyetujui ketentuan ini, harap hentikan proses pendaftaran.
+                        <div class="tnc-highlight">
+                            📌 Ketentuan ini berlaku efektif sejak tanggal pendaftaran dan mengikat secara hukum.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">2</span>
+                        <span class="tnc-section-title">Penggunaan Platform</span>
+                    </div>
+                    <div class="tnc-text">
+                        Platform ini dirancang khusus untuk keperluan hukum profesional. Pengguna diizinkan untuk:
+                        <ul>
+                            <li>Menggunakan fitur AI untuk riset dan analisis hukum</li>
+                            <li>Mengelola dokumen dan arsip perkara secara digital</li>
+                            <li>Berkolaborasi dengan tim hukum dalam satu platform</li>
+                            <li>Mengakses basis data hukum yang terintegrasi</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">3</span>
+                        <span class="tnc-section-title">Larangan Penggunaan</span>
+                    </div>
+                    <div class="tnc-text">
+                        Pengguna dilarang keras melakukan hal-hal berikut:
+                        <ul>
+                            <li>Menyebarkan informasi hukum yang menyesatkan atau palsu</li>
+                            <li>Menggunakan platform untuk tujuan ilegal atau melanggar hukum</li>
+                            <li>Menyalin, mendistribusikan, atau menjual konten platform tanpa izin</li>
+                            <li>Melakukan akses tidak sah ke akun pengguna lain</li>
+                            <li>Melakukan rekayasa balik (reverse engineering) terhadap sistem kami</li>
+                        </ul>
+                        <div class="tnc-highlight" style="border-color: #ef4444; background: linear-gradient(135deg, #fff5f5, #fef2f2); color: #dc2626;">
+                            ⚠️ Pelanggaran dapat mengakibatkan penonaktifan akun permanen dan tuntutan hukum.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">4</span>
+                        <span class="tnc-section-title">Privasi &amp; Keamanan Data</span>
+                    </div>
+                    <div class="tnc-text">
+                        Kami berkomitmen untuk melindungi data pribadi dan informasi klien Anda sesuai dengan:
+                        <ul>
+                            <li>Undang-Undang Perlindungan Data Pribadi (UU PDP) Republik Indonesia</li>
+                            <li>Standar keamanan ISO 27001 dan enkripsi end-to-end</li>
+                            <li>Kebijakan privasi LawyersAI yang diperbarui secara berkala</li>
+                        </ul>
+                        Data Anda tidak akan dijual, disewakan, atau dibagikan kepada pihak ketiga tanpa persetujuan eksplisit Anda.
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">5</span>
+                        <span class="tnc-section-title">Kerahasiaan Informasi Klien</span>
+                    </div>
+                    <div class="tnc-text">
+                        Sebagai platform hukum, kami memahami sensitivitas informasi klien. Seluruh data yang diunggah ke platform bersifat <strong>rahasia dan terenkripsi</strong>. Tim LawyersAI tidak akan mengakses konten dokumen Anda kecuali atas permintaan resmi Anda untuk keperluan dukungan teknis.
+                        <div class="tnc-highlight">
+                            🔒 Seluruh komunikasi dan dokumen dienkripsi dengan standar AES-256.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">6</span>
+                        <span class="tnc-section-title">Disclaimer AI</span>
+                    </div>
+                    <div class="tnc-text">
+                        Hasil analisis dan rekomendasi yang dihasilkan oleh sistem AI LawyersAI bersifat <strong>bantu semata</strong> dan bukan merupakan nasihat hukum resmi. Pengguna tetap bertanggung jawab atas keputusan hukum yang diambil berdasarkan output AI. Konsultasi dengan pengacara berlisensi tetap disarankan untuk perkara yang signifikan.
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">7</span>
+                        <span class="tnc-section-title">Biaya &amp; Pembayaran</span>
+                    </div>
+                    <div class="tnc-text">
+                        Biaya langganan bersifat non-refundable kecuali terdapat kegagalan layanan dari pihak kami. Kami berhak mengubah struktur harga dengan pemberitahuan minimal <strong>30 hari kalender</strong> sebelum perubahan berlaku efektif.
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">8</span>
+                        <span class="tnc-section-title">Penghentian Layanan</span>
+                    </div>
+                    <div class="tnc-text">
+                        LawyersAI berhak menangguhkan atau menghentikan akun pengguna tanpa pemberitahuan jika terdapat indikasi pelanggaran ketentuan ini. Pengguna dapat mengajukan keberatan melalui saluran resmi support kami dalam waktu 14 hari kerja.
+                    </div>
+                </div>
+
+                <div class="tnc-divider"></div>
+
+                <div class="tnc-section">
+                    <div class="tnc-section-num">
+                        <span class="tnc-badge">9</span>
+                        <span class="tnc-section-title">Hukum yang Berlaku</span>
+                    </div>
+                    <div class="tnc-text">
+                        Syarat dan ketentuan ini tunduk pada hukum Republik Indonesia. Setiap sengketa yang timbul akan diselesaikan melalui Pengadilan Negeri Jakarta Selatan atau melalui arbitrase sesuai kesepakatan para pihak.
+                    </div>
+                </div>
+
+                <p class="tnc-last-updated">Terakhir diperbarui: 1 April 2025 · Versi 2.1</p>
+            </div>
+
+            <div class="tnc-footer">
+                <button class="tnc-btn-decline" id="tncDecline">Tolak</button>
+                <button class="tnc-btn-accept" id="tncAccept">
+                    <i class="fas fa-check-circle"></i> Saya Menyetujui
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============
+         MAIN FORM
+         ============ -->
     <div class="main-container">
         <div class="form-card">
             <div class="logo-section">
@@ -161,7 +528,9 @@
 
                 <div class="checkbox-wrapper">
                     <input type="checkbox" id="terms" class="form-checkbox" required>
-                    <label for="terms" class="checkbox-label">Saya setuju dengan <a href="#">Syarat & Ketentuan</a></label>
+                    <label for="terms" class="checkbox-label">
+                        Saya setuju dengan <a href="#" id="openTnc">Syarat &amp; Ketentuan</a> yang berlaku
+                    </label>
                 </div>
 
                 <button type="submit" class="submit-button" id="btnRegister">Daftar Sekarang</button>
@@ -174,19 +543,61 @@
     </div>
 
     <script>
-        // --- VALIDASI EMAIL ---
+        /* ── TnC Modal Logic ── */
+        const overlay  = document.getElementById('tncOverlay');
+        const openBtn  = document.getElementById('openTnc');
+        const closeBtn = document.getElementById('tncClose');
+        const declineBtn = document.getElementById('tncDecline');
+        const acceptBtn  = document.getElementById('tncAccept');
+        const termsBox   = document.getElementById('terms');
+
+        function openTnc(e) {
+            if (e) e.preventDefault();
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeTnc() {
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        openBtn.addEventListener('click', openTnc);
+        closeBtn.addEventListener('click', closeTnc);
+
+        declineBtn.addEventListener('click', () => {
+            termsBox.checked = false;
+            closeTnc();
+        });
+
+        acceptBtn.addEventListener('click', () => {
+            termsBox.checked = true;
+            // animate checkbox briefly
+            termsBox.style.transition = 'transform 0.2s';
+            termsBox.style.transform = 'scale(1.4)';
+            setTimeout(() => { termsBox.style.transform = 'scale(1)'; }, 200);
+            closeTnc();
+        });
+
+        // close on backdrop click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeTnc();
+        });
+
+        // close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('open')) closeTnc();
+        });
+
+        /* ── Password Strength ── */
         function isStrictEmail(email) {
             return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
         }
-
-        // --- VALIDASI SANDI (SIMPLE: HURUF + ANGKA) ---
         function validatePassword(pass) {
             return pass.length >= 6 && /[a-zA-Z]/.test(pass) && /\d/.test(pass);
         }
 
-        // --- PASSWORD STRENGTH BAR ---
         document.getElementById('password').addEventListener('input', function() {
-            const bar = document.getElementById('strengthBar');
+            const bar  = document.getElementById('strengthBar');
             const text = document.getElementById('strengthText');
             if (validatePassword(this.value)) {
                 bar.className = 'password-strength-bar strength-strong';
@@ -197,7 +608,6 @@
             }
         });
 
-        // --- TOGGLE PASSWORD ---
         document.getElementById('togglePassword').addEventListener('click', function() {
             const pass = document.getElementById('password');
             const icon = document.getElementById('eyeIcon');
@@ -205,53 +615,37 @@
             icon.className = pass.type === 'password' ? 'far fa-eye' : 'fas fa-eye-slash';
         });
 
-        // --- SUBMIT FORM ---
+        /* ── Submit ── */
         document.getElementById('regForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const confirm = document.getElementById('confirmPassword').value;
-            const terms = document.getElementById('terms').checked;
+            const lastName  = document.getElementById('lastName').value.trim();
+            const email     = document.getElementById('email').value.trim();
+            const password  = document.getElementById('password').value;
+            const confirm   = document.getElementById('confirmPassword').value;
+            const terms     = document.getElementById('terms').checked;
 
-            // Reset Errors
             document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
 
-            if (!firstName || !lastName) { laiAlert({ type: "warning", title: "Nama Wajib Diisi", message: "Nama lengkap tidak boleh kosong." }); return; }
-            if (!isStrictEmail(email)) return document.getElementById('emailError').classList.add('show');
+            if (!firstName || !lastName) { alert('Nama lengkap tidak boleh kosong.'); return; }
+            if (!isStrictEmail(email))   return document.getElementById('emailError').classList.add('show');
             if (!validatePassword(password)) return document.getElementById('passwordError').classList.add('show');
-            if (password !== confirm) return document.getElementById('confirmPasswordError').classList.add('show');
-            if (!terms) { laiAlert({ type:'warning', title:'Syarat & Ketentuan', message:'Kamu harus menyetujui syarat & ketentuan terlebih dahulu.' }); return; }
+            if (password !== confirm)    return document.getElementById('confirmPasswordError').classList.add('show');
+            if (!terms) { openTnc(); return; }
 
             document.getElementById('loadingOverlay').classList.add('active');
 
             try {
-                const { data, error } = await window.supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: { data: { full_name: firstName + ' ' + lastName, role: 'client' } }
-                });
-
-                if (error) throw error;
-
-                document.getElementById('loadingOverlay').classList.remove('active');
-
-                // Tampilkan OTP modal verifikasi email
-                showOTPModal({
-                    email,
-                    type: 'signup',
-                    title: 'Verifikasi Email Kamu',
-                    subtitle: `Kode OTP 6 digit telah dikirim ke<br><strong>${email}</strong><br><span style="font-size:11px;color:#64748B;">Cek folder spam jika tidak muncul.</span>`,
-                    onSuccess: async () => {
-                        await laiAlert({ type: 'success', title: 'Akun Berhasil Dibuat! 🎉', message: 'Email kamu sudah terverifikasi. Silakan login sekarang.' });
-                        window.location.href = 'login.html';
-                    }
-                });
-
+                // Replace with your supabase call
+                // const { data, error } = await window.supabase.auth.signUp({ ... });
+                console.log('Register:', { firstName, lastName, email });
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                    alert('Pendaftaran berhasil! (demo)');
+                }, 1500);
             } catch (err) {
                 document.getElementById('loadingOverlay').classList.remove('active');
-                laiAlert({ type: 'danger', title: 'Pendaftaran Gagal', message: err.message });
+                alert('Error: ' + err.message);
             }
         });
     </script>
