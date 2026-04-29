@@ -2,7 +2,6 @@
 // sw.js — Lawyers AI Service Worker v1.0
 // Push Notification + Badge + Offline Cache
 // ============================================
-
 const CACHE_NAME = 'lawyers-ai-v1';
 const ASSETS_TO_CACHE = [
   '/',
@@ -38,7 +37,6 @@ self.addEventListener('push', event => {
     tag: 'lawyers-ai-notif',
     data: { url: '/' }
   };
-
   if (event.data) {
     try {
       const payload = event.data.json();
@@ -47,17 +45,16 @@ self.addEventListener('push', event => {
       data.body = event.data.text();
     }
   }
-
   event.waitUntil(
     self.registration.showNotification(data.title, {
-      body:    data.body,
-      icon:    data.icon    || '/icon-192.png',
-      badge:   data.badge   || '/badge-72.png',
-      tag:     data.tag     || 'lawyers-ai-notif',
+      body:     data.body,
+      icon:     data.icon    || '/icon-192.png',
+      badge:    data.badge   || '/badge-72.png',
+      tag:      data.tag     || 'lawyers-ai-notif',
       renotify: true,
-      data:    data.data    || { url: '/' },
-      actions: data.actions || [],
-      vibrate: [200, 100, 200],
+      data:     data.data    || { url: '/' },
+      actions:  data.actions || [],
+      vibrate:  [200, 100, 200],
     })
   );
 });
@@ -65,9 +62,7 @@ self.addEventListener('push', event => {
 // ── NOTIFICATION CLICK ──
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-
   const targetUrl = event.notification.data?.url || '/';
-
   if (event.action === 'open_chat') {
     event.waitUntil(openOrFocus('/chat-advokat.html'));
   } else if (event.action === 'dismiss') {
@@ -81,7 +76,6 @@ async function openOrFocus(url) {
   const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   const origin  = self.location.origin;
   const fullUrl = url.startsWith('http') ? url : origin + url;
-
   for (const client of clients) {
     if (client.url.startsWith(origin) && 'focus' in client) {
       await client.navigate(fullUrl);
@@ -108,7 +102,6 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (event.request.url.includes('/api/')) return; // jangan cache API calls
-
   event.respondWith(
     fetch(event.request)
       .then(res => {
