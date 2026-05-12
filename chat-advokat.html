@@ -1181,7 +1181,6 @@ function showChatView(){
 // ══════════════════════════════════════════════
 async function loadChatMode() {
     if(rtChannel){window.supabase.removeChannel(rtChannel);rtChannel=null;}
-    if(window._typingChannel){window.supabase.removeChannel(window._typingChannel);window._typingChannel=null;}
     if(rtOnlineChannel){window.supabase.removeChannel(rtOnlineChannel);rtOnlineChannel=null;}
     clearInterval(window._onlineCheckInterval);
 
@@ -1314,28 +1313,23 @@ function clearAttach(){attachedFile=null;document.getElementById('file-input').v
 function subscribeRT() {
     if(!receiverId) return;
 
-    // Channel postgres — listen pesan baru masuk
-    rtChannel = window.supabase.channel('msgs-db-' + currentUser.id)
+    rtChannel = window.supabase.channel('rt-' + currentUser.id + '-' + receiverId)
+        // Listen pesan baru masuk
         .on('postgres_changes', {event:'INSERT', schema:'public', table:'messages'}, p => {
             const m = p.new;
             const rel = (m.sender_id===currentUser.id && m.receiver_id===receiverId)
                      || (m.sender_id===receiverId && m.receiver_id===currentUser.id);
             if(rel){ renderMessages(); if(m.sender_id!==currentUser.id) playNotifSound(); }
         })
-        .subscribe();
-
-    // Channel typing — nama deterministik: sort dua ID agar identik di kedua sisi
-    const typingRoomId = [currentUser.id, receiverId].sort().join('--');
-    window._typingChannel = window.supabase.channel('typing-room-' + typingRoomId, {
-        config: { broadcast: { self: false } }
-    })
-        .on('broadcast', {event:'typing'}, p => {
-            console.log('[typing received]', p.payload);
-            if(p.payload?.from === receiverId) showTyping();
+        // Listen typing_status — deteksi lawan sedang mengetik
+        .on('postgres_changes', {event:'*', schema:'public', table:'typing_status',
+            filter: `user_id=eq.${receiverId}`}, p => {
+            const row = p.new || p.old;
+            if(row?.target_id === currentUser.id && row?.is_typing === true) {
+                showTyping();
+            }
         })
-        .subscribe(status => {
-            console.log('[typing channel status]', status);
-        });
+        .subscribe();
 }
 
 // ── SHOW TYPING — mengontrol #typing-row + teks di header ──
@@ -1365,16 +1359,32 @@ function showTyping(){
     }, 3200);
 }
 
-function notifyTyping(){
-    if(!receiverId || !window._typingChannel) return;
-    clearTimeout(typingDebounce);
-    typingDebounce = setTimeout(() => {
-        window._typingChannel.send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: { from: currentUser.id }
-        });
-    }, 350);
+// Upsert is_typing=true ke DB, lalu set false setelah 3 detik berhenti ketik
+let typingStopTimer = null;
+async function notifyTyping(){
+    if(!receiverId || !currentUser) return;
+    // Set is_typing = true
+    try {
+        await window.supabase.from('typing_status').upsert({
+            user_id: currentUser.id,
+            target_id: receiverId,
+            is_typing: true,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,target_id' });
+    } catch(e) {}
+
+    // Reset stop timer — set false setelah 3 detik berhenti ketik
+    clearTimeout(typingStopTimer);
+    typingStopTimer = setTimeout(async () => {
+        try {
+            await window.supabase.from('typing_status').upsert({
+                user_id: currentUser.id,
+                target_id: receiverId,
+                is_typing: false,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,target_id' });
+        } catch(e) {}
+    }, 3000);
 }
 
 // ══════════════════════════════════════════════
