@@ -1,417 +1,774 @@
 // ============================================
-// push-init.js — Lawyers AI v1.0
-// Push Notification + Tab Badge + Realtime
-// Tambahkan di semua halaman setelah config.js
+// push-init.js — Lawyers AI v2.0 Hardened
+// Push Notification + Badge + Realtime Stable
 // ============================================
 
 (function () {
-  // ── VAPID PUBLIC KEY ──
-  const VAPID_PUBLIC_KEY = 'BM7ViMP2CNCk8y4CG5fz84gvIVOCF3uW9PaXTj0a9ynDLO0TuX6V0497g1W6hmYAZ0kLzk6dDyGMEod7nVbhW2w';
 
-  // ── STATE ──
-  let _swReg         = null;
-  let _unreadCount   = 0;
+  // ============================================
+  // CONFIG
+  // ============================================
+
+  const VAPID_PUBLIC_KEY =
+    'BM7ViMP2CNCk8y4CG5fz84gvIVOCF3uW9PaXTj0a9ynDLO0TuX6V0497g1W6hmYAZ0kLzk6dDyGMEod7nVbhW2w';
+
+  const SW_PATH = './sw.js';
+
+  // ============================================
+  // STATE
+  // ============================================
+
+  let _swReg = null;
+  let _unreadCount = 0;
   let _blinkInterval = null;
+  let _originalTitle = document.title || 'Lawyers AI';
 
-  // _originalTitle di-capture setelah DOMContentLoaded agar tidak kosong
-  let _originalTitle = '';
+  let _messageChannel = null;
+  let _refreshTimeout = null;
 
-  // ════════════════════════════════════════
-  // 1. REGISTER SERVICE WORKER
-  // ════════════════════════════════════════
+  // ============================================
+  // SERVICE WORKER REGISTER
+  // ============================================
+
   async function registerSW() {
-    if (!('serviceWorker' in navigator)) return null;
+
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service Worker not supported');
+      return null;
+    }
+
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+
+      const reg = await navigator.serviceWorker.register(
+        SW_PATH,
+        { scope: './' }
+      );
+
       _swReg = reg;
+
       console.log('✅ SW registered:', reg.scope);
 
-      // Update otomatis saat ada versi baru
+      // auto update
       reg.addEventListener('updatefound', () => {
-        // FIX: reg.installing bisa null jika worker sudah lewat ke state 'waiting'
+
         const newWorker = reg.installing;
+
         if (!newWorker) return;
+
         newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
+
+          if (
+            newWorker.state === 'installed' &&
+            navigator.serviceWorker.controller
+          ) {
+
+            console.log('🔄 New SW installed');
+
+            newWorker.postMessage({
+              type: 'SKIP_WAITING'
+            });
           }
         });
       });
 
       return reg;
+
     } catch (err) {
+
       console.warn('SW registration failed:', err);
+
       return null;
     }
   }
 
-  // ════════════════════════════════════════
-  // 2. MINTA IZIN & SUBSCRIBE PUSH
-  // ════════════════════════════════════════
+  // ============================================
+  // PUSH SUBSCRIBE
+  // ============================================
+
   async function subscribePush(userId) {
+
     if (!_swReg) return null;
+
     if (!('PushManager' in window)) {
       console.warn('Push not supported');
       return null;
     }
 
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      console.warn('Notifikasi ditolak user.');
+    if (!('Notification' in window)) {
+      console.warn('Notification API unavailable');
       return null;
     }
 
     try {
-      // Cek apakah sudah subscribe
-      let sub = await _swReg.pushManager.getSubscription();
 
-      if (!sub) {
-        sub = await _swReg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-        });
+      const permission =
+        await Notification.requestPermission();
+
+      if (permission !== 'granted') {
+
+        console.warn('Notification denied');
+
+        return null;
       }
 
-      // Simpan subscription ke Supabase
+      let sub =
+        await _swReg.pushManager.getSubscription();
+
+      if (!sub) {
+
+        sub =
+          await _swReg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey:
+              urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+          });
+      }
+
+      // save subscription
       if (userId && window.supabase) {
+
         const subJson = sub.toJSON();
-        const { error } = await window.supabase.from('push_subscriptions').upsert({
-          user_id:    userId,
-          endpoint:   subJson.endpoint,
-          p256dh:     subJson.keys?.p256dh,
-          auth:       subJson.keys?.auth,
+
+        const payload = {
+          user_id: userId,
+          endpoint: subJson.endpoint,
+          p256dh: subJson.keys?.p256dh,
+          auth: subJson.keys?.auth,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+        };
+
+        const { error } =
+          await window.supabase
+            .from('push_subscriptions')
+            .upsert(
+              payload,
+              { onConflict: 'user_id' }
+            );
 
         if (error) {
-          console.error('Gagal simpan push subscription:', error.message);
+
+          console.error(
+            'Push save error:',
+            error.message
+          );
+
         } else {
-          console.log('✅ Push subscription saved');
+
+          console.log(
+            '✅ Push subscription saved'
+          );
         }
       }
 
       return sub;
+
     } catch (err) {
-      console.error('Subscribe push error:', err);
+
+      console.error(
+        'Push subscribe error:',
+        err
+      );
+
       return null;
     }
   }
 
-  // ════════════════════════════════════════
-  // 3. BADGE TAB BROWSER
-  // ════════════════════════════════════════
+  // ============================================
+  // TAB BADGE
+  // ============================================
+
   function setTabBadge(count) {
+
+    count = Number(count || 0);
+
     _unreadCount = count;
 
-    // a) App Badge API (Android Chrome / PWA)
-    if ('setAppBadge' in navigator) {
-      count > 0 ? navigator.setAppBadge(count) : navigator.clearAppBadge();
+    // ============================================
+    // APP BADGE API
+    // ============================================
+
+    try {
+
+      if ('setAppBadge' in navigator) {
+
+        if (count > 0) {
+
+          navigator.setAppBadge(count);
+
+        } else {
+
+          navigator.clearAppBadge();
+        }
+      }
+
+    } catch (err) {
+
+      console.warn(
+        'AppBadge error:',
+        err
+      );
     }
 
-    // b) Favicon badge (semua browser)
+    // ============================================
+    // FAVICON BADGE
+    // ============================================
+
     updateFaviconBadge(count);
 
-    // c) Title blink saat tab tidak aktif
+    // ============================================
+    // TITLE BLINK
+    // ============================================
+
     if (count > 0 && document.hidden) {
+
       startTitleBlink(count);
+
     } else {
+
       stopTitleBlink();
     }
 
-    // d) Update badge sidebar jika ada
-    const sidebarBadge = document.getElementById('sidebar-badge-inbox');
-    if (sidebarBadge) {
+    // ============================================
+    // SIDEBAR BADGE
+    // ============================================
+
+    const badge =
+      document.getElementById(
+        'sidebar-badge-inbox'
+      );
+
+    if (badge) {
+
       if (count > 0) {
-        sidebarBadge.textContent = count > 9 ? '9+' : count;
-        sidebarBadge.classList.add('show');
+
+        badge.textContent =
+          count > 9 ? '9+' : String(count);
+
+        badge.classList.add('show');
+
       } else {
-        sidebarBadge.textContent = '0';
-        sidebarBadge.classList.remove('show');
+
+        badge.textContent = '0';
+
+        badge.classList.remove('show');
       }
     }
 
-    // e) Kirim ke SW untuk App Badge
-    if (_swReg?.active) {
-      _swReg.active.postMessage({ type: 'SET_BADGE', count });
+    // ============================================
+    // SEND TO SERVICE WORKER
+    // ============================================
+
+    try {
+
+      if (_swReg?.active) {
+
+        _swReg.active.postMessage({
+          type: 'SET_BADGE',
+          count
+        });
+      }
+
+    } catch (err) {
+
+      console.warn(
+        'SW badge message error:',
+        err
+      );
     }
   }
 
+  // ============================================
+  // FAVICON BADGE
+  // ============================================
+
+  let _lastFaviconCount = -1;
+
   function updateFaviconBadge(count) {
+
+    // prevent redraw spam
+    if (_lastFaviconCount === count) return;
+
+    _lastFaviconCount = count;
+
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 32; canvas.height = 32;
-      const ctx = canvas.getContext('2d');
+
+      const canvas =
+        document.createElement('canvas');
+
+      canvas.width = 32;
+      canvas.height = 32;
+
+      const ctx =
+        canvas.getContext('2d');
 
       const img = new Image();
+
       img.crossOrigin = 'anonymous';
-      img.src = '/favicon.ico';
+
+      img.src = './favicon.ico';
 
       img.onload = () => {
+
         ctx.drawImage(img, 0, 0, 32, 32);
-        if (count > 0) drawBadgeCircle(ctx, canvas, count);
+
+        if (count > 0) {
+          drawBadgeCircle(ctx, count);
+        }
+
         applyFavicon(canvas.toDataURL());
       };
 
       img.onerror = () => {
-        // Fallback: favicon sederhana
+
         ctx.fillStyle = '#1E293B';
         ctx.fillRect(0, 0, 32, 32);
+
         ctx.fillStyle = '#3B82F6';
+
         ctx.font = 'bold 20px sans-serif';
+
         ctx.textAlign = 'center';
+
         ctx.fillText('L', 16, 24);
-        if (count > 0) drawBadgeCircle(ctx, canvas, count);
+
+        if (count > 0) {
+          drawBadgeCircle(ctx, count);
+        }
+
         applyFavicon(canvas.toDataURL());
       };
-    } catch (e) {
-      console.warn('Favicon badge error:', e);
+
+    } catch (err) {
+
+      console.warn(
+        'Favicon badge error:',
+        err
+      );
     }
   }
 
-  function drawBadgeCircle(ctx, canvas, count) {
+  function drawBadgeCircle(ctx, count) {
+
     const r = 9;
-    const x = canvas.width  - r - 1;
-    const y = r + 1;
+    const x = 22;
+    const y = 10;
+
     ctx.beginPath();
+
     ctx.arc(x, y, r, 0, 2 * Math.PI);
+
     ctx.fillStyle = '#EF4444';
+
     ctx.fill();
+
     ctx.fillStyle = '#FFFFFF';
+
     ctx.font = 'bold 10px sans-serif';
+
     ctx.textAlign = 'center';
+
     ctx.textBaseline = 'middle';
-    ctx.fillText(count > 9 ? '9+' : String(count), x, y);
+
+    ctx.fillText(
+      count > 9 ? '9+' : String(count),
+      x,
+      y
+    );
   }
 
   function applyFavicon(dataUrl) {
-    let link = document.querySelector("link[rel~='icon']");
+
+    let link =
+      document.querySelector(
+        "link[rel~='icon']"
+      );
+
     if (!link) {
+
       link = document.createElement('link');
+
       link.rel = 'icon';
+
       document.head.appendChild(link);
     }
+
     link.href = dataUrl;
   }
 
+  // ============================================
+  // TITLE BLINK
+  // ============================================
+
   function startTitleBlink(count) {
+
     if (_blinkInterval) return;
+
     let show = true;
+
     _blinkInterval = setInterval(() => {
+
       document.title = show
         ? `(${count}) Pesan Baru — Lawyers AI`
         : _originalTitle;
+
       show = !show;
+
     }, 1500);
   }
 
   function stopTitleBlink() {
+
     if (_blinkInterval) {
+
       clearInterval(_blinkInterval);
+
       _blinkInterval = null;
     }
+
     document.title = _originalTitle;
   }
 
-  // Hentikan blink saat tab aktif lagi
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      // FIX: ambil ulang judul asli sebelum blink menimpa
-      if (_blinkInterval) stopTitleBlink();
-      if (_unreadCount > 0) {
-        document.title = `(${_unreadCount}) ${_originalTitle}`;
+  document.addEventListener(
+    'visibilitychange',
+    () => {
+
+      if (!document.hidden) {
+
+        stopTitleBlink();
+
+        if (_unreadCount > 0) {
+
+          document.title =
+            `(${_unreadCount}) ${_originalTitle}`;
+        }
       }
     }
-  });
+  );
 
-  // ════════════════════════════════════════
-  // 4. LISTEN PESAN MASUK REALTIME
-  // ════════════════════════════════════════
-  async function listenIncomingMessages(userId) {
-    if (!window.supabase || !userId) return;
-
-    // Hitung unread awal
-    await refreshUnreadCount(userId);
-
-    // Subscribe realtime
-    window.supabase
-      .channel('push-inbox-' + userId)
-      .on('postgres_changes', {
-        event:  'INSERT',
-        schema: 'public',
-        table:  'messages',
-        filter: `receiver_id=eq.${userId}`,
-      }, async (payload) => {
-        const msg = payload.new;
-
-        // Update badge
-        await refreshUnreadCount(userId);
-
-        // Tampilkan toast jika tab aktif
-        if (!document.hidden && window.showLALToast) {
-          window.showLALToast('info', 'Pesan Baru', msg.content?.substring(0, 60) || 'Ada pesan baru masuk.');
-        }
-      })
-      .subscribe();
-  }
+  // ============================================
+  // REFRESH UNREAD
+  // ============================================
 
   async function refreshUnreadCount(userId) {
+
+    if (!window.supabase || !userId) return;
+
     try {
-      const { count, error } = await window.supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', userId)
-        .eq('is_read', false);
+
+      const { count, error } =
+        await window.supabase
+          .from('messages')
+          .select('*', {
+            count: 'exact',
+            head: true
+          })
+          .eq('receiver_id', userId)
+          .eq('is_read', false);
 
       if (error) {
-        console.warn('refreshUnreadCount error:', error.message);
+
+        console.warn(
+          'refreshUnreadCount:',
+          error.message
+        );
+
         return;
       }
 
       setTabBadge(count || 0);
-    } catch (e) {
-      console.warn('refreshUnreadCount exception:', e);
+
+    } catch (err) {
+
+      console.warn(
+        'refreshUnreadCount exception:',
+        err
+      );
     }
   }
 
-  // Expose untuk reset badge saat buka halaman chat
-  window.clearInboxBadge = async function (userId) {
-    if (!userId) return;
-    setTabBadge(0);
-    // FIX: tangkap error dari Supabase update
-    try {
-      const { error } = await window.supabase
-        .from('messages')
-        .update({ is_read: true })
-        .eq('receiver_id', userId)
-        .eq('is_read', false);
+  // ============================================
+  // REALTIME MESSAGE LISTENER
+  // ============================================
 
-      if (error) console.warn('clearInboxBadge update error:', error.message);
-    } catch (e) {
-      console.warn('clearInboxBadge exception:', e);
-    }
-  };
+  async function listenIncomingMessages(userId) {
 
-  // ════════════════════════════════════════
-  // 5. TOMBOL AKTIFKAN NOTIFIKASI (UI)
-  // ════════════════════════════════════════
-  window.showNotifPrompt = function () {
-    // FIX: Notification mungkin tidak tersedia (iOS WebView lama, beberapa browser)
-    if (!('Notification' in window)) {
-      console.warn('Notification API tidak tersedia di browser ini.');
-      return;
-    }
+    if (!window.supabase || !userId) return;
 
-    if (Notification.permission === 'granted') {
-      if (window.showLALToast) showLALToast('success', 'Notifikasi Aktif', 'Anda sudah mengaktifkan notifikasi.');
-      return;
-    }
-    if (Notification.permission === 'denied') {
-      if (window.showLALToast) showLALToast('warning', 'Notifikasi Diblokir', 'Aktifkan notifikasi di pengaturan browser Anda.');
-      return;
-    }
+    // cleanup old
+    if (_messageChannel) {
 
-    // Tampilkan banner soft prompt
-    const banner = document.createElement('div');
-    banner.id = 'notif-prompt-banner';
-    banner.innerHTML = `
-      <div style="
-        position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
-        background:#1E293B;border:1px solid rgba(59,130,246,0.3);
-        border-radius:20px;padding:16px 20px;z-index:9999;
-        display:flex;align-items:center;gap:14px;
-        box-shadow:0 8px 32px rgba(0,0,0,0.4);
-        max-width:calc(100vw - 32px);width:380px;
-        animation: slideUp 0.3s ease;">
-        <div style="width:40px;height:40px;background:rgba(59,130,246,0.15);border-radius:12px;
-          display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <i class='fas fa-bell' style='color:#60A5FA;font-size:16px;'></i>
-        </div>
-        <div style="flex:1;min-width:0;">
-          <p style="font-size:13px;font-weight:800;color:#F1F5F9;margin:0 0 3px;">Aktifkan Notifikasi</p>
-          <p style="font-size:11px;color:#64748B;margin:0;line-height:1.5;">
-            Dapat notif saat advokat membalas pesan Anda.
-          </p>
-        </div>
-        <div style="display:flex;gap:8px;flex-shrink:0;">
-          <button onclick="
-            document.getElementById('notif-prompt-banner')?.remove();
-            window._pushInit?.requestPermission();"
-            style="padding:8px 14px;background:#2563EB;border:none;border-radius:10px;
-              font-size:11px;font-weight:800;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;">
-            Aktifkan
-          </button>
-          <button onclick="document.getElementById('notif-prompt-banner')?.remove();"
-            style="padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.1);
-              border-radius:10px;font-size:11px;color:#64748B;cursor:pointer;font-family:inherit;">
-            <i class='fas fa-times'></i>
-          </button>
-        </div>
-      </div>
-      <style>
-        @keyframes slideUp {
-          from { opacity:0; transform:translateX(-50%) translateY(20px); }
-          to   { opacity:1; transform:translateX(-50%) translateY(0); }
-        }
-      </style>`;
-    document.body.appendChild(banner);
-  };
-
-  // ════════════════════════════════════════
-  // 6. BOOT
-  // ════════════════════════════════════════
-  window._pushInit = {
-    requestPermission: async function () {
       try {
-        const { data: { session } } = await window.supabase.auth.getSession();
-        if (!session) return;
-        await subscribePush(session.user.id);
-      } catch (e) {
-        console.error('requestPermission error:', e);
-      }
+        _messageChannel.unsubscribe();
+      } catch (_) {}
     }
-  };
 
-  window.addEventListener('DOMContentLoaded', async () => {
-    // FIX: capture _originalTitle di sini, setelah DOM siap dan judul ter-set
-    _originalTitle = document.title;
+    await refreshUnreadCount(userId);
 
-    // Daftar SW
-    await registerSW();
+    _messageChannel =
+      window.supabase
+        .channel(
+          'push-inbox-' + userId
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter:
+              `receiver_id=eq.${userId}`,
+          },
+          async (payload) => {
 
-    // Cek sesi user
-    try {
-      if (!window.supabase) return;
-      const { data: { session } } = await window.supabase.auth.getSession();
-      if (!session) return;
+            const msg = payload.new;
 
-      const userId = session.user.id;
+            // debounce refresh
+            clearTimeout(_refreshTimeout);
 
-      // Listen pesan masuk
-      await listenIncomingMessages(userId);
+            _refreshTimeout =
+              setTimeout(async () => {
 
-      // Subscribe push jika sudah izin
-      if (!('Notification' in window)) return; // browser tidak support
-      if (Notification.permission === 'granted') {
-        await subscribePush(userId);
-      } else if (Notification.permission === 'default') {
-        // Tampilkan soft prompt setelah 3 detik, hanya di halaman chat
-        setTimeout(() => {
-          const isChat = window.location.pathname.includes('chat') ||
-                         window.location.pathname.includes('konsultasi');
-          if (isChat) window.showNotifPrompt?.();
-        }, 3000);
+                await refreshUnreadCount(userId);
+
+              }, 250);
+
+            // toast only when active
+            if (
+              !document.hidden &&
+              window.showToast
+            ) {
+
+              const preview =
+                String(
+                  msg.content || ''
+                ).substring(0, 60);
+
+              window.showToast(
+                preview || 'Pesan baru masuk.',
+                'info'
+              );
+            }
+          }
+        )
+        .subscribe((status) => {
+
+          console.log(
+            '[Push RT]',
+            status
+          );
+        });
+  }
+
+  // ============================================
+  // CLEAR BADGE
+  // ============================================
+
+  window.clearInboxBadge =
+    async function(userId) {
+
+      if (!userId) return;
+
+      setTabBadge(0);
+
+      try {
+
+        const { error } =
+          await window.supabase
+            .from('messages')
+            .update({
+              is_read: true
+            })
+            .eq('receiver_id', userId)
+            .eq('is_read', false);
+
+        if (error) {
+
+          console.warn(
+            'clearInboxBadge:',
+            error.message
+          );
+        }
+
+      } catch (err) {
+
+        console.warn(
+          'clearInboxBadge exception:',
+          err
+        );
       }
-    } catch (e) {
-      console.warn('[PushInit] Boot error:', e);
-    }
-  });
+    };
 
-  // ── UTIL: VAPID key converter ──
+  // ============================================
+  // SHOW NOTIFICATION PROMPT
+  // ============================================
+
+  window.showNotifPrompt =
+    function() {
+
+      if (!('Notification' in window)) {
+
+        console.warn(
+          'Notification unsupported'
+        );
+
+        return;
+      }
+
+      if (
+        Notification.permission ===
+        'granted'
+      ) {
+
+        if (window.showToast) {
+
+          window.showToast(
+            'Notifikasi sudah aktif',
+            'success'
+          );
+        }
+
+        return;
+      }
+
+      if (
+        Notification.permission ===
+        'denied'
+      ) {
+
+        if (window.showToast) {
+
+          window.showToast(
+            'Aktifkan notifikasi di browser.',
+            'warning'
+          );
+        }
+
+        return;
+      }
+
+      Notification
+        .requestPermission()
+        .then(result => {
+
+          if (
+            result === 'granted'
+          ) {
+
+            if (window.showToast) {
+
+              window.showToast(
+                'Notifikasi berhasil diaktifkan',
+                'success'
+              );
+            }
+          }
+        });
+    };
+
+  // ============================================
+  // HELPERS
+  // ============================================
+
   function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+
+    const padding =
+      '='.repeat(
+        (4 - base64String.length % 4) % 4
+      );
+
+    const base64 =
+      (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData =
+      atob(base64);
+
+    const outputArray =
+      new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+
+      outputArray[i] =
+        rawData.charCodeAt(i);
+    }
+
+    return outputArray;
+  }
+
+  // ============================================
+  // INIT
+  // ============================================
+
+  async function init() {
+
+    try {
+
+      await registerSW();
+
+      if (!window.supabase) return;
+
+      const {
+        data: { user }
+      } =
+        await window.supabase
+          .auth
+          .getUser();
+
+      if (!user) return;
+
+      await subscribePush(user.id);
+
+      await listenIncomingMessages(user.id);
+
+      console.log(
+        '✅ Push system initialized'
+      );
+
+    } catch (err) {
+
+      console.error(
+        'Push init failed:',
+        err
+      );
+    }
+  }
+
+  // ============================================
+  // CLEANUP
+  // ============================================
+
+  window.addEventListener(
+    'beforeunload',
+    () => {
+
+      try {
+
+        if (_messageChannel) {
+          _messageChannel.unsubscribe();
+        }
+
+      } catch (_) {}
+    }
+  );
+
+  // ============================================
+  // START
+  // ============================================
+
+  if (
+    document.readyState ===
+    'loading'
+  ) {
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      init
+    );
+
+  } else {
+
+    init();
   }
 
 })();
