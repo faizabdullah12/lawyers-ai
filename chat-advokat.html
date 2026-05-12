@@ -776,7 +776,7 @@
                         <div style="display:flex;align-items:center;gap:6px;margin-top:1px">
                             <span id="adv-spec" style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.08em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
                             <span id="adv-status-text" style="font-size:10px;font-weight:600;color:var(--text-3);flex-shrink:0">• offline</span>
-                            <span id="adv-typing" style="display:none;font-size:10px;font-weight:700;color:var(--emerald);flex-shrink:0">• mengetik...</span>
+                            <span id="adv-typing" style="display:none;font-size:10px;font-weight:700;color:var(--emerald);flex-shrink:0;animation:pulse-dot 1s infinite">• mengetik...</span>
                         </div>
                     </div>
                 </div>
@@ -788,7 +788,6 @@
                 </div>
             </div>
 
-            <!-- CHAT BOX — bersih, typing-row dibuat dinamis oleh renderMessages() -->
             <div id="chat-box"></div>
 
             <div id="upgrade-wall">
@@ -931,7 +930,9 @@ let currentUser = null, currentProfile = null;
 let receiverId = new URLSearchParams(location.search).get('id');
 let advData = null, advName = '', lawyerTableId = null, activeConvId = null;
 let isPremium = false, allConvs = [], attachedFile = null;
-let rtChannel = null, rtOnlineChannel = null, typingHideTimer = null, typingDebounce = null;
+let rtChannel = null, rtOnlineChannel = null;
+let typingHideTimer = null, typingStopTimer = null;
+let _lastTypingSent = 0;
 let autoMsgSent = false, _advAvatarCache = null;
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
@@ -963,6 +964,8 @@ function applyOnlineStatus(lastSeen) {
     const dot = document.getElementById('online-dot');
     const statusText = document.getElementById('adv-status-text');
     if (!dot || !statusText) return;
+    // Jangan override kalau sedang mengetik
+    if (document.getElementById('adv-typing')?.style.display !== 'none') return;
     if (!lastSeen) {
         dot.className = 'online-badge offline';
         statusText.textContent = '• offline';
@@ -1008,6 +1011,36 @@ async function updateMyLastSeen() {
     try {
         await window.supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', currentUser.id);
     } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// TYPING — SHOW / HIDE
+// ══════════════════════════════════════════════
+function showTyping() {
+    const advTypingEl = document.getElementById('adv-typing');
+    const statusTextEl = document.getElementById('adv-status-text');
+    const tr = document.getElementById('typing-row');
+
+    if (advTypingEl) advTypingEl.style.display = '';
+    if (statusTextEl) statusTextEl.style.display = 'none';
+    if (tr) {
+        tr.style.display = 'flex';
+        const box = document.getElementById('chat-box');
+        if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    clearTimeout(typingHideTimer);
+    typingHideTimer = setTimeout(() => hideTyping(), 3500);
+}
+
+function hideTyping() {
+    const advTypingEl = document.getElementById('adv-typing');
+    const statusTextEl = document.getElementById('adv-status-text');
+    const tr = document.getElementById('typing-row');
+
+    if (advTypingEl) advTypingEl.style.display = 'none';
+    if (statusTextEl) statusTextEl.style.display = '';
+    if (tr) tr.style.display = 'none';
 }
 
 // ══════════════════════════════════════════════
@@ -1180,11 +1213,16 @@ function showChatView(){
 // LOAD CHAT MODE
 // ══════════════════════════════════════════════
 async function loadChatMode() {
-    if(rtChannel){window.supabase.removeChannel(rtChannel);rtChannel=null;}
-    if(rtOnlineChannel){window.supabase.removeChannel(rtOnlineChannel);rtOnlineChannel=null;}
+    // Bersihkan channel lama
+    if(rtChannel){ try{ window.supabase.removeChannel(rtChannel); }catch(e){} rtChannel=null; }
+    if(rtOnlineChannel){ try{ window.supabase.removeChannel(rtOnlineChannel); }catch(e){} rtOnlineChannel=null; }
     clearInterval(window._onlineCheckInterval);
+    clearTimeout(typingHideTimer);
+    clearTimeout(typingStopTimer);
+    hideTyping();
 
-    advData=null;autoMsgSent=false;_advAvatarCache=null;
+    advData=null; autoMsgSent=false; _advAvatarCache=null;
+    _lastTypingSent=0;
     document.getElementById('adv-name').textContent='Memuat...';
     document.getElementById('adv-spec').textContent='';
     applyOnlineStatus(null);
@@ -1263,7 +1301,8 @@ async function renderMessages() {
                 ${isMe?(showAvatar?avatarHtml:avatarSpace):''}
             </div>`;
     });
-    // Typing row — dibuat di sini, dikontrol oleh showTyping()
+
+    // Typing row — selalu ada di akhir, dikontrol show/hide
     box.innerHTML+=`
         <div id="typing-row" class="typing-row" style="display:none">
             <img src="${esc(bubbleAdvAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
@@ -1276,6 +1315,115 @@ async function renderMessages() {
 }
 
 // ══════════════════════════════════════════════
+// REALTIME — SUBSCRIBE (Hybrid: Broadcast + postgres_changes)
+// ══════════════════════════════════════════════
+function subscribeRT() {
+    if(!receiverId) return;
+
+    // Channel name simetris — sama untuk kedua sisi percakapan
+    const channelName = 'chat-' + [currentUser.id, receiverId].sort().join('-');
+
+    rtChannel = window.supabase.channel(channelName, {
+        config: { broadcast: { self: false } }
+    })
+        // ── 1. Pesan baru masuk via postgres_changes ──
+        .on('postgres_changes', {
+            event: 'INSERT', schema: 'public', table: 'messages'
+        }, p => {
+            const m = p.new;
+            const rel = (m.sender_id===currentUser.id && m.receiver_id===receiverId)
+                     || (m.sender_id===receiverId && m.receiver_id===currentUser.id);
+            if(rel){
+                renderMessages();
+                if(m.sender_id !== currentUser.id) playNotifSound();
+            }
+        })
+        // ── 2. Typing: via Broadcast (prioritas utama, ~50ms latensi) ──
+        .on('broadcast', { event: 'typing' }, ({ payload }) => {
+            if(payload?.from === receiverId) {
+                showTyping();
+            }
+        })
+        // ── 3. Typing: via postgres_changes pada tabel typing_status (fallback) ──
+        .on('postgres_changes', {
+            event: 'UPDATE', schema: 'public', table: 'typing_status'
+        }, p => {
+            const row = p.new;
+            if(!row) return;
+            if(row.user_id === receiverId && row.target_id === currentUser.id) {
+                if(row.is_typing === true) {
+                    showTyping();
+                } else {
+                    // Advokat berhenti mengetik
+                    clearTimeout(typingHideTimer);
+                    hideTyping();
+                }
+            }
+        })
+        // ── 4. Typing INSERT — untuk baris pertama kali dibuat ──
+        .on('postgres_changes', {
+            event: 'INSERT', schema: 'public', table: 'typing_status'
+        }, p => {
+            const row = p.new;
+            if(!row) return;
+            if(row.user_id === receiverId && row.target_id === currentUser.id && row.is_typing === true) {
+                showTyping();
+            }
+        })
+        .subscribe((status, err) => {
+            if(err) console.error('[RT] subscribe error:', err);
+        });
+}
+
+// ══════════════════════════════════════════════
+// NOTIFY TYPING — Hybrid: Broadcast + DB upsert
+// ══════════════════════════════════════════════
+async function notifyTyping() {
+    if(!receiverId || !currentUser) return;
+
+    const now = Date.now();
+
+    // Throttle: kirim max 1x per 2 detik agar tidak spam
+    if(now - _lastTypingSent > 2000) {
+        _lastTypingSent = now;
+
+        // Broadcast dulu (instan, tidak perlu DB)
+        if(rtChannel) {
+            try {
+                await rtChannel.send({
+                    type: 'broadcast',
+                    event: 'typing',
+                    payload: { from: currentUser.id }
+                });
+            } catch(e) {}
+        }
+
+        // Upsert ke DB sebagai fallback (untuk penerima yang baru join channel)
+        try {
+            await window.supabase.from('typing_status').upsert({
+                user_id: currentUser.id,
+                target_id: receiverId,
+                is_typing: true,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,target_id' });
+        } catch(e) {}
+    }
+
+    // Set is_typing = false otomatis setelah 3 detik berhenti mengetik
+    clearTimeout(typingStopTimer);
+    typingStopTimer = setTimeout(async () => {
+        try {
+            await window.supabase.from('typing_status').upsert({
+                user_id: currentUser.id,
+                target_id: receiverId,
+                is_typing: false,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,target_id' });
+        } catch(e) {}
+    }, 3000);
+}
+
+// ══════════════════════════════════════════════
 // SEND MESSAGE
 // ══════════════════════════════════════════════
 async function sendMsg() {
@@ -1285,10 +1433,29 @@ async function sendMsg() {
     const text=inp.value.trim();
     if(!text&&!attachedFile) return;
     const btn=document.getElementById('send-btn');
-    btn.disabled=true;inp.value='';autoResize(inp);
+    btn.disabled=true; inp.value=''; autoResize(inp);
+
+    // Reset typing state saat kirim pesan
+    clearTimeout(typingStopTimer);
+    try {
+        await window.supabase.from('typing_status').upsert({
+            user_id: currentUser.id,
+            target_id: receiverId,
+            is_typing: false,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,target_id' });
+    } catch(e) {}
+
     try{
         const msgText=text||`📎 ${attachedFile?.name}`;
-        await window.supabase.from('messages').insert([{sender_id:currentUser.id,receiver_id:receiverId,lawyer_id:lawyerTableId,conversation_id:activeConvId,message_text:msgText,is_read:false}]);
+        await window.supabase.from('messages').insert([{
+            sender_id: currentUser.id,
+            receiver_id: receiverId,
+            lawyer_id: lawyerTableId,
+            conversation_id: activeConvId,
+            message_text: msgText,
+            is_read: false
+        }]);
         clearAttach();
         const cv=allConvs.find(c=>c.pid===receiverId);
         if(cv){cv.preview=msgText;cv.isMe=true;cv.time='Baru';renderConvList(allConvs);}
@@ -1306,86 +1473,6 @@ function handleFileAttach(inp){
     document.getElementById('file-preview').style.display='block';
 }
 function clearAttach(){attachedFile=null;document.getElementById('file-input').value='';document.getElementById('file-preview').style.display='none';}
-
-// ══════════════════════════════════════════════
-// REALTIME — CHAT + TYPING
-// ══════════════════════════════════════════════
-function subscribeRT() {
-    if(!receiverId) return;
-
-    rtChannel = window.supabase.channel('rt-' + currentUser.id + '-' + receiverId)
-        // Listen pesan baru masuk
-        .on('postgres_changes', {event:'INSERT', schema:'public', table:'messages'}, p => {
-            const m = p.new;
-            const rel = (m.sender_id===currentUser.id && m.receiver_id===receiverId)
-                     || (m.sender_id===receiverId && m.receiver_id===currentUser.id);
-            if(rel){ renderMessages(); if(m.sender_id!==currentUser.id) playNotifSound(); }
-        })
-        // Listen typing_status — deteksi lawan sedang mengetik
-        .on('postgres_changes', {event:'*', schema:'public', table:'typing_status',
-            filter: `user_id=eq.${receiverId}`}, p => {
-            const row = p.new || p.old;
-            if(row?.target_id === currentUser.id && row?.is_typing === true) {
-                showTyping();
-            }
-        })
-        .subscribe();
-}
-
-// ── SHOW TYPING — mengontrol #typing-row + teks di header ──
-function showTyping(){
-    // Tampilkan label "mengetik..." di header
-    const advTypingEl = document.getElementById('adv-typing');
-    if(advTypingEl) advTypingEl.style.display = '';
-
-    // Sembunyikan status online sementara
-    const statusTextEl = document.getElementById('adv-status-text');
-    if(statusTextEl) statusTextEl.style.display = 'none';
-
-    // Tampilkan bubble typing di chat box
-    const tr = document.getElementById('typing-row');
-    if(tr){
-        tr.style.display = 'flex';
-        const box = document.getElementById('chat-box');
-        if(box) box.scrollTop = box.scrollHeight;
-    }
-
-    // Reset timer — sembunyikan setelah 3.2 detik tanpa sinyal baru
-    clearTimeout(typingHideTimer);
-    typingHideTimer = setTimeout(() => {
-        if(advTypingEl) advTypingEl.style.display = 'none';
-        if(statusTextEl) statusTextEl.style.display = '';
-        if(tr) tr.style.display = 'none';
-    }, 3200);
-}
-
-// Upsert is_typing=true ke DB, lalu set false setelah 3 detik berhenti ketik
-let typingStopTimer = null;
-async function notifyTyping(){
-    if(!receiverId || !currentUser) return;
-    // Set is_typing = true
-    try {
-        await window.supabase.from('typing_status').upsert({
-            user_id: currentUser.id,
-            target_id: receiverId,
-            is_typing: true,
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,target_id' });
-    } catch(e) {}
-
-    // Reset stop timer — set false setelah 3 detik berhenti ketik
-    clearTimeout(typingStopTimer);
-    typingStopTimer = setTimeout(async () => {
-        try {
-            await window.supabase.from('typing_status').upsert({
-                user_id: currentUser.id,
-                target_id: receiverId,
-                is_typing: false,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,target_id' });
-        } catch(e) {}
-    }, 3000);
-}
 
 // ══════════════════════════════════════════════
 // AUTO MESSAGE
@@ -1476,9 +1563,7 @@ function reportFromModal() {
         message: 'Kamu akan diarahkan ke formulir pengaduan. Laporan palsu dapat berakibat hukum. Lanjutkan?',
         confirmText: 'Ya, Buat Laporan',
         cancelText: 'Batal',
-        onConfirm: () => {
-            window.location.href = 'pengaduan.html?id=' + targetId;
-        }
+        onConfirm: () => { window.location.href = 'pengaduan.html?id=' + targetId; }
     });
 }
 
