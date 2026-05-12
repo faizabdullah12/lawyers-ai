@@ -1498,21 +1498,26 @@ async function notifyTyping() {
 
         window.supabase
             .from('typing_status')
-            .upsert({
+           .upsert({
 
-                user_id:
-                    currentUser.id,
+    user_id:
+        currentUser.id,
 
-                target_id:
-                    receiverId,
+    target_id:
+        receiverId,
 
-                is_typing:
-                    true,
+    is_typing:
+        true,
 
-                updated_at:
-                    new Date().toISOString()
+    updated_at:
+        new Date().toISOString()
 
-            });
+}, {
+
+    onConflict:
+        'user_id,target_id'
+
+});
 
     }
 
@@ -1521,23 +1526,27 @@ async function notifyTyping() {
         setTimeout(() => {
 
             window.supabase
-                .from('typing_status')
-                .upsert({
+    .from('typing_status')
+    .upsert({
 
-                    user_id:
-                        currentUser.id,
+        user_id:
+            currentUser.id,
 
-                    target_id:
-                        receiverId,
+        target_id:
+            receiverId,
 
-                    is_typing:
-                        false,
+        is_typing:
+            false,
 
-                    updated_at:
-                        new Date().toISOString()
+        updated_at:
+            new Date().toISOString()
 
-                });
+    }, {
 
+        onConflict:
+            'user_id,target_id'
+
+    });
         }, 1500);
 }
 
