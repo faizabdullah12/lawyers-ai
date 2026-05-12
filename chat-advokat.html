@@ -997,15 +997,114 @@ async function updateOnlineStatus() {
     } catch(e) {}
 }
 
-function subscribeOnlineRealtime() {
-    if (rtOnlineChannel) { window.supabase.removeChannel(rtOnlineChannel); rtOnlineChannel = null; }
-    if (!receiverId) return;
-    rtOnlineChannel = window.supabase.channel('online-status-' + receiverId)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${receiverId}` },
-            (payload) => { applyOnlineStatus(payload.new?.last_seen || null); })
-        .subscribe();
-}
+// ═══════════════════════════════════════
+// REALTIME TYPING LISTENER
+// ═══════════════════════════════════════
 
+let typingRealtimeChannel = null;
+
+function subscribeTypingRealtime() {
+
+    if (
+        !window.supabase ||
+        !currentUser?.id ||
+        !receiverId
+    ) return;
+
+    // cleanup
+    if (typingRealtimeChannel) {
+
+        window.supabase.removeChannel(
+            typingRealtimeChannel
+        );
+    }
+
+    typingRealtimeChannel =
+
+        window.supabase
+
+            .channel(
+                'typing-' + currentUser.id
+            )
+
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'typing_status'
+                },
+
+                (payload) => {
+
+                    try {
+
+                        const data =
+                            payload.new;
+
+                        if (!data) return;
+
+                        // hanya lawan chat
+                        if (
+                            data.user_id !==
+                            receiverId
+                        ) return;
+
+                        // hanya untuk saya
+                        if (
+                            data.target_id !==
+                            currentUser.id
+                        ) return;
+
+                        const typingEl =
+                            document.getElementById(
+                                'adv-typing'
+                            );
+
+                        const statusEl =
+                            document.getElementById(
+                                'adv-status-text'
+                            );
+
+                        if (!typingEl) return;
+
+                        if (
+                            data.is_typing
+                        ) {
+
+                            typingEl.style.display =
+                                'inline';
+
+                            if (statusEl) {
+
+                                statusEl.style.display =
+                                    'none';
+                            }
+
+                        } else {
+
+                            typingEl.style.display =
+                                'none';
+
+                            if (statusEl) {
+
+                                statusEl.style.display =
+                                    'inline';
+                            }
+                        }
+
+                    } catch (err) {
+
+                        console.warn(
+                            'typing realtime',
+                            err
+                        );
+                    }
+                }
+            )
+
+            .subscribe();
+}
 async function updateMyLastSeen() {
     if (!currentUser) return;
     try {
@@ -1252,6 +1351,7 @@ async function loadChatMode() {
     await renderMessages();
     subscribeRT();
     subscribeOnlineRealtime();
+    subscribeTypingRealtime();
     await updateOnlineStatus();
     window._onlineCheckInterval = setInterval(updateOnlineStatus, 15000);
     await checkAutoMsg();
@@ -1379,48 +1479,66 @@ function subscribeRT() {
 // NOTIFY TYPING — Hybrid: Broadcast + DB upsert
 // ══════════════════════════════════════════════
 async function notifyTyping() {
-    if(!receiverId || !currentUser) return;
+
+    if (
+        !window.supabase ||
+        !currentUser?.id ||
+        !receiverId
+    ) return;
+
+    // tampil realtime
+    clearTimeout(typingStopTimer);
 
     const now = Date.now();
 
-    // Throttle: kirim max 1x per 2 detik agar tidak spam
-    if(now - _lastTypingSent > 2000) {
+    // throttle
+    if (now - _lastTypingSent > 1200) {
+
         _lastTypingSent = now;
 
-        // Broadcast dulu (instan, tidak perlu DB)
-        if(rtChannel) {
-            try {
-                await rtChannel.send({
-                    type: 'broadcast',
-                    event: 'typing',
-                    payload: { from: currentUser.id }
-                });
-            } catch(e) {}
-        }
+        window.supabase
+            .from('typing_status')
+            .upsert({
 
-        // Upsert ke DB sebagai fallback (untuk penerima yang baru join channel)
-        try {
-            await window.supabase.from('typing_status').upsert({
-                user_id: currentUser.id,
-                target_id: receiverId,
-                is_typing: true,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,target_id' });
-        } catch(e) {}
+                user_id:
+                    currentUser.id,
+
+                target_id:
+                    receiverId,
+
+                is_typing:
+                    true,
+
+                updated_at:
+                    new Date().toISOString()
+
+            });
+
     }
 
-    // Set is_typing = false otomatis setelah 3 detik berhenti mengetik
-    clearTimeout(typingStopTimer);
-    typingStopTimer = setTimeout(async () => {
-        try {
-            await window.supabase.from('typing_status').upsert({
-                user_id: currentUser.id,
-                target_id: receiverId,
-                is_typing: false,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,target_id' });
-        } catch(e) {}
-    }, 3000);
+    // auto stop
+    typingStopTimer =
+        setTimeout(() => {
+
+            window.supabase
+                .from('typing_status')
+                .upsert({
+
+                    user_id:
+                        currentUser.id,
+
+                    target_id:
+                        receiverId,
+
+                    is_typing:
+                        false,
+
+                    updated_at:
+                        new Date().toISOString()
+
+                });
+
+        }, 1500);
 }
 
 // ══════════════════════════════════════════════
