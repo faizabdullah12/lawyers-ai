@@ -230,7 +230,7 @@
             border: 1.5px solid var(--border-2);
         }
 
-        /* ─── ONLINE BADGE — realtime ─── */
+        /* ─── ONLINE BADGE ─── */
         .online-badge {
             position: absolute; bottom: -2px; right: -2px;
             width: 12px; height: 12px; border-radius: 50%;
@@ -788,25 +788,8 @@
                 </div>
             </div>
 
-            <div id="chat-box">
-                ```html id="yk63s0"
-<div
-    id="typingIndicator"
-    style="
-        display:none;
-        padding:8px 14px;
-        margin:8px 0 12px;
-        font-size:13px;
-        color:#94A3B8;
-        font-style:italic;
-        animation:pulseTyping 1.2s infinite;
-    "
->
-    sedang mengetik...
-</div>
-```
-
-            </div>
+            <!-- CHAT BOX — bersih, typing-row dibuat dinamis oleh renderMessages() -->
+            <div id="chat-box"></div>
 
             <div id="upgrade-wall">
                 <div style="display:flex;align-items:center;gap:14px">
@@ -934,7 +917,6 @@
             <a id="m-profile-link" href="#" style="display:flex;width:100%;margin-top:8px;padding:11px;border-radius:12px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);color:#60A5FA;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;text-align:center;text-decoration:none;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;min-height:44px;">
                 <i class="fas fa-id-card"></i>Lihat Profil Lengkap
             </a>
-            <!-- ── REPORT BUTTON (BARU) ── -->
             <button class="btn-report-modal" onclick="reportFromModal()">
                 <i class="fas fa-flag" style="font-size:11px"></i>
                 <span>Laporkan Advokat</span>
@@ -1281,6 +1263,7 @@ async function renderMessages() {
                 ${isMe?(showAvatar?avatarHtml:avatarSpace):''}
             </div>`;
     });
+    // Typing row — dibuat di sini, dikontrol oleh showTyping()
     box.innerHTML+=`
         <div id="typing-row" class="typing-row" style="display:none">
             <img src="${esc(bubbleAdvAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
@@ -1339,16 +1322,33 @@ function subscribeRT() {
         .subscribe();
 }
 
+// ── SHOW TYPING — mengontrol #typing-row + teks di header ──
 function showTyping(){
-    document.getElementById('adv-typing').style.display='';
-    const tr=document.getElementById('typing-row');
-    if(tr){tr.style.display='flex';document.getElementById('chat-box').scrollTop=999999;}
+    // Tampilkan label "mengetik..." di header
+    const advTypingEl = document.getElementById('adv-typing');
+    if(advTypingEl) advTypingEl.style.display = '';
+
+    // Sembunyikan status online sementara
+    const statusTextEl = document.getElementById('adv-status-text');
+    if(statusTextEl) statusTextEl.style.display = 'none';
+
+    // Tampilkan bubble typing di chat box
+    const tr = document.getElementById('typing-row');
+    if(tr){
+        tr.style.display = 'flex';
+        const box = document.getElementById('chat-box');
+        if(box) box.scrollTop = box.scrollHeight;
+    }
+
+    // Reset timer — sembunyikan setelah 3.2 detik tanpa sinyal baru
     clearTimeout(typingHideTimer);
-    typingHideTimer=setTimeout(()=>{
-        const el=document.getElementById('adv-typing');if(el)el.style.display='none';
-        const trEl=document.getElementById('typing-row');if(trEl)trEl.style.display='none';
-    },3200);
+    typingHideTimer = setTimeout(() => {
+        if(advTypingEl) advTypingEl.style.display = 'none';
+        if(statusTextEl) statusTextEl.style.display = '';
+        if(tr) tr.style.display = 'none';
+    }, 3200);
 }
+
 function notifyTyping(){
     if(!receiverId||!rtChannel) return;
     clearTimeout(typingDebounce);
@@ -1429,7 +1429,7 @@ function copyWA(){
 }
 
 // ══════════════════════════════════════════════
-// REPORT FROM MODAL  ← BARU
+// REPORT FROM MODAL
 // ══════════════════════════════════════════════
 function reportFromModal() {
     closeContactModal();
