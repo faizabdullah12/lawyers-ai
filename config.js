@@ -27,15 +27,32 @@ window.CONFIG = {
         return;
     }
     try {
-        window.supabase = supabase.createClient(supabaseUrl, supabaseKey, {
-            auth: {
-                storage: window.localStorage,
-                storageKey: 'lawyers-ai-auth',
-                autoRefreshToken: true,
-                persistSession: true,
-                detectSessionInUrl: false
+       window.supabase = supabase.createClient(
+    supabaseUrl,
+    supabaseKey,
+    {
+        auth: {
+            storage: window.localStorage,
+            storageKey: 'lawyers-ai-auth',
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: false,
+            flowType: 'pkce'
+        },
+
+        realtime: {
+            params: {
+                eventsPerSecond: 10
             }
-        });
+        },
+
+        global: {
+            headers: {
+                'X-Client-Info': 'lawyers-ai-web'
+            }
+        }
+    }
+);
         console.log("✅ Supabase Connected");
     } catch (error) {
         console.error("❌ Supabase Connection Failed:", error);
@@ -53,26 +70,69 @@ window.APP_CONFIG = {
 };
 
 // ============================================
-// 4.1 REALTIME CHAT ENGINE
-// ============================================
-window.subscribeRT = function(targetId, userId, callback) {
-    if (!targetId || !userId) return null;
-    window.supabase.removeAllChannels();
-    return window.supabase
-        .channel('public:messages:' + userId)
-        .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages'
-        }, (payload) => {
-            const newMsg = payload.new;
-            const isRelevant = (newMsg.sender_id === targetId && newMsg.receiver_id === userId) ||
-                               (newMsg.sender_id === userId && newMsg.receiver_id === targetId);
-            if (isRelevant && typeof callback === 'function') callback(newMsg);
-        })
-        .subscribe();
-};
+                    channel.unsubscribe();
 
+                    console.log(
+                        '[RT] Cleanup:',
+                        key
+                    );
+
+                } catch (_) {}
+
+            });
+
+        } catch (err) {
+
+            console.warn(
+                '[RT] Cleanup failed:',
+                err
+            );
+        }
+
+        window.__ACTIVE_RT_CHANNELS__ = {};
+    };
+
+// ============================================
+// AUTO CLEANUP
+// ============================================
+
+window.addEventListener(
+    'beforeunload',
+    () => {
+
+        window.cleanupRealtime();
+    }
+);
+
+// ============================================
+// MOBILE NETWORK RECOVERY
+// ============================================
+
+window.addEventListener(
+    'online',
+    () => {
+
+        console.log(
+            '[RT] Network online'
+        );
+
+        window.__GLOBAL_RT_STATE__.connected =
+            true;
+    }
+);
+
+window.addEventListener(
+    'offline',
+    () => {
+
+        console.warn(
+            '[RT] Network offline'
+        );
+
+        window.__GLOBAL_RT_STATE__.connected =
+            false;
+    }
+);
 // ============================================
 // 5. UTILITY FUNCTIONS - SECURITY
 // ============================================
