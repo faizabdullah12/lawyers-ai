@@ -1,773 +1,363 @@
 // ============================================
-// push-init.js — Lawyers AI v2.0 Hardened
-// Push Notification + Badge + Realtime Stable
+// push-init.js — LawyersAI v3.0
+// Web Push + Realtime Badge + Favicon Badge
 // ============================================
 
 (function () {
 
-  // ============================================
-  // CONFIG
-  // ============================================
-
+  // ── CONFIG ──────────────────────────────────
+  // VAPID Public Key (harus sama dengan di Edge Function)
   const VAPID_PUBLIC_KEY =
-    'BM7ViMP2CNCk8y4CG5fz84gvIVOCF3uW9PaXTj0a9ynDLO0TuX6V0497g1W6hmYAZ0kLzk6dDyGMEod7nVbhW2w';
+    'BEvoH5TBhDValNm12840Q-dZzzJFR68yueF3v64ID1vSMZinsfwkwEctSDdtZfQOOU5bkWgp8JYARtnOfZQI34U';
 
   const SW_PATH = './sw.js';
 
-  // ============================================
-  // STATE
-  // ============================================
+  // ── STATE ───────────────────────────────────
+  let _swReg          = null;
+  let _unreadCount    = 0;
+  let _blinkInterval  = null;
+  let _originalTitle  = document.title || 'Lawyers AI';
+  let _msgChannel     = null;
+  let _refreshTimer   = null;
+  let _lastFaviconCnt = -1;
 
-  let _swReg = null;
-  let _unreadCount = 0;
-  let _blinkInterval = null;
-  let _originalTitle = document.title || 'Lawyers AI';
-
-  let _messageChannel = null;
-  let _refreshTimeout = null;
-
-  // ============================================
-  // SERVICE WORKER REGISTER
-  // ============================================
-
+  // ════════════════════════════════════════════
+  // 1. REGISTER SERVICE WORKER
+  // ════════════════════════════════════════════
   async function registerSW() {
-
-    if (!('serviceWorker' in navigator)) {
-      console.warn('Service Worker not supported');
-      return null;
-    }
-
+    if (!('serviceWorker' in navigator)) return null;
     try {
-
-      const reg = await navigator.serviceWorker.register(
-        SW_PATH,
-        { scope: './' }
-      );
-
+      const reg = await navigator.serviceWorker.register(SW_PATH, { scope: './' });
       _swReg = reg;
-
-      console.log('✅ SW registered:', reg.scope);
-
-      // auto update
       reg.addEventListener('updatefound', () => {
-
-        const newWorker = reg.installing;
-
-        if (!newWorker) return;
-
-        newWorker.addEventListener('statechange', () => {
-
-          if (
-            newWorker.state === 'installed' &&
-            navigator.serviceWorker.controller
-          ) {
-
-            console.log('🔄 New SW installed');
-
-            newWorker.postMessage({
-              type: 'SKIP_WAITING'
-            });
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            nw.postMessage({ type: 'SKIP_WAITING' });
           }
         });
       });
-
+      console.log('[Push] SW registered:', reg.scope);
       return reg;
-
-    } catch (err) {
-
-      console.warn('SW registration failed:', err);
-
+    } catch (e) {
+      console.warn('[Push] SW failed:', e);
       return null;
     }
   }
 
-  // ============================================
-  // PUSH SUBSCRIBE
-  // ============================================
-
+  // ════════════════════════════════════════════
+  // 2. SUBSCRIBE PUSH + SIMPAN KE SUPABASE
+  // ════════════════════════════════════════════
   async function subscribePush(userId) {
-
-    if (!_swReg) return null;
-
-    if (!('PushManager' in window)) {
-      console.warn('Push not supported');
-      return null;
-    }
-
-    if (!('Notification' in window)) {
-      console.warn('Notification API unavailable');
-      return null;
-    }
-
+    if (!_swReg || !('PushManager' in window) || !('Notification' in window)) return null;
     try {
-
-      const permission =
-        await Notification.requestPermission();
-
-      if (permission !== 'granted') {
-
-        console.warn('Notification denied');
-
-        return null;
+      let perm = Notification.permission;
+      if (perm === 'default') {
+        perm = await Notification.requestPermission();
       }
+      if (perm !== 'granted') return null;
 
-      let sub =
-        await _swReg.pushManager.getSubscription();
-
+      let sub = await _swReg.pushManager.getSubscription();
       if (!sub) {
-
-        sub =
-          await _swReg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey:
-              urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-          });
-      }
-
-      // save subscription
-      if (userId && window.supabase) {
-
-        const subJson = sub.toJSON();
-
-        const payload = {
-          user_id: userId,
-          endpoint: subJson.endpoint,
-          p256dh: subJson.keys?.p256dh,
-          auth: subJson.keys?.auth,
-          updated_at: new Date().toISOString(),
-        };
-
-        const { error } =
-          await window.supabase
-            .from('push_subscriptions')
-            .upsert(
-              payload,
-              { onConflict: 'user_id' }
-            );
-
-        if (error) {
-
-          console.error(
-            'Push save error:',
-            error.message
-          );
-
-        } else {
-
-          console.log(
-            '✅ Push subscription saved'
-          );
-        }
-      }
-
-      return sub;
-
-    } catch (err) {
-
-      console.error(
-        'Push subscribe error:',
-        err
-      );
-
-      return null;
-    }
-  }
-
-  // ============================================
-  // TAB BADGE
-  // ============================================
-
-  function setTabBadge(count) {
-
-    count = Number(count || 0);
-
-    _unreadCount = count;
-
-    // ============================================
-    // APP BADGE API
-    // ============================================
-
-    try {
-
-      if ('setAppBadge' in navigator) {
-
-        if (count > 0) {
-
-          navigator.setAppBadge(count);
-
-        } else {
-
-          navigator.clearAppBadge();
-        }
-      }
-
-    } catch (err) {
-
-      console.warn(
-        'AppBadge error:',
-        err
-      );
-    }
-
-    // ============================================
-    // FAVICON BADGE
-    // ============================================
-
-    updateFaviconBadge(count);
-
-    // ============================================
-    // TITLE BLINK
-    // ============================================
-
-    if (count > 0 && document.hidden) {
-
-      startTitleBlink(count);
-
-    } else {
-
-      stopTitleBlink();
-    }
-
-    // ============================================
-    // SIDEBAR BADGE
-    // ============================================
-
-    const badge =
-      document.getElementById(
-        'sidebar-badge-inbox'
-      );
-
-    if (badge) {
-
-      if (count > 0) {
-
-        badge.textContent =
-          count > 9 ? '9+' : String(count);
-
-        badge.classList.add('show');
-
-      } else {
-
-        badge.textContent = '0';
-
-        badge.classList.remove('show');
-      }
-    }
-
-    // ============================================
-    // SEND TO SERVICE WORKER
-    // ============================================
-
-    try {
-
-      if (_swReg?.active) {
-
-        _swReg.active.postMessage({
-          type: 'SET_BADGE',
-          count
+        sub = await _swReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
         });
       }
 
-    } catch (err) {
+      if (userId && window.supabase) {
+        const j = sub.toJSON();
+        const { error } = await window.supabase
+          .from('push_subscriptions')
+          .upsert({
+            user_id:    userId,
+            endpoint:   j.endpoint,
+            p256dh:     j.keys?.p256dh,
+            auth:       j.keys?.auth,
+            user_agent: navigator.userAgent.slice(0, 200),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' });
 
-      console.warn(
-        'SW badge message error:',
-        err
-      );
+        if (error) console.warn('[Push] Save sub error:', error.message);
+        else       console.log('[Push] Subscription saved');
+      }
+      return sub;
+    } catch (e) {
+      console.warn('[Push] Subscribe error:', e);
+      return null;
     }
   }
 
-  // ============================================
-  // FAVICON BADGE
-  // ============================================
+  // ════════════════════════════════════════════
+  // 3. BADGE — TAB + APP + FAVICON
+  // ════════════════════════════════════════════
+  function setTabBadge(count) {
+    _unreadCount = Math.max(0, Number(count || 0));
 
-  let _lastFaviconCount = -1;
-
-  function updateFaviconBadge(count) {
-
-    // prevent redraw spam
-    if (_lastFaviconCount === count) return;
-
-    _lastFaviconCount = count;
-
+    // App Badge API (Android Chrome, Edge)
     try {
+      if ('setAppBadge' in navigator) {
+        _unreadCount > 0
+          ? navigator.setAppBadge(_unreadCount)
+          : navigator.clearAppBadge();
+      }
+    } catch (_) {}
 
-      const canvas =
-        document.createElement('canvas');
+    // Favicon badge
+    updateFaviconBadge(_unreadCount);
 
-      canvas.width = 32;
-      canvas.height = 32;
+    // Title blink saat tab tidak aktif
+    if (_unreadCount > 0 && document.hidden) {
+      startTitleBlink(_unreadCount);
+    } else {
+      stopTitleBlink();
+      document.title = _unreadCount > 0
+        ? `(${_unreadCount}) ${_originalTitle}`
+        : _originalTitle;
+    }
 
-      const ctx =
-        canvas.getContext('2d');
+    // SW badge sync
+    try {
+      if (_swReg?.active) {
+        _swReg.active.postMessage({ type: 'SET_BADGE', count: _unreadCount });
+      }
+    } catch (_) {}
+  }
+
+  // ── Favicon dengan badge merah ──
+  function updateFaviconBadge(count) {
+    if (_lastFaviconCnt === count) return;
+    _lastFaviconCnt = count;
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 32;
+      const ctx = canvas.getContext('2d');
 
       const img = new Image();
-
       img.crossOrigin = 'anonymous';
-
       img.src = './favicon.ico';
 
-      img.onload = () => {
-
-        ctx.drawImage(img, 0, 0, 32, 32);
-
+      const draw = () => {
         if (count > 0) {
-          drawBadgeCircle(ctx, count);
+          // Lingkaran merah + angka
+          ctx.beginPath();
+          ctx.arc(22, 10, 9, 0, 2 * Math.PI);
+          ctx.fillStyle = '#EF4444';
+          ctx.fill();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(count > 9 ? '9+' : String(count), 22, 10);
         }
-
         applyFavicon(canvas.toDataURL());
       };
 
+      img.onload  = () => { ctx.drawImage(img, 0, 0, 32, 32); draw(); };
       img.onerror = () => {
-
+        // Fallback: buat icon "L" biru
         ctx.fillStyle = '#1E293B';
         ctx.fillRect(0, 0, 32, 32);
-
         ctx.fillStyle = '#3B82F6';
-
         ctx.font = 'bold 20px sans-serif';
-
         ctx.textAlign = 'center';
-
         ctx.fillText('L', 16, 24);
-
-        if (count > 0) {
-          drawBadgeCircle(ctx, count);
-        }
-
-        applyFavicon(canvas.toDataURL());
+        draw();
       };
-
-    } catch (err) {
-
-      console.warn(
-        'Favicon badge error:',
-        err
-      );
-    }
-  }
-
-  function drawBadgeCircle(ctx, count) {
-
-    const r = 9;
-    const x = 22;
-    const y = 10;
-
-    ctx.beginPath();
-
-    ctx.arc(x, y, r, 0, 2 * Math.PI);
-
-    ctx.fillStyle = '#EF4444';
-
-    ctx.fill();
-
-    ctx.fillStyle = '#FFFFFF';
-
-    ctx.font = 'bold 10px sans-serif';
-
-    ctx.textAlign = 'center';
-
-    ctx.textBaseline = 'middle';
-
-    ctx.fillText(
-      count > 9 ? '9+' : String(count),
-      x,
-      y
-    );
+    } catch (_) {}
   }
 
   function applyFavicon(dataUrl) {
-
-    let link =
-      document.querySelector(
-        "link[rel~='icon']"
-      );
-
-    if (!link) {
-
-      link = document.createElement('link');
-
-      link.rel = 'icon';
-
-      document.head.appendChild(link);
-    }
-
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
     link.href = dataUrl;
   }
 
-  // ============================================
-  // TITLE BLINK
-  // ============================================
-
+  // ── Title blink ──
   function startTitleBlink(count) {
-
     if (_blinkInterval) return;
-
     let show = true;
-
     _blinkInterval = setInterval(() => {
-
-      document.title = show
-        ? `(${count}) Pesan Baru — Lawyers AI`
-        : _originalTitle;
-
+      document.title = show ? `(${count}) 💬 Pesan Baru!` : _originalTitle;
       show = !show;
-
     }, 1500);
   }
 
   function stopTitleBlink() {
-
-    if (_blinkInterval) {
-
-      clearInterval(_blinkInterval);
-
-      _blinkInterval = null;
-    }
-
+    if (!_blinkInterval) return;
+    clearInterval(_blinkInterval);
+    _blinkInterval = null;
     document.title = _originalTitle;
   }
 
-  document.addEventListener(
-    'visibilitychange',
-    () => {
-
-      if (!document.hidden) {
-
-        stopTitleBlink();
-
-        if (_unreadCount > 0) {
-
-          document.title =
-            `(${_unreadCount}) ${_originalTitle}`;
-        }
-      }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      stopTitleBlink();
+      if (_unreadCount > 0) document.title = `(${_unreadCount}) ${_originalTitle}`;
     }
-  );
+  });
 
-  // ============================================
-  // REFRESH UNREAD
-  // ============================================
-
-  async function refreshUnreadCount(userId) {
-
-    if (!window.supabase || !userId) return;
-
-    try {
-
-      const { count, error } =
-        await window.supabase
-          .from('messages')
-          .select('*', {
-            count: 'exact',
-            head: true
-          })
-          .eq('receiver_id', userId)
-          .eq('is_read', false);
-
-      if (error) {
-
-        console.warn(
-          'refreshUnreadCount:',
-          error.message
-        );
-
-        return;
-      }
-
-      setTabBadge(count || 0);
-
-    } catch (err) {
-
-      console.warn(
-        'refreshUnreadCount exception:',
-        err
-      );
-    }
-  }
-
-  // ============================================
-  // REALTIME MESSAGE LISTENER
-  // ============================================
-
+  // ════════════════════════════════════════════
+  // 4. REALTIME — Dengarkan pesan masuk
+  //    Ini untuk badge saat TAB AKTIF (bukan ditutup)
+  //    Notif saat TAB DITUTUP dikerjakan oleh
+  //    Database Trigger → Edge Function → Push API
+  // ════════════════════════════════════════════
   async function listenIncomingMessages(userId) {
-
     if (!window.supabase || !userId) return;
 
-    // cleanup old
-    if (_messageChannel) {
-
-      try {
-        _messageChannel.unsubscribe();
-      } catch (_) {}
+    // Cleanup channel lama
+    if (_msgChannel) {
+      try { window.supabase.removeChannel(_msgChannel); } catch (_) {}
     }
 
-    await refreshUnreadCount(userId);
+    // Hitung unread awal
+    await refreshUnread(userId);
 
-    _messageChannel =
-      window.supabase
-        .channel(
-          'push-inbox-' + userId
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'messages',
-            filter:
-              `receiver_id=eq.${userId}`,
-          },
-          async (payload) => {
+    // Subscribe realtime
+    _msgChannel = window.supabase
+      .channel('push-inbox-' + userId)
+      .on('postgres_changes', {
+        event:  'INSERT',
+        schema: 'public',
+        table:  'messages',
+        filter: `receiver_id=eq.${userId}`,
+      }, async (payload) => {
+        const msg = payload.new;
 
-            const msg = payload.new;
+        // Debounce refresh count
+        clearTimeout(_refreshTimer);
+        _refreshTimer = setTimeout(() => refreshUnread(userId), 300);
 
-            // debounce refresh
-            clearTimeout(_refreshTimeout);
-
-            _refreshTimeout =
-              setTimeout(async () => {
-
-                await refreshUnreadCount(userId);
-
-              }, 250);
-
-            // toast only when active
-            if (
-              !document.hidden &&
-              window.showToast
-            ) {
-
-              const preview =
-                String(
-                  msg.content || ''
-                ).substring(0, 60);
-
-              window.showToast(
-                preview || 'Pesan baru masuk.',
-                'info'
-              );
-            }
-          }
-        )
-        .subscribe((status) => {
-
-          console.log(
-            '[Push RT]',
-            status
-          );
-        });
+        // Toast saat tab aktif
+        if (!document.hidden) {
+          const preview = String(msg.message_text || '').slice(0, 60);
+          showLocalToast(preview || 'Pesan baru masuk');
+        }
+      })
+      .subscribe(status => console.log('[Push RT]', status));
   }
 
-  // ============================================
-  // CLEAR BADGE
-  // ============================================
-
-  window.clearInboxBadge =
-    async function(userId) {
-
-      if (!userId) return;
-
-      setTabBadge(0);
-
-      try {
-
-        const { error } =
-          await window.supabase
-            .from('messages')
-            .update({
-              is_read: true
-            })
-            .eq('receiver_id', userId)
-            .eq('is_read', false);
-
-        if (error) {
-
-          console.warn(
-            'clearInboxBadge:',
-            error.message
-          );
-        }
-
-      } catch (err) {
-
-        console.warn(
-          'clearInboxBadge exception:',
-          err
-        );
-      }
-    };
-
-  // ============================================
-  // SHOW NOTIFICATION PROMPT
-  // ============================================
-
-  window.showNotifPrompt =
-    function() {
-
-      if (!('Notification' in window)) {
-
-        console.warn(
-          'Notification unsupported'
-        );
-
-        return;
-      }
-
-      if (
-        Notification.permission ===
-        'granted'
-      ) {
-
-        if (window.showToast) {
-
-          window.showToast(
-            'Notifikasi sudah aktif',
-            'success'
-          );
-        }
-
-        return;
-      }
-
-      if (
-        Notification.permission ===
-        'denied'
-      ) {
-
-        if (window.showToast) {
-
-          window.showToast(
-            'Aktifkan notifikasi di browser.',
-            'warning'
-          );
-        }
-
-        return;
-      }
-
-      Notification
-        .requestPermission()
-        .then(result => {
-
-          if (
-            result === 'granted'
-          ) {
-
-            if (window.showToast) {
-
-              window.showToast(
-                'Notifikasi berhasil diaktifkan',
-                'success'
-              );
-            }
-          }
-        });
-    };
-
-  // ============================================
-  // HELPERS
-  // ============================================
-
-  function urlBase64ToUint8Array(base64String) {
-
-    const padding =
-      '='.repeat(
-        (4 - base64String.length % 4) % 4
-      );
-
-    const base64 =
-      (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
-
-    const rawData =
-      atob(base64);
-
-    const outputArray =
-      new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-
-      outputArray[i] =
-        rawData.charCodeAt(i);
-    }
-
-    return outputArray;
-  }
-
-  // ============================================
-  // INIT
-  // ============================================
-
-  async function init() {
-
+  async function refreshUnread(userId) {
+    if (!window.supabase || !userId) return;
     try {
+      const { count } = await window.supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', userId)
+        .eq('is_read', false);
+      setTabBadge(count || 0);
+    } catch (_) {}
+  }
 
+  // ── Toast ringan (jika halaman tidak punya toast sendiri) ──
+  function showLocalToast(msg) {
+    // Gunakan toast yang sudah ada di halaman kalau tersedia
+    if (typeof window.toast === 'function') {
+      window.toast('💬 ' + msg, 'info');
+      return;
+    }
+    // Fallback toast minimal
+    const el = document.createElement('div');
+    el.style.cssText = [
+      'position:fixed;bottom:80px;left:50%;transform:translateX(-50%)',
+      'background:#1E3A5F;color:#fff;border:1px solid rgba(59,130,246,0.4)',
+      'border-radius:12px;padding:10px 18px;font-size:13px;font-weight:600',
+      'z-index:99999;box-shadow:0 8px 28px rgba(0,0,0,0.4)',
+      'animation:fadeInUp .3s ease;pointer-events:none;max-width:300px',
+      'font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis',
+    ].join(';');
+    el.textContent = '💬 ' + msg;
+    document.body.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3500);
+  }
+
+  // ════════════════════════════════════════════
+  // 5. CLEAR BADGE (panggil saat user buka chat)
+  // ════════════════════════════════════════════
+  window.clearInboxBadge = async function (userId) {
+    setTabBadge(0);
+    if (!window.supabase || !userId) return;
+    try {
+      await window.supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('receiver_id', userId)
+        .eq('is_read', false);
+    } catch (_) {}
+  };
+
+  // ════════════════════════════════════════════
+  // 6. MINTA IZIN NOTIFIKASI (expose ke halaman)
+  // ════════════════════════════════════════════
+  window.requestPushPermission = async function () {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      typeof window.toast === 'function'
+        ? window.toast('🔔 Notifikasi sudah aktif', 'success')
+        : showLocalToast('Notifikasi sudah aktif');
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      typeof window.toast === 'function'
+        ? window.toast('🔔 Notifikasi berhasil diaktifkan!', 'success')
+        : showLocalToast('Notifikasi diaktifkan!');
+      // Re-subscribe dengan user yang sedang login
+      if (window.supabase) {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if (user) await subscribePush(user.id);
+      }
+    } else {
+      showLocalToast('Notifikasi diblokir. Aktifkan di pengaturan browser.');
+    }
+  };
+
+  // ════════════════════════════════════════════
+  // HELPERS
+  // ════════════════════════════════════════════
+  function urlBase64ToUint8Array(b64) {
+    const padding = '='.repeat((4 - b64.length % 4) % 4);
+    const base64  = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw     = atob(base64);
+    const out     = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+
+  // ════════════════════════════════════════════
+  // INIT
+  // ════════════════════════════════════════════
+  async function init() {
+    try {
       await registerSW();
 
       if (!window.supabase) return;
-
-      const {
-        data: { user }
-      } =
-        await window.supabase
-          .auth
-          .getUser();
-
+      const { data: { user } } = await window.supabase.auth.getUser();
       if (!user) return;
 
+      // Subscribe push (minta izin browser)
       await subscribePush(user.id);
 
+      // Dengarkan pesan masuk untuk badge tab
       await listenIncomingMessages(user.id);
 
-      console.log(
-        '✅ Push system initialized'
-      );
-
-    } catch (err) {
-
-      console.error(
-        'Push init failed:',
-        err
-      );
+      console.log('[Push] ✅ Initialized for', user.id);
+    } catch (e) {
+      console.error('[Push] Init failed:', e);
     }
   }
 
-  // ============================================
-  // CLEANUP
-  // ============================================
+  // Cleanup saat halaman ditutup
+  window.addEventListener('beforeunload', () => {
+    try { if (_msgChannel) window.supabase?.removeChannel(_msgChannel); } catch (_) {}
+  });
 
-  window.addEventListener(
-    'beforeunload',
-    () => {
-
-      try {
-
-        if (_messageChannel) {
-          _messageChannel.unsubscribe();
-        }
-
-      } catch (_) {}
-    }
-  );
-
-  // ============================================
-  // START
-  // ============================================
-
-  if (
-    document.readyState ===
-    'loading'
-  ) {
-
-    document.addEventListener(
-      'DOMContentLoaded',
-      init
-    );
-
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-
     init();
   }
 
