@@ -4,8 +4,7 @@
 // ============================================
 (function () {
 
-  const VAPID_PUBLIC_KEY =
-    'BJB1qjoSWDSFk3toH1a3G0-WYtuGHwhvd7s7CT9sdWuoqn2JuQaxPvCoIpwlIvl5S4l5fsbg37Iq6AQ2wfhwbt0';
+  const VAPID_PUBLIC_KEY = 'BEvoH5TBhDValNm12840Q-dZzzJFR68yueF3v64ID1vSMZinsfwkwEctSDdtZfQOOU5bkWgp8JYARtnOfZQI34U'
 
   const SW_PATH = './sw.js';
 
