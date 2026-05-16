@@ -711,15 +711,6 @@
         body.light .btn-report-modal { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2); color: #DC2626; }
         body.light .btn-report-modal:hover { background: rgba(239,68,68,0.1); }
 
-        /* ─── DEBUG BADGE — hapus setelah konfirmasi fix ─── */
-        #debug-badge {
-            position: fixed; top: calc(var(--safe-top) + 4px); right: 8px;
-            z-index: 9998; font-size: 9px; font-weight: 700;
-            padding: 3px 8px; border-radius: 20px;
-            background: rgba(0,0,0,0.6); color: #fff;
-            pointer-events: none; display: none;
-        }
-
         @supports (height: 100dvh) {
             #app { height: 100dvh; }
         }
@@ -729,7 +720,6 @@
 <body>
 
 <div id="toast-container"></div>
-<div id="debug-badge" id="debug-badge"></div>
 <div id="load-overlay">
     <div style="text-align:center">
         <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px;font-style:italic;font-weight:800;color:#fff;letter-spacing:-1px">L</div>
@@ -994,7 +984,7 @@ let rtChannel = null;
 let typingHideTimer = null, typingStopTimer = null;
 let _lastTypingSent = 0;
 let autoMsgSent = false, _advAvatarCache = null;
-let _isSending = false; // ← FIX Bug 2: guard flag agar send tidak double-trigger
+let _isSending = false;
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
@@ -1018,39 +1008,47 @@ function imgSrc(url,name) {
     return url;
 }
 
-// ══════════════════════════════════════════════
-// FIX BUG 1 — Refresh isPremium langsung dari DB
-// Dipanggil di window.onload SETELAH fetch profile
-// ══════════════════════════════════════════════
+// ── Helper: safe Supabase upsert tanpa .catch() langsung ──
+async function safeUpsertTyping(userId, targetId, isTyping) {
+    try {
+        await window.supabase.from('typing_status').upsert({
+            user_id: userId,
+            target_id: targetId,
+            is_typing: isTyping,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,target_id' });
+    } catch(e) {
+        // silent fail — typing status tidak kritis
+    }
+}
+
+// ── Helper: safe broadcast tanpa .catch() langsung ──
+function safeBroadcast(channel, payload) {
+    if (!channel) return;
+    try {
+        channel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: payload
+        }).then(() => {}).catch(() => {});
+    } catch(e) {}
+}
+
 async function refreshPremiumStatus(userId) {
     try {
-        // Ambil fresh dari DB, bypass cache apapun
         const { data, error } = await window.supabase
             .from('profiles')
             .select('is_premium')
             .eq('id', userId)
             .single();
-
-        if (error) {
-            console.warn('[Premium] Gagal fetch is_premium:', error.message);
-            return false;
-        }
-
-        // Coba berbagai nama kolom yang mungkin dipakai
+        if (error) { console.warn('[Premium] Gagal fetch is_premium:', error.message); return false; }
         const val = data?.is_premium ?? data?.isPremium ?? data?.premium ?? false;
         const result = val === true || val === 1 || val === 'true';
-
         console.log('[Premium] is_premium raw:', val, '→ parsed:', result);
         return result;
-    } catch(e) {
-        console.error('[Premium] Exception:', e);
-        return false;
-    }
+    } catch(e) { console.error('[Premium] Exception:', e); return false; }
 }
 
-// ══════════════════════════════════════════════
-// STATUS ONLINE
-// ══════════════════════════════════════════════
 function applyOnlineStatus(lastSeen) {
     const dot = document.getElementById('online-dot');
     const statusText = document.getElementById('adv-status-text');
@@ -1094,14 +1092,10 @@ async function updateMyLastSeen() {
     } catch(e) {}
 }
 
-// ══════════════════════════════════════════════
-// TYPING — SHOW / HIDE
-// ══════════════════════════════════════════════
 function showTyping() {
     const advTypingEl = document.getElementById('adv-typing');
     const statusTextEl = document.getElementById('adv-status-text');
     const tr = document.getElementById('typing-row');
-
     if (advTypingEl) advTypingEl.style.display = 'inline';
     if (statusTextEl) statusTextEl.style.display = 'none';
     if (tr) {
@@ -1109,7 +1103,6 @@ function showTyping() {
         const box = document.getElementById('chat-box');
         if (box) requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
     }
-
     clearTimeout(typingHideTimer);
     typingHideTimer = setTimeout(() => hideTyping(), 4000);
 }
@@ -1119,15 +1112,11 @@ function hideTyping() {
     const advTypingEl = document.getElementById('adv-typing');
     const statusTextEl = document.getElementById('adv-status-text');
     const tr = document.getElementById('typing-row');
-
     if (advTypingEl) advTypingEl.style.display = 'none';
     if (statusTextEl) statusTextEl.style.display = '';
     if (tr) tr.style.display = 'none';
 }
 
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
 async function buildAdvAvatarCache() {
     if(!receiverId){_advAvatarCache=avatarFallback('A');return;}
     if(advData?.foto_profil_url){_advAvatarCache=imgSrc(advData.foto_profil_url,advName);return;}
@@ -1163,9 +1152,6 @@ async function fetchPartnerName(uid) {
     return 'Advokat';
 }
 
-// ══════════════════════════════════════════════
-// FIX — Apply UI state sesuai isPremium
-// ══════════════════════════════════════════════
 function applyPremiumUI() {
     if (isPremium) {
         document.getElementById('session-tag').textContent = 'PRO SULTAN';
@@ -1176,19 +1162,16 @@ function applyPremiumUI() {
         document.getElementById('side-plan-sub').textContent = 'Akses penuh seumur hidup';
         document.getElementById('premium-marker').style.display = '';
     }
-    // Refresh tampilan chat panel jika sudah terbuka
     const chatView = document.getElementById('chat-view');
     if (chatView && chatView.style.display !== 'none') {
         applyInputState();
     }
 }
 
-// FIX — Pisahkan logika tampil input/upgrade wall
 function applyInputState() {
     const wall = document.getElementById('upgrade-wall');
     const wrap = document.getElementById('input-wrap');
     const qrBar = document.getElementById('quick-reply-bar');
-
     if (isPremium) {
         if (wall) wall.style.display = 'none';
         if (wrap) wrap.style.display = 'block';
@@ -1207,7 +1190,6 @@ window.onload = async () => {
     if(!session){ location.href='login.html'; return; }
     currentUser = session.user;
 
-    // Cek apakah mitra
     const { data: mitraCheck } = await window.supabase
         .from('mitra_ahli').select('id')
         .eq('user_id', currentUser.id)
@@ -1215,13 +1197,11 @@ window.onload = async () => {
         .maybeSingle();
     if(mitraCheck){ location.href='dashboard-mitra.html'; return; }
 
-    // Fetch profile
     const { data: profile } = await window.supabase
         .from('profiles').select('*')
         .eq('id', currentUser.id).single();
     currentProfile = profile;
 
-    // ── FIX BUG 1: Cek is_premium secara eksplisit ──
     isPremium = await refreshPremiumStatus(currentUser.id);
 
     if(profile){
@@ -1337,7 +1317,7 @@ function backToInbox(){showMobileInbox();}
 function showChatView(){
     document.getElementById('chat-empty').style.display='none';
     document.getElementById('chat-view').style.display='flex';
-    applyInputState(); // ← FIX: pakai fungsi terpusat, bukan inline
+    applyInputState();
 }
 
 // ══════════════════════════════════════════════
@@ -1511,7 +1491,7 @@ function subscribeRT() {
 }
 
 // ══════════════════════════════════════════════
-// NOTIFY TYPING
+// NOTIFY TYPING — FIX: gunakan helper, tidak pakai .catch() langsung
 // ══════════════════════════════════════════════
 async function notifyTyping() {
     if(!currentUser?.id || !receiverId || !rtChannel) return;
@@ -1522,45 +1502,25 @@ async function notifyTyping() {
     if(now - _lastTypingSent > 1500) {
         _lastTypingSent = now;
 
-        rtChannel.send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: { from: currentUser.id, to: receiverId, is_typing: true }
-        }).catch(() => {});
+        // FIX: pakai safeBroadcast helper
+        safeBroadcast(rtChannel, { from: currentUser.id, to: receiverId, is_typing: true });
 
-        window.supabase.from('typing_status').upsert({
-            user_id: currentUser.id,
-            target_id: receiverId,
-            is_typing: true,
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,target_id' }).then(() => {}).catch(() => {});
+        // FIX: pakai safeUpsertTyping helper (async/await, bukan .catch() langsung)
+        safeUpsertTyping(currentUser.id, receiverId, true);
     }
 
-    typingStopTimer = setTimeout(() => {
-        if(rtChannel) {
-            rtChannel.send({
-                type: 'broadcast',
-                event: 'typing',
-                payload: { from: currentUser.id, to: receiverId, is_typing: false }
-            }).catch(() => {});
-        }
-        window.supabase.from('typing_status').upsert({
-            user_id: currentUser.id,
-            target_id: receiverId,
-            is_typing: false,
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,target_id' }).catch(() => {});
+    typingStopTimer = setTimeout(async () => {
+        safeBroadcast(rtChannel, { from: currentUser.id, to: receiverId, is_typing: false });
+        await safeUpsertTyping(currentUser.id, receiverId, false);
     }, 1800);
 }
 
 // ══════════════════════════════════════════════
-// SEND MESSAGE — FIX BUG 2: guard + reset btn
+// SEND MESSAGE — FIX: guard + reset btn + no .catch() langsung
 // ══════════════════════════════════════════════
 async function sendMsg() {
     if(!isPremium){ toast('🔒 Upgrade PRO untuk membalas pesan','warn'); return; }
     if(!receiverId){ toast('Pilih percakapan terlebih dahulu','warn'); return; }
-
-    // FIX: guard flag agar tidak double-trigger
     if(_isSending) return;
 
     const inp = document.getElementById('msg-input');
@@ -1577,21 +1537,11 @@ async function sendMsg() {
 
     // Stop typing indicator segera saat kirim
     clearTimeout(typingStopTimer);
-    if(rtChannel) {
-        rtChannel.send({
-            type: 'broadcast',
-            event: 'typing',
-            payload: { from: currentUser.id, to: receiverId, is_typing: false }
-        }).catch(() => {});
-    }
-    window.supabase.from('typing_status').upsert({
-        user_id: currentUser.id,
-        target_id: receiverId,
-        is_typing: false,
-        updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id,target_id' }).catch(() => {});
+    // FIX: pakai helper, tidak pakai .catch() langsung
+    safeBroadcast(rtChannel, { from: currentUser.id, to: receiverId, is_typing: false });
+    await safeUpsertTyping(currentUser.id, receiverId, false);
 
-    try{
+    try {
         const msgText = text || `📎 ${attachedFile?.name}`;
         const { error } = await window.supabase.from('messages').insert([{
             sender_id: currentUser.id,
@@ -1602,7 +1552,6 @@ async function sendMsg() {
             is_read: false
         }]);
 
-        // FIX: cek error dari insert
         if(error) throw error;
 
         clearAttach();
@@ -1610,13 +1559,10 @@ async function sendMsg() {
         if(cv){ cv.preview=msgText; cv.isMe=true; cv.time='Baru'; renderConvList(allConvs); }
 
     } catch(e) {
-        // FIX: kembalikan teks jika gagal kirim
         inp.value = sentText;
         autoResize(inp);
         toast('Gagal kirim: ' + (e.message || 'Coba lagi'), 'error');
-
     } finally {
-        // FIX: SELALU reset state, tidak peduli sukses/gagal
         _isSending = false;
         btn.disabled = false;
         inp.focus();
@@ -1656,8 +1602,16 @@ async function checkAutoMsg() {
         if(count===0){
             autoMsgSent=true;
             setTimeout(async()=>{
-                try{await window.supabase.from('messages').insert([{sender_id:receiverId,receiver_id:currentUser.id,lawyer_id:lawyerTableId||null,conversation_id:activeConvId,message_text:`Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,is_read:false}]);}
-                catch(e){console.error('[AutoMsg]',e);}
+                try{
+                    await window.supabase.from('messages').insert([{
+                        sender_id:receiverId,
+                        receiver_id:currentUser.id,
+                        lawyer_id:lawyerTableId||null,
+                        conversation_id:activeConvId,
+                        message_text:`Halo, saya ${safeName}. Silakan ceritakan detail kasus hukum Anda. Sertakan dokumen relevan jika ada agar analisis lebih akurat. 🤝`,
+                        is_read:false
+                    }]);
+                }catch(e){console.error('[AutoMsg]',e);}
             },1500);
         }else{autoMsgSent=true;}
     }catch(e){console.error('[AutoMsg] Count failed:',e);}
@@ -1732,9 +1686,6 @@ function fallbackCopy(text) {
     document.body.removeChild(el);
 }
 
-// ══════════════════════════════════════════════
-// REPORT FROM MODAL
-// ══════════════════════════════════════════════
 function reportFromModal() {
     closeContactModal();
     const targetId = lawyerTableId || receiverId;
@@ -1752,15 +1703,9 @@ function reportFromModal() {
     });
 }
 
-// ══════════════════════════════════════════════
-// SIDEBAR
-// ══════════════════════════════════════════════
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('show');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');}
 
-// ══════════════════════════════════════════════
-// TOAST
-// ══════════════════════════════════════════════
 function toast(msg,type='info'){
     const icons={info:'#60A5FA',error:'#F87171',warn:'#FBBF24',success:'#34D399'};
     const imap={info:'fa-info-circle',error:'fa-times-circle',warn:'fa-exclamation-circle',success:'fa-check-circle'};
@@ -1772,9 +1717,6 @@ function toast(msg,type='info'){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeContactModal();closeRatingModal();}});
 
-// ══════════════════════════════════════════════
-// SOUND
-// ══════════════════════════════════════════════
 let soundEnabled=localStorage.getItem('chat_sound')!=='off';
 let audioCtx=null;
 function getAudioCtx(){
@@ -1803,9 +1745,6 @@ function toggleSound(){
     else{btn.innerHTML='<i class="fas fa-volume-xmark"></i>';btn.style.color='var(--text-3)';btn.classList.add('muted');toast('🔕 Notifikasi suara dimatikan','info');}
 }
 
-// ══════════════════════════════════════════════
-// QUICK REPLY
-// ══════════════════════════════════════════════
 function useQuickReply(el){
     if(!isPremium){toast('🔒 Upgrade PRO untuk mengirim pesan','warn');return;}
     const inp=document.getElementById('msg-input');
@@ -1862,9 +1801,6 @@ async function submitRating(){
     }
 }
 
-// ══════════════════════════════════════════════
-// DOMContentLoaded
-// ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
     const btn=document.getElementById('sound-toggle');
     if(btn&&!soundEnabled){btn.innerHTML='<i class="fas fa-volume-xmark"></i>';btn.style.color='var(--text-3)';btn.classList.add('muted');}
