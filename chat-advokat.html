@@ -20,7 +20,6 @@
             --accent: #3B82F6; --accent-2: #1D4ED8; --gold: #F59E0B; --emerald: #10B981;
             --scrollbar: rgba(255,255,255,0.05);
             --header-h: 64px;
-            --input-h: 72px;
             --safe-top: env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
             --safe-left: env(safe-area-inset-left, 0px);
@@ -36,24 +35,41 @@
         }
 
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html { height: 100%; height: -webkit-fill-available; }
+
+        /* iOS fix: use dvh for true viewport height */
+        html {
+            height: 100%;
+            height: -webkit-fill-available;
+        }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: var(--bg);
             color: var(--text-1);
             transition: background 0.3s, color 0.3s;
             margin: 0; padding: 0;
+            /* iOS: prevent bounce scroll on body */
             height: 100vh;
-            height: -webkit-fill-available;
+            height: 100dvh;
             overflow: hidden;
+            position: fixed;
+            width: 100%;
             -webkit-text-size-adjust: 100%;
+            /* Prevent iOS text inflation */
+            -webkit-overflow-scrolling: touch;
         }
 
         ::-webkit-scrollbar { width: 3px; height: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
 
-        #app { display: flex; height: 100vh; height: -webkit-fill-available; overflow: hidden; }
+        #app {
+            display: flex;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            /* Prevent iOS rubber-banding on outer container */
+            overscroll-behavior: none;
+        }
 
         /* ─── SIDEBAR ─── */
         #sidebar {
@@ -82,7 +98,7 @@
         @media (max-width: 1024px) {
             #sidebar {
                 position: fixed; z-index: 300;
-                height: 100%; height: -webkit-fill-available;
+                height: 100%; height: 100dvh;
                 transform: translateX(-100%);
                 box-shadow: none;
             }
@@ -95,10 +111,12 @@
         @media (max-width: 768px) {
             #inbox-panel {
                 width: 100%;
+                /* iOS: absolute instead of fixed to avoid keyboard issues */
                 position: absolute; z-index: 10;
-                height: 100%; height: -webkit-fill-available;
+                height: 100%; height: 100dvh;
                 transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
                 transform: translateX(0);
+                left: 0; top: 0;
             }
             #inbox-panel.hidden-mobile {
                 transform: translateX(-100%);
@@ -182,6 +200,8 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             outline: none; transition: border-color 0.2s;
             min-height: 42px;
+            /* iOS: prevent zoom on focus */
+            font-size: 16px;
         }
         .search-box input:focus { border-color: var(--accent); }
         .search-box input::placeholder { color: var(--text-3); }
@@ -189,7 +209,12 @@
         body.light .search-box input { background: #F8FAFC; border-color: #E2E8F0; color: #0F172A; }
 
         /* ─── CONV LIST ─── */
-        .conv-list { flex: 1; overflow-y: auto; background: var(--bg); -webkit-overflow-scrolling: touch; }
+        .conv-list {
+            flex: 1; overflow-y: auto;
+            background: var(--bg);
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
         body.light .conv-list { background: #F0F4F8; }
         .conv-item {
             display: flex; align-items: center; gap: 12px;
@@ -199,6 +224,8 @@
             transition: background 0.12s;
             position: relative;
             min-height: 72px;
+            /* iOS tap feedback */
+            -webkit-tap-highlight-color: rgba(59,130,246,0.08);
         }
         .conv-item:hover { background: rgba(255,255,255,0.025); }
         .conv-item.active { background: rgba(59,130,246,0.07); }
@@ -217,8 +244,9 @@
             display: flex; align-items: center; justify-content: space-between;
             flex-shrink: 0;
             min-height: calc(var(--header-h) + var(--safe-top));
-            backdrop-filter: blur(20px);
+            /* iOS: use native blur */
             -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
         }
         body.light #chat-header { background: rgba(255,255,255,0.95); border-color: #E2E8F0; }
 
@@ -258,6 +286,8 @@
             cursor: pointer; color: var(--text-2); font-size: 13px;
             transition: all 0.15s;
             -webkit-tap-highlight-color: transparent;
+            /* iOS: minimum tap target */
+            min-width: 44px; min-height: 44px;
         }
         .header-btn:hover { background: var(--bg-4); color: var(--text-1); }
         .header-btn:active { transform: scale(0.92); }
@@ -349,14 +379,14 @@
             border-top: 1px solid var(--border);
             padding: 10px 12px calc(10px + var(--safe-bottom)) 12px;
             flex-shrink: 0;
-            backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
         }
         body.light #input-wrap { background: rgba(255,255,255,0.97); border-color: #E2E8F0; }
 
         .input-row { display: flex; align-items: flex-end; gap: 8px; }
         .attach-btn {
-            width: 40px; height: 40px; border-radius: 12px;
+            width: 44px; height: 44px; border-radius: 12px;
             background: var(--bg-3); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: var(--text-2); font-size: 15px; flex-shrink: 0;
@@ -373,13 +403,17 @@
             border: 1.5px solid var(--border);
             border-radius: 20px;
             padding: 10px 46px 10px 16px;
-            font-size: 14px; color: var(--text-1);
+            /* iOS: prevent zoom — minimum 16px */
+            font-size: 16px;
+            color: var(--text-1);
             font-family: 'Plus Jakarta Sans', sans-serif;
             outline: none; resize: none;
-            min-height: 42px; max-height: 120px;
+            min-height: 44px; max-height: 120px;
             overflow-y: auto; transition: border-color 0.2s;
             display: block; line-height: 1.5;
+            /* iOS: remove inner shadow on inputs */
             -webkit-appearance: none;
+            appearance: none;
         }
         #msg-input:focus { border-color: var(--accent); background: var(--bg-4); }
         #msg-input::placeholder { color: var(--text-3); }
@@ -390,7 +424,7 @@
 
         .send-btn {
             position: absolute; right: 5px; bottom: 5px;
-            width: 32px; height: 32px; border-radius: 50%;
+            width: 34px; height: 34px; border-radius: 50%;
             background: var(--accent);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: #fff; font-size: 11px; border: none;
@@ -440,12 +474,33 @@
         body.light .qr-chip { background: #F8FAFC; border-color: #E2E8F0; color: #475569; }
         body.light .qr-chip:hover { background: #EFF6FF; border-color: #93C5FD; color: #2563EB; }
 
-        /* ─── MODALS ─── */
-        #contact-modal { position: fixed; inset: 0; z-index: 400; display: none; align-items: flex-end; justify-content: center; padding: 0; }
-        #contact-modal.open { display: flex; }
-        @media (min-width: 640px) { #contact-modal { align-items: center; padding: 24px; } }
+        /* ─── MODALS
+             iOS FIX: Ganti position:fixed → position:absolute dengan wrapper bertinggi eksplisit
+             agar modal tidak collapse di iOS WebView / WKWebView
+        ─── */
+        .modal-host {
+            position: fixed;
+            inset: 0;
+            z-index: 400;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 0;
+            /* iOS: pointer events */
+            touch-action: none;
+        }
+        .modal-host.open { display: flex; }
+        @media (min-width: 640px) {
+            .modal-host { align-items: center; padding: 24px; }
+        }
 
-        .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .modal-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.6);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
         .modal-card {
             position: relative; z-index: 1;
             width: 100%; max-width: 420px;
@@ -455,10 +510,21 @@
             background: var(--bg-2);
             border: 1px solid var(--border-2);
             border-bottom: none;
-            padding-bottom: var(--safe-bottom);
+            /* iOS safe area at bottom */
+            padding-bottom: max(var(--safe-bottom), 16px);
+            /* iOS: prevent modal from being taller than screen */
+            max-height: 92dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         @media (min-width: 640px) {
-            .modal-card { border-radius: 24px; border-bottom: 1px solid var(--border-2); padding-bottom: 0; max-width: 380px; }
+            .modal-card {
+                border-radius: 24px;
+                border-bottom: 1px solid var(--border-2);
+                padding-bottom: 0;
+                max-width: 380px;
+                max-height: 85dvh;
+            }
         }
         body.light .modal-card { background: #FFFFFF; border-color: #E2E8F0; }
 
@@ -476,7 +542,7 @@
         .modal-banner { height: 90px; background: linear-gradient(135deg, #1e3a5f, #2563EB); position: relative; }
         .modal-avatar { position: absolute; bottom: -24px; left: 20px; width: 60px; height: 60px; border-radius: 16px; object-fit: cover; border: 3px solid var(--bg-2); }
         body.light .modal-avatar { border-color: #FFFFFF; }
-        .modal-close { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 9px; background: rgba(0,0,0,0.3); border: none; color: rgba(255,255,255,0.85); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        .modal-close { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 9px; background: rgba(0,0,0,0.3); border: none; color: rgba(255,255,255,0.85); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; min-width: 44px; min-height: 44px; }
         .modal-close:hover { background: rgba(0,0,0,0.5); }
         .modal-body { padding: 32px 20px 20px; }
         body.light .modal-body { color: #0F172A; }
@@ -490,13 +556,6 @@
         }
 
         /* ─── RATING MODAL ─── */
-        #rating-modal {
-            position: fixed; inset: 0; z-index: 400;
-            display: none; align-items: flex-end; justify-content: center;
-            padding: 0;
-        }
-        #rating-modal.open, #rating-modal[style*="flex"] { display: flex; }
-        @media (min-width: 640px) { #rating-modal { align-items: center; padding: 24px; } }
         .rating-card {
             position: relative; z-index: 1;
             width: 100%; max-width: 420px;
@@ -506,9 +565,19 @@
             background: var(--bg-2);
             border: 1px solid var(--border-2);
             border-bottom: none;
-            padding-bottom: var(--safe-bottom);
+            padding-bottom: max(var(--safe-bottom), 16px);
+            max-height: 92dvh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        @media (min-width: 640px) { .rating-card { border-radius: 24px; border-bottom: 1px solid var(--border-2); padding-bottom: 0; } }
+        @media (min-width: 640px) {
+            .rating-card {
+                border-radius: 24px;
+                border-bottom: 1px solid var(--border-2);
+                padding-bottom: 0;
+                max-height: 85dvh;
+            }
+        }
         .rating-card::before {
             content: ''; display: block;
             width: 36px; height: 4px;
@@ -553,7 +622,7 @@
         /* ─── MISC ─── */
         .pro-badge { background: linear-gradient(135deg, var(--gold), #D97706); border-radius: 5px; padding: 2px 6px; font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #fff; }
 
-        #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 290; display: none; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        #sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 290; display: none; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
         #sidebar-overlay.show { display: block; }
 
         #load-overlay {
@@ -566,10 +635,16 @@
         .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border-2); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Toast: pakai position absolute terhadap wrapper, bukan fixed */
         #toast-container {
-            position: fixed; bottom: calc(80px + var(--safe-bottom));
+            position: fixed;
+            bottom: calc(80px + var(--safe-bottom));
             left: 50%; transform: translateX(-50%);
-            z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
+            z-index: 999;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            pointer-events: none;
+            /* iOS: force above keyboard */
+            padding-bottom: 0;
         }
         .toast {
             background: var(--bg-2); border: 1px solid var(--border-2);
@@ -595,7 +670,7 @@
 
         /* ─── SOUND TOGGLE ─── */
         #sound-toggle {
-            width: 36px; height: 36px; border-radius: 10px;
+            width: 44px; height: 44px; border-radius: 10px;
             background: var(--bg-3); border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; color: var(--text-2); font-size: 13px; transition: all 0.15s;
@@ -605,18 +680,19 @@
         body.light #sound-toggle { background: #F8FAFC; border-color: #E2E8F0; }
 
         #back-btn {
-            width: 36px; height: 36px; border-radius: 10px;
+            width: 44px; height: 44px; border-radius: 10px;
             background: var(--bg-3); border: 1px solid var(--border);
             color: var(--text-2); cursor: pointer; font-size: 13px;
             display: none; align-items: center; justify-content: center;
             -webkit-tap-highlight-color: transparent;
             transition: all 0.15s;
+            flex-shrink: 0;
         }
         #back-btn:active { transform: scale(0.9); background: var(--bg-4); }
 
         @media (max-width: 380px) {
             #chat-header-actions { gap: 4px !important; }
-            #chat-header-actions .header-btn { width: 32px; height: 32px; font-size: 11px; }
+            #chat-header-actions .header-btn { width: 38px; height: 38px; min-width: 38px; min-height: 38px; font-size: 11px; }
             #adv-name { font-size: 13px !important; }
         }
         @media (max-width: 768px) {
@@ -638,7 +714,6 @@
         body.light .premium-card { background: linear-gradient(135deg,#FFFBEB,#FEF3C7) !important; border-color: rgba(245,158,11,0.3) !important; }
         body.light .profile-row { background: #F8FAFC !important; }
 
-        /* ─── REPORT BUTTON ─── */
         .btn-report-modal {
             width: 100%; margin-top: 8px; padding: 11px;
             border-radius: 12px;
@@ -653,17 +728,13 @@
             min-height: 44px;
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        .btn-report-modal:hover {
-            background: rgba(239,68,68,0.12);
-            border-color: rgba(239,68,68,0.35);
-        }
-        body.light .btn-report-modal {
-            background: rgba(239,68,68,0.05);
-            border-color: rgba(239,68,68,0.2);
-            color: #DC2626;
-        }
-        body.light .btn-report-modal:hover {
-            background: rgba(239,68,68,0.1);
+        .btn-report-modal:hover { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.35); }
+        body.light .btn-report-modal { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2); color: #DC2626; }
+        body.light .btn-report-modal:hover { background: rgba(239,68,68,0.1); }
+
+        /* iOS keyboard: shrink chat-box when keyboard opens */
+        @supports (height: 100dvh) {
+            #app { height: 100dvh; }
         }
     </style>
 </head>
@@ -727,7 +798,7 @@
                     <p id="conv-count" style="font-size:10px;color:var(--text-3);margin-top:2px;font-weight:500">0 percakapan</p>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                    <button id="menu-toggle" onclick="openSidebar()" style="width:36px;height:36px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--text-2);cursor:pointer;font-size:13px">
+                    <button id="menu-toggle" onclick="openSidebar()" style="width:44px;height:44px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);display:none;align-items:center;justify-content:color:var(--text-2);cursor:pointer;font-size:13px">
                         <i class="fas fa-bars"></i>
                     </button>
                     <button class="theme-toggle" onclick="window.toggleTheme?.()" title="Mode Siang/Malam">
@@ -737,7 +808,7 @@
             </div>
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input id="search-input" type="text" placeholder="Cari advokat atau pesan..." oninput="filterConvs(this.value)">
+                <input id="search-input" type="search" placeholder="Cari advokat atau pesan..." oninput="filterConvs(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </div>
         </div>
         <div class="conv-list" id="conv-list">
@@ -761,7 +832,7 @@
         <div id="chat-view" style="display:none;flex-direction:column;flex:1;overflow:hidden">
             <div id="chat-header">
                 <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
-                    <button id="back-btn" onclick="backToInbox()" style="display:none;width:36px;height:36px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:13px;align-items:center;justify-content:center;flex-shrink:0">
+                    <button id="back-btn" onclick="backToInbox()" style="display:none;width:44px;height:44px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);cursor:pointer;font-size:13px;align-items:center;justify-content:center;flex-shrink:0">
                         <i class="fas fa-arrow-left"></i>
                     </button>
                     <div class="adv-avatar-wrap">
@@ -820,7 +891,7 @@
                         <input type="file" id="file-input" style="display:none" onchange="handleFileAttach(this)">
                     </label>
                     <div class="input-field-wrap">
-                        <textarea id="msg-input" rows="1" placeholder="Ketik pesan konsultasi..." oninput="autoResize(this);notifyTyping()" onkeydown="handleKey(event)"></textarea>
+                        <textarea id="msg-input" rows="1" placeholder="Ketik pesan konsultasi..." oninput="autoResize(this);notifyTyping()" onkeydown="handleKey(event)" autocomplete="off" autocorrect="off" autocapitalize="sentences"></textarea>
                         <button id="send-btn" class="send-btn" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></button>
                     </div>
                 </div>
@@ -828,7 +899,7 @@
                     <div class="fp-inner">
                         <i class="fas fa-file" style="color:var(--accent);font-size:12px"></i>
                         <span id="fp-name" style="font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2)"></span>
-                        <button onclick="clearAttach()" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px 6px;border-radius:6px;font-size:12px;min-width:28px;min-height:28px"><i class="fas fa-times"></i></button>
+                        <button onclick="clearAttach()" style="background:none;border:none;color:var(--text-3);cursor:pointer;padding:4px 6px;border-radius:6px;font-size:12px;min-width:44px;min-height:44px"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
             </div>
@@ -836,18 +907,18 @@
     </div>
 </div>
 
-<!-- RATING MODAL -->
-<div id="rating-modal" style="position:fixed;inset:0;z-index:400;display:none;align-items:flex-end;justify-content:center;padding:0;">
+<!-- RATING MODAL — pakai .modal-host agar iOS tidak collapse -->
+<div id="rating-modal" class="modal-host">
     <div class="modal-overlay" onclick="closeRatingModal()"></div>
     <div class="rating-card">
         <div style="height:5px;background:linear-gradient(90deg,#F59E0B,#FBBF24);"></div>
-        <div style="padding:22px 20px calc(16px + var(--safe-bottom,0px));">
+        <div style="padding:22px 20px 20px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
                 <div>
                     <h3 style="font-size:17px;font-weight:900;font-style:italic;letter-spacing:-0.3px;margin:0;color:var(--text-1);">Beri Rating</h3>
                     <p id="rating-adv-name" style="font-size:11px;color:var(--text-3);margin:3px 0 0;font-weight:600;"></p>
                 </div>
-                <button onclick="closeRatingModal()" style="width:32px;height:32px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+                <button onclick="closeRatingModal()" style="width:44px;height:44px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
             </div>
             <div style="display:flex;justify-content:center;gap:6px;margin:18px 0 6px;" id="star-row">
                 <button class="star-btn" data-val="1" onclick="setRating(1)"><i class="fas fa-star"></i></button>
@@ -858,14 +929,14 @@
             </div>
             <p id="rating-label" style="text-align:center;font-size:12.5px;font-weight:700;color:var(--text-3);margin:0 0 14px;min-height:20px;"></p>
             <textarea id="rating-comment" placeholder="Tulis ulasan singkat (opsional)..." maxlength="200"
-                style="width:100%;padding:11px 14px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--text-1);outline:none;resize:none;min-height:72px;line-height:1.5;box-sizing:border-box;transition:border-color 0.2s;-webkit-appearance:none;"
+                style="width:100%;padding:11px 14px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;color:var(--text-1);outline:none;resize:none;min-height:72px;line-height:1.5;box-sizing:border-box;transition:border-color 0.2s;-webkit-appearance:none;"
                 onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
             <div id="already-rated-info" style="display:none;text-align:center;padding:8px 12px;border-radius:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);margin:10px 0 0;">
                 <p style="font-size:11px;font-weight:600;color:#34D399;margin:0;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Anda sudah memberi rating. Rating baru akan mengganti yang lama.</p>
             </div>
             <div style="display:flex;gap:8px;margin-top:14px;">
-                <button onclick="closeRatingModal()" style="flex:1;padding:12px;border-radius:12px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;min-height:46px;">Batal</button>
-                <button id="submit-rating-btn" onclick="submitRating()" style="flex:2;padding:12px;border-radius:12px;background:#F59E0B;color:#fff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;opacity:0.4;pointer-events:none;transition:opacity 0.2s;min-height:46px;">
+                <button onclick="closeRatingModal()" style="flex:1;padding:12px;border-radius:12px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;min-height:46px;font-family:'Plus Jakarta Sans',sans-serif;">Batal</button>
+                <button id="submit-rating-btn" onclick="submitRating()" style="flex:2;padding:12px;border-radius:12px;background:#F59E0B;color:#fff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;opacity:0.4;pointer-events:none;transition:opacity 0.2s;min-height:46px;font-family:'Plus Jakarta Sans',sans-serif;">
                     <i class="fas fa-paper-plane"></i> Kirim Rating
                 </button>
             </div>
@@ -874,7 +945,7 @@
 </div>
 
 <!-- CONTACT MODAL -->
-<div id="contact-modal">
+<div id="contact-modal" class="modal-host">
     <div class="modal-overlay" onclick="closeContactModal()"></div>
     <div class="modal-card">
         <div class="modal-banner">
@@ -909,7 +980,7 @@
                     <i class="fas fa-envelope" style="font-size:11px"></i>Email
                 </a>
             </div>
-            <button id="copy-wa-btn" onclick="copyWA()" style="width:100%;margin-top:8px;padding:11px;border-radius:12px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.15s;min-height:44px">
+            <button id="copy-wa-btn" onclick="copyWA()" style="width:100%;margin-top:8px;padding:11px;border-radius:12px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background 0.15s;min-height:44px;font-family:'Plus Jakarta Sans',sans-serif;">
                 <i class="fas fa-copy" style="font-size:11px"></i>
                 <span id="copy-wa-label">Salin Nomor WA</span>
             </button>
@@ -930,7 +1001,7 @@ let currentUser = null, currentProfile = null;
 let receiverId = new URLSearchParams(location.search).get('id');
 let advData = null, advName = '', lawyerTableId = null, activeConvId = null;
 let isPremium = false, allConvs = [], attachedFile = null;
-let rtChannel = null, rtOnlineChannel = null;
+let rtChannel = null;
 let typingHideTimer = null, typingStopTimer = null;
 let _lastTypingSent = 0;
 let autoMsgSent = false, _advAvatarCache = null;
@@ -958,13 +1029,12 @@ function imgSrc(url,name) {
 }
 
 // ══════════════════════════════════════════════
-// STATUS ONLINE — REALTIME
+// STATUS ONLINE
 // ══════════════════════════════════════════════
 function applyOnlineStatus(lastSeen) {
     const dot = document.getElementById('online-dot');
     const statusText = document.getElementById('adv-status-text');
     if (!dot || !statusText) return;
-    // Jangan override kalau sedang mengetik
     if (document.getElementById('adv-typing')?.style.display !== 'none') return;
     if (!lastSeen) {
         dot.className = 'online-badge offline';
@@ -997,114 +1067,6 @@ async function updateOnlineStatus() {
     } catch(e) {}
 }
 
-// ═══════════════════════════════════════
-// REALTIME TYPING LISTENER
-// ═══════════════════════════════════════
-
-let typingRealtimeChannel = null;
-
-function subscribeTypingRealtime() {
-
-    if (
-        !window.supabase ||
-        !currentUser?.id ||
-        !receiverId
-    ) return;
-
-    // cleanup
-    if (typingRealtimeChannel) {
-
-        window.supabase.removeChannel(
-            typingRealtimeChannel
-        );
-    }
-
-    typingRealtimeChannel =
-
-        window.supabase
-
-            .channel(
-                'typing-' + currentUser.id
-            )
-
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'typing_status'
-                },
-
-                (payload) => {
-
-                    try {
-
-                        const data =
-                            payload.new;
-
-                        if (!data) return;
-
-                        // hanya lawan chat
-                        if (
-                            data.user_id !==
-                            receiverId
-                        ) return;
-
-                        // hanya untuk saya
-                        if (
-                            data.target_id !==
-                            currentUser.id
-                        ) return;
-
-                        const typingEl =
-                            document.getElementById(
-                                'adv-typing'
-                            );
-
-                        const statusEl =
-                            document.getElementById(
-                                'adv-status-text'
-                            );
-
-                        if (!typingEl) return;
-
-                        if (
-                            data.is_typing
-                        ) {
-
-                            typingEl.style.display =
-                                'inline';
-
-                            if (statusEl) {
-
-                                statusEl.style.display =
-                                    'none';
-                            }
-
-                        } else {
-
-                            typingEl.style.display =
-                                'none';
-
-                            if (statusEl) {
-
-                                statusEl.style.display =
-                                    'inline';
-                            }
-                        }
-
-                    } catch (err) {
-
-                        console.warn(
-                            'typing realtime',
-                            err
-                        );
-                    }
-                }
-            )
-
-            .subscribe();
-}
 async function updateMyLastSeen() {
     if (!currentUser) return;
     try {
@@ -1120,19 +1082,20 @@ function showTyping() {
     const statusTextEl = document.getElementById('adv-status-text');
     const tr = document.getElementById('typing-row');
 
-    if (advTypingEl) advTypingEl.style.display = '';
+    if (advTypingEl) advTypingEl.style.display = 'inline';
     if (statusTextEl) statusTextEl.style.display = 'none';
     if (tr) {
         tr.style.display = 'flex';
         const box = document.getElementById('chat-box');
-        if (box) box.scrollTop = box.scrollHeight;
+        if (box) requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
     }
 
     clearTimeout(typingHideTimer);
-    typingHideTimer = setTimeout(() => hideTyping(), 3500);
+    typingHideTimer = setTimeout(() => hideTyping(), 4000);
 }
 
 function hideTyping() {
+    clearTimeout(typingHideTimer);
     const advTypingEl = document.getElementById('adv-typing');
     const statusTextEl = document.getElementById('adv-status-text');
     const tr = document.getElementById('typing-row');
@@ -1211,6 +1174,10 @@ window.onload = async () => {
     await updateMyLastSeen();
     setInterval(updateMyLastSeen, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) updateMyLastSeen(); });
+
+    // iOS: update last seen on resume from background
+    window.addEventListener('focus', () => updateMyLastSeen());
+    window.addEventListener('pageshow', () => updateMyLastSeen());
 
     await loadInbox();
     document.getElementById('load-overlay').style.opacity='0';
@@ -1301,20 +1268,28 @@ async function openConv(pid,name) {
 function hideMobileInbox(){document.getElementById('inbox-panel').classList.add('hidden-mobile');}
 function showMobileInbox(){document.getElementById('inbox-panel').classList.remove('hidden-mobile');}
 function backToInbox(){showMobileInbox();}
+
 function showChatView(){
     document.getElementById('chat-empty').style.display='none';
     document.getElementById('chat-view').style.display='flex';
-    if(!isPremium){document.getElementById('upgrade-wall').style.display='block';document.getElementById('input-wrap').style.display='none';}
-    else{document.getElementById('upgrade-wall').style.display='none';document.getElementById('input-wrap').style.display='block';}
+    if(!isPremium){
+        document.getElementById('upgrade-wall').style.display='block';
+        document.getElementById('input-wrap').style.display='none';
+    } else {
+        document.getElementById('upgrade-wall').style.display='none';
+        document.getElementById('input-wrap').style.display='block';
+    }
 }
 
 // ══════════════════════════════════════════════
 // LOAD CHAT MODE
 // ══════════════════════════════════════════════
 async function loadChatMode() {
-    // Bersihkan channel lama
-    if(rtChannel){ try{ window.supabase.removeChannel(rtChannel); }catch(e){} rtChannel=null; }
-    if(rtOnlineChannel){ try{ window.supabase.removeChannel(rtOnlineChannel); }catch(e){} rtOnlineChannel=null; }
+    // Bersihkan semua channel lama — SATU titik cleanup
+    if(rtChannel){
+        try{ window.supabase.removeChannel(rtChannel); }catch(e){}
+        rtChannel = null;
+    }
     clearInterval(window._onlineCheckInterval);
     clearTimeout(typingHideTimer);
     clearTimeout(typingStopTimer);
@@ -1349,9 +1324,10 @@ async function loadChatMode() {
     activeConvId=ex?.[0]?.conversation_id||crypto.randomUUID();
 
     await renderMessages();
+
+    // Subscribe SATU channel untuk semua events
     subscribeRT();
-    subscribeOnlineRealtime();
-    subscribeTypingRealtime();
+
     await updateOnlineStatus();
     window._onlineCheckInterval = setInterval(updateOnlineStatus, 15000);
     await checkAutoMsg();
@@ -1402,152 +1378,149 @@ async function renderMessages() {
             </div>`;
     });
 
-    // Typing row — selalu ada di akhir, dikontrol show/hide
     box.innerHTML+=`
         <div id="typing-row" class="typing-row" style="display:none">
             <img src="${esc(bubbleAdvAv)}" class="msg-avatar" onerror="this.src='${avatarFallback(advName||'A')}'">
             <div class="typing-bubble"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
         </div>`;
-    box.scrollTop=box.scrollHeight;
+
+    requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+
     await window.supabase.from('messages').update({is_read:true}).eq('sender_id',receiverId).eq('receiver_id',currentUser.id).eq('is_read',false);
     const conv=allConvs.find(c=>c.pid===receiverId);
     if(conv){conv.unread=0;renderConvList(allConvs);}
 }
 
 // ══════════════════════════════════════════════
-// REALTIME — SUBSCRIBE (Hybrid: Broadcast + postgres_changes)
+// REALTIME — SATU channel untuk semua event
+// FIX: hapus subscribeTypingRealtime() terpisah yang menyebabkan konflik
 // ══════════════════════════════════════════════
 function subscribeRT() {
-    if(!receiverId) return;
+    if(!receiverId || !currentUser?.id) return;
 
-    // Channel name simetris — sama untuk kedua sisi percakapan
+    // Nama channel simetris — sama untuk kedua sisi
     const channelName = 'chat-' + [currentUser.id, receiverId].sort().join('-');
 
     rtChannel = window.supabase.channel(channelName, {
-        config: { broadcast: { self: false } }
+        config: {
+            broadcast: { self: false, ack: false },
+            presence: { key: currentUser.id }
+        }
     })
-        // ── 1. Pesan baru masuk via postgres_changes ──
-        .on('postgres_changes', {
-            event: 'INSERT', schema: 'public', table: 'messages'
-        }, p => {
-            const m = p.new;
-            const rel = (m.sender_id===currentUser.id && m.receiver_id===receiverId)
-                     || (m.sender_id===receiverId && m.receiver_id===currentUser.id);
-            if(rel){
-                renderMessages();
-                if(m.sender_id !== currentUser.id) playNotifSound();
-            }
-        })
-        // ── 2. Typing: via Broadcast (prioritas utama, ~50ms latensi) ──
-        .on('broadcast', { event: 'typing' }, ({ payload }) => {
-            if(payload?.from === receiverId) {
-                showTyping();
-            }
-        })
-        // ── 3. Typing: via postgres_changes pada tabel typing_status (fallback) ──
-        .on('postgres_changes', {
-            event: 'UPDATE', schema: 'public', table: 'typing_status'
-        }, p => {
-            const row = p.new;
-            if(!row) return;
-            if(row.user_id === receiverId && row.target_id === currentUser.id) {
-                if(row.is_typing === true) {
-                    showTyping();
-                } else {
-                    // Advokat berhenti mengetik
-                    clearTimeout(typingHideTimer);
-                    hideTyping();
-                }
-            }
-        })
-        // ── 4. Typing INSERT — untuk baris pertama kali dibuat ──
-        .on('postgres_changes', {
-            event: 'INSERT', schema: 'public', table: 'typing_status'
-        }, p => {
-            const row = p.new;
-            if(!row) return;
-            if(row.user_id === receiverId && row.target_id === currentUser.id && row.is_typing === true) {
-                showTyping();
-            }
-        })
-        .subscribe((status, err) => {
-            if(err) console.error('[RT] subscribe error:', err);
-        });
+    // ── Pesan baru (postgres_changes) ──
+    .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+    }, payload => {
+        const m = payload.new;
+        if(!m) return;
+        const rel = (m.sender_id === currentUser.id && m.receiver_id === receiverId)
+                 || (m.sender_id === receiverId && m.receiver_id === currentUser.id);
+        if(rel) {
+            renderMessages();
+            if(m.sender_id !== currentUser.id) playNotifSound();
+        }
+    })
+    // ── Typing: Broadcast (latensi <100ms) ──
+    .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if(!payload) return;
+        if(payload.from === receiverId && payload.to === currentUser.id) {
+            if(payload.is_typing) showTyping();
+            else hideTyping();
+        }
+    })
+    // ── Typing: postgres_changes UPDATE fallback ──
+    .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'typing_status'
+    }, payload => {
+        const row = payload.new;
+        if(!row) return;
+        if(row.user_id === receiverId && row.target_id === currentUser.id) {
+            if(row.is_typing) showTyping();
+            else { clearTimeout(typingHideTimer); hideTyping(); }
+        }
+    })
+    // ── Typing: postgres_changes INSERT fallback ──
+    .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'typing_status'
+    }, payload => {
+        const row = payload.new;
+        if(!row) return;
+        if(row.user_id === receiverId && row.target_id === currentUser.id && row.is_typing) {
+            showTyping();
+        }
+    })
+    // ── Online status ──
+    .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles'
+    }, payload => {
+        const row = payload.new;
+        if(row?.id === receiverId) applyOnlineStatus(row.last_seen);
+    })
+    .subscribe((status, err) => {
+        if(err) console.error('[RT] error:', err);
+        // Reconnect jika channel tertutup — penting untuk iOS background resume
+        if(status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+            setTimeout(() => {
+                if(receiverId) subscribeRT();
+            }, 3000);
+        }
+    });
 }
 
 // ══════════════════════════════════════════════
 // NOTIFY TYPING — Hybrid: Broadcast + DB upsert
+// FIX: broadcast via rtChannel yang sudah ada, tidak buat channel baru
 // ══════════════════════════════════════════════
 async function notifyTyping() {
+    if(!currentUser?.id || !receiverId || !rtChannel) return;
 
-    if (
-        !window.supabase ||
-        !currentUser?.id ||
-        !receiverId
-    ) return;
-
-    // tampil realtime
     clearTimeout(typingStopTimer);
 
     const now = Date.now();
-
-    // throttle
-    if (now - _lastTypingSent > 1200) {
-
+    // Throttle broadcast agar tidak spam (max 1x per 1.5 detik)
+    if(now - _lastTypingSent > 1500) {
         _lastTypingSent = now;
 
-        window.supabase
-            .from('typing_status')
-           .upsert({
+        // Broadcast via channel yang sudah ada (paling cepat)
+        rtChannel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { from: currentUser.id, to: receiverId, is_typing: true }
+        }).catch(() => {});
 
-    user_id:
-        currentUser.id,
-
-    target_id:
-        receiverId,
-
-    is_typing:
-        true,
-
-    updated_at:
-        new Date().toISOString()
-
-}, {
-
-    onConflict:
-        'user_id,target_id'
-
-});
-
+        // DB upsert sebagai fallback (async, tidak block UI)
+        window.supabase.from('typing_status').upsert({
+            user_id: currentUser.id,
+            target_id: receiverId,
+            is_typing: true,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,target_id' }).then(() => {}).catch(() => {});
     }
 
-    // auto stop
-    typingStopTimer =
-        setTimeout(() => {
-
-            window.supabase
-    .from('typing_status')
-    .upsert({
-
-        user_id:
-            currentUser.id,
-
-        target_id:
-            receiverId,
-
-        is_typing:
-            false,
-
-        updated_at:
-            new Date().toISOString()
-
-    }, {
-
-        onConflict:
-            'user_id,target_id'
-
-    });
-        }, 1500);
+    // Auto-stop setelah 1.8 detik berhenti mengetik
+    typingStopTimer = setTimeout(() => {
+        if(rtChannel) {
+            rtChannel.send({
+                type: 'broadcast',
+                event: 'typing',
+                payload: { from: currentUser.id, to: receiverId, is_typing: false }
+            }).catch(() => {});
+        }
+        window.supabase.from('typing_status').upsert({
+            user_id: currentUser.id,
+            target_id: receiverId,
+            is_typing: false,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,target_id' }).then(() => {}).catch(() => {});
+    }, 1800);
 }
 
 // ══════════════════════════════════════════════
@@ -1562,16 +1535,21 @@ async function sendMsg() {
     const btn=document.getElementById('send-btn');
     btn.disabled=true; inp.value=''; autoResize(inp);
 
-    // Reset typing state saat kirim pesan
+    // Stop typing indicator segera saat kirim
     clearTimeout(typingStopTimer);
-    try {
-        await window.supabase.from('typing_status').upsert({
-            user_id: currentUser.id,
-            target_id: receiverId,
-            is_typing: false,
-            updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,target_id' });
-    } catch(e) {}
+    if(rtChannel) {
+        rtChannel.send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { from: currentUser.id, to: receiverId, is_typing: false }
+        }).catch(() => {});
+    }
+    window.supabase.from('typing_status').upsert({
+        user_id: currentUser.id,
+        target_id: receiverId,
+        is_typing: false,
+        updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id,target_id' }).catch(() => {});
 
     try{
         const msgText=text||`📎 ${attachedFile?.name}`;
@@ -1590,8 +1568,17 @@ async function sendMsg() {
     finally{btn.disabled=false;inp.focus();}
 }
 
-function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}}
-function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+function handleKey(e){
+    // iOS: Enter di keyboard virtual tidak trigger newline
+    if(e.key==='Enter'&&!e.shiftKey){
+        e.preventDefault();
+        sendMsg();
+    }
+}
+function autoResize(el){
+    el.style.height='auto';
+    el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
 function handleFileAttach(inp){
     const f=inp.files[0];if(!f) return;
     if(f.size>10*1024*1024){toast('File maksimal 10MB','error');return;}
@@ -1668,10 +1655,29 @@ function openContactModal() {
 function closeContactModal(){document.getElementById('contact-modal').classList.remove('open');}
 function copyWA(){
     const wa=advData?.wa_number;if(!wa) return;
-    navigator.clipboard.writeText(wa).then(()=>{
-        const l=document.getElementById('copy-wa-label');l.textContent='✓ Tersalin!';
-        setTimeout(()=>{l.textContent='Salin: '+wa;},2000);
-    }).catch(()=>toast('Gagal menyalin nomor','error'));
+    // iOS: clipboard API kadang perlu interaksi user langsung
+    if(navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(wa).then(()=>{
+            const l=document.getElementById('copy-wa-label');l.textContent='✓ Tersalin!';
+            setTimeout(()=>{l.textContent='Salin: '+wa;},2000);
+        }).catch(()=>fallbackCopy(wa));
+    } else {
+        fallbackCopy(wa);
+    }
+}
+function fallbackCopy(text) {
+    // iOS fallback: buat input sementara
+    const el = document.createElement('input');
+    el.value = text;
+    el.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0';
+    document.body.appendChild(el);
+    el.focus(); el.select();
+    try {
+        document.execCommand('copy');
+        const l=document.getElementById('copy-wa-label');
+        if(l){l.textContent='✓ Tersalin!';setTimeout(()=>{l.textContent='Salin: '+text;},2000);}
+    } catch(e) { toast('Salin manual: '+text,'info'); }
+    document.body.removeChild(el);
 }
 
 // ══════════════════════════════════════════════
@@ -1719,7 +1725,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeContactModal()
 // ══════════════════════════════════════════════
 let soundEnabled=localStorage.getItem('chat_sound')!=='off';
 let audioCtx=null;
-function getAudioCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function getAudioCtx(){
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    // iOS: resume jika suspended
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    return audioCtx;
+}
 function playNotifSound(){
     if(!soundEnabled) return;
     try{
@@ -1740,15 +1751,6 @@ function toggleSound(){
     if(soundEnabled){btn.innerHTML='<i class="fas fa-volume-high"></i>';btn.style.color='#60A5FA';btn.classList.remove('muted');toast('🔔 Notifikasi suara aktif','info');playNotifSound();}
     else{btn.innerHTML='<i class="fas fa-volume-xmark"></i>';btn.style.color='var(--text-3)';btn.classList.add('muted');toast('🔕 Notifikasi suara dimatikan','info');}
 }
-document.addEventListener('DOMContentLoaded',()=>{
-    const btn=document.getElementById('sound-toggle');
-    if(btn&&!soundEnabled){btn.innerHTML='<i class="fas fa-volume-xmark"></i>';btn.style.color='var(--text-3)';btn.classList.add('muted');}
-    const inp=document.getElementById('msg-input');
-    if(inp){
-        inp.addEventListener('focus',()=>{if(!inp.value.trim())document.getElementById('quick-reply-bar').classList.add('show');});
-        inp.addEventListener('input',()=>{const bar=document.getElementById('quick-reply-bar');if(inp.value.trim())bar.classList.remove('show');else bar.classList.add('show');});
-    }
-});
 
 // ══════════════════════════════════════════════
 // QUICK REPLY
@@ -1765,12 +1767,14 @@ function useQuickReply(el){
 // ══════════════════════════════════════════════
 let selectedRating=0;
 const RATING_LABELS=['','Kurang Memuaskan','Cukup','Baik','Sangat Baik','Luar Biasa! ⭐'];
+
 function setRating(val){
     selectedRating=val;
     document.querySelectorAll('.star-btn').forEach(btn=>btn.classList.toggle('active',parseInt(btn.dataset.val)<=val));
     document.getElementById('rating-label').textContent=RATING_LABELS[val]||'';
     const sb=document.getElementById('submit-rating-btn');sb.style.opacity='1';sb.style.pointerEvents='';
 }
+
 async function openRatingModal(){
     if(!receiverId) return;
     selectedRating=0;
@@ -1784,9 +1788,13 @@ async function openRatingModal(){
         const{data:ex}=await window.supabase.from('ratings').select('score,comment').eq('reviewer_id',currentUser.id).eq('advokat_id',receiverId).maybeSingle();
         if(ex){setRating(ex.score);document.getElementById('rating-comment').value=ex.comment||'';document.getElementById('already-rated-info').style.display='block';}
     }catch(e){}
-    document.getElementById('rating-modal').style.display='flex';
+    document.getElementById('rating-modal').classList.add('open');
 }
-function closeRatingModal(){document.getElementById('rating-modal').style.display='none';}
+
+function closeRatingModal(){
+    document.getElementById('rating-modal').classList.remove('open');
+}
+
 async function submitRating(){
     if(!selectedRating||!receiverId) return;
     const btn=document.getElementById('submit-rating-btn');
@@ -1802,6 +1810,40 @@ async function submitRating(){
         btn.innerHTML='<i class="fas fa-paper-plane"></i> Kirim Rating';btn.style.pointerEvents='';
     }
 }
+
+// ══════════════════════════════════════════════
+// DOMContentLoaded — event listeners
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+    const btn=document.getElementById('sound-toggle');
+    if(btn&&!soundEnabled){btn.innerHTML='<i class="fas fa-volume-xmark"></i>';btn.style.color='var(--text-3)';btn.classList.add('muted');}
+
+    const inp=document.getElementById('msg-input');
+    if(inp){
+        inp.addEventListener('focus',()=>{
+            if(!inp.value.trim()) document.getElementById('quick-reply-bar').classList.add('show');
+            // iOS: scroll ke bawah saat keyboard muncul
+            setTimeout(() => {
+                const box = document.getElementById('chat-box');
+                if(box) box.scrollTop = box.scrollHeight;
+            }, 350);
+        });
+        inp.addEventListener('input',()=>{
+            const bar=document.getElementById('quick-reply-bar');
+            if(inp.value.trim()) bar.classList.remove('show');
+            else bar.classList.add('show');
+        });
+        inp.addEventListener('blur', () => {
+            // iOS: collapse quick reply saat keyboard turun
+            setTimeout(() => document.getElementById('quick-reply-bar').classList.remove('show'), 200);
+        });
+    }
+
+    // iOS: resume AudioContext pada interaksi user pertama
+    document.addEventListener('touchstart', () => {
+        if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }, { once: true });
+});
 </script>
 <script src="shared-modal.js"></script>
 </body>
