@@ -1,5 +1,7 @@
 // ============================================
-// push-init.js — LawyersAI v3.1
+// push-init.js — LawyersAI v3.2
+// FIX: button tidak lagi diletakkan di <head>
+//      melainkan di-inject ke DOM setelah body siap
 // VAPID key harus sama dengan di valtown_push_handler.ts
 // ============================================
 (function () {
@@ -17,7 +19,9 @@
   let _refreshTimer  = null;
   let _lastFavCount  = -1;
 
-  // ── 1. Register Service Worker ──
+  // ─────────────────────────────────────────────
+  // 1. Register Service Worker
+  // ─────────────────────────────────────────────
   async function registerSW() {
     if (!('serviceWorker' in navigator)) return null;
     try {
@@ -39,7 +43,9 @@
     }
   }
 
-  // ── 2. Subscribe Push + simpan ke Supabase ──
+  // ─────────────────────────────────────────────
+  // 2. Subscribe Push + simpan ke Supabase
+  // ─────────────────────────────────────────────
   async function subscribePush(userId) {
     if (!_swReg || !('PushManager' in window) || !('Notification' in window)) return null;
     try {
@@ -73,7 +79,9 @@
     }
   }
 
-  // ── 3. Badge: Tab Title + Favicon + App Badge ──
+  // ─────────────────────────────────────────────
+  // 3. Badge: Tab Title + Favicon + App Badge
+  // ─────────────────────────────────────────────
   function setTabBadge(count) {
     _unreadCount = Math.max(0, Number(count || 0));
 
@@ -89,7 +97,9 @@
       startTitleBlink(_unreadCount);
     } else {
       stopTitleBlink();
-      document.title = _unreadCount > 0 ? `(${_unreadCount}) ${_originalTitle}` : _originalTitle;
+      document.title = _unreadCount > 0
+        ? `(${_unreadCount}) ${_originalTitle}`
+        : _originalTitle;
     }
 
     try {
@@ -120,7 +130,11 @@
           ctx.fillText(count > 9 ? '9+' : String(count), 22, 10);
         }
         let link = document.querySelector("link[rel~='icon']");
-        if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+        }
         link.href = canvas.toDataURL();
       };
       img.onload  = () => { ctx.drawImage(img, 0, 0, 32, 32); draw(); };
@@ -156,7 +170,9 @@
     }
   });
 
-  // ── 4. Realtime badge saat tab aktif ──
+  // ─────────────────────────────────────────────
+  // 4. Realtime badge saat tab aktif
+  // ─────────────────────────────────────────────
   async function listenMessages(userId) {
     if (!window.supabase || !userId) return;
     if (_msgChannel) {
@@ -174,7 +190,7 @@
         _refreshTimer = setTimeout(() => refreshUnread(userId), 300);
         if (!document.hidden) {
           const preview = String(payload.new?.message_text || '').slice(0, 60);
-          showToast('💬 ' + (preview || 'Pesan baru masuk'));
+          _showToast('💬 ' + (preview || 'Pesan baru masuk'));
         }
       })
       .subscribe();
@@ -192,50 +208,196 @@
     } catch (_) {}
   }
 
-  function showToast(msg) {
+  function _showToast(msg) {
     if (typeof window.toast === 'function') { window.toast(msg, 'info'); return; }
     const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1E3A5F;color:#fff;border:1px solid rgba(59,130,246,0.4);border-radius:12px;padding:10px 18px;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 8px 28px rgba(0,0,0,0.4);pointer-events:none;max-width:300px;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    el.style.cssText = [
+      'position:fixed', 'bottom:80px', 'left:50%', 'transform:translateX(-50%)',
+      'background:#1E293B', 'color:#fff',
+      'border:1px solid rgba(59,130,246,0.4)', 'border-radius:12px',
+      'padding:10px 18px', 'font-size:13px', 'font-weight:600',
+      'z-index:99999', 'box-shadow:0 8px 28px rgba(0,0,0,0.4)',
+      'pointer-events:none', 'max-width:300px', 'font-family:sans-serif',
+      'white-space:nowrap', 'overflow:hidden', 'text-overflow:ellipsis',
+    ].join(';');
     el.textContent = msg;
     document.body.appendChild(el);
-    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3500);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity .3s';
+      setTimeout(() => el.remove(), 300);
+    }, 3500);
   }
 
-  // ── 5. Expose ke halaman ──
+  // ─────────────────────────────────────────────
+  // 5. Public API
+  // ─────────────────────────────────────────────
   window.clearInboxBadge = async function (userId) {
     setTabBadge(0);
     if (!window.supabase || !userId) return;
     try {
-      await window.supabase.from('messages').update({ is_read: true })
-        .eq('receiver_id', userId).eq('is_read', false);
+      await window.supabase.from('messages')
+        .update({ is_read: true })
+        .eq('receiver_id', userId)
+        .eq('is_read', false);
     } catch (_) {}
   };
 
+  /**
+   * window.requestPushPermission()
+   * Dipanggil dari tombol "Aktifkan Notifikasi".
+   * Aman dipanggil berulang kali.
+   */
   window.requestPushPermission = async function () {
-    if (!('Notification' in window)) return;
-    if (Notification.permission === 'granted') { showToast('🔔 Notifikasi sudah aktif'); return; }
+    if (!('Notification' in window)) {
+      _showToast('Browser ini tidak mendukung notifikasi');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      _showToast('🔔 Notifikasi sudah aktif');
+      updateButtonState('granted');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      _showToast('⚠️ Notifikasi diblokir — aktifkan di pengaturan browser');
+      updateButtonState('denied');
+      return;
+    }
+    // Status 'default' — tampilkan dialog izin browser
     const perm = await Notification.requestPermission();
+    updateButtonState(perm);
     if (perm === 'granted') {
-      showToast('🔔 Notifikasi berhasil diaktifkan!');
+      _showToast('🔔 Notifikasi berhasil diaktifkan!');
       if (window.supabase) {
         const { data: { user } } = await window.supabase.auth.getUser();
         if (user) await subscribePush(user.id);
       }
     } else {
-      showToast('Notifikasi diblokir — aktifkan di pengaturan browser');
+      _showToast('Notifikasi diblokir — aktifkan di pengaturan browser');
     }
   };
 
-  // ── Helper ──
+  // ─────────────────────────────────────────────
+  // 6. Tombol "Aktifkan Notifikasi"
+  //
+  //  Di-inject ke <body> setelah DOM siap.
+  //  JANGAN lagi taruh <button> hardcode di <head> atau
+  //  di luar <body> — browser akan mengabaikannya.
+  // ─────────────────────────────────────────────
+  function createNotifButton() {
+    // Jangan duplikat jika dipanggil lebih dari sekali
+    if (document.getElementById('push-notif-btn')) return;
+
+    // Jika izin sudah granted, tidak perlu tampilkan tombol
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') return;
+
+    const btn = document.createElement('button');
+    btn.id        = 'push-notif-btn';
+    btn.type      = 'button';
+    btn.setAttribute('aria-label', 'Aktifkan notifikasi push');
+
+    Object.assign(btn.style, {
+      // Posisi fixed pojok kanan bawah — tidak mengganggu layout apapun
+      position:             'fixed',
+      bottom:               'calc(env(safe-area-inset-bottom, 0px) + 72px)',
+      right:                '16px',
+      zIndex:               '8000',
+      display:              'inline-flex',
+      alignItems:           'center',
+      gap:                  '6px',
+      padding:              '8px 14px',
+      borderRadius:         '12px',
+      background:           'rgba(10,20,40,0.90)',
+      border:               '1px solid rgba(59,130,246,0.35)',
+      color:                '#60A5FA',
+      fontSize:             '11px',
+      fontWeight:           '700',
+      cursor:               'pointer',
+      fontFamily:           'inherit',
+      backdropFilter:       'blur(14px)',
+      WebkitBackdropFilter: 'blur(14px)',
+      boxShadow:            '0 4px 20px rgba(0,0,0,0.4)',
+      transition:           'opacity .25s, transform .2s',
+      letterSpacing:        '0.04em',
+      lineHeight:           '1',
+    });
+
+    // Render isi tombol (FontAwesome sudah di-load oleh halaman)
+    btn.innerHTML = '<i class="fas fa-bell" style="font-size:11px;pointer-events:none"></i>'
+                  + '<span style="pointer-events:none">Aktifkan Notifikasi</span>';
+
+    btn.onclick = window.requestPushPermission;
+
+    // Efek hover / tap
+    btn.addEventListener('mouseenter', () => {
+      btn.style.opacity   = '0.85';
+      btn.style.transform = 'translateY(-2px)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.opacity   = '1';
+      btn.style.transform = 'translateY(0)';
+    });
+    btn.addEventListener('touchstart', () => { btn.style.opacity = '0.7'; }, { passive: true });
+    btn.addEventListener('touchend',   () => { btn.style.opacity = '1'; },   { passive: true });
+
+    document.body.appendChild(btn);
+  }
+
+  /**
+   * Sesuaikan tampilan tombol dengan status izin.
+   * granted → hijau, lalu hilang otomatis setelah 3 detik
+   * denied  → abu, berikan tooltip
+   * default → kembalikan tampilan biru awal
+   */
+  function updateButtonState(perm) {
+    const btn = document.getElementById('push-notif-btn');
+    if (!btn) return;
+
+    if (perm === 'granted') {
+      btn.innerHTML    = '<i class="fas fa-bell" style="font-size:11px;pointer-events:none"></i>'
+                       + '<span style="pointer-events:none">Notifikasi Aktif ✓</span>';
+      btn.style.color  = '#34D399';
+      btn.style.border = '1px solid rgba(16,185,129,0.35)';
+      btn.style.cursor = 'default';
+      btn.onclick      = null;
+      // Hilangkan setelah 3 detik agar tidak mengganggu UI
+      setTimeout(() => {
+        btn.style.opacity         = '0';
+        btn.style.pointerEvents   = 'none';
+        setTimeout(() => { if (btn.parentNode) btn.remove(); }, 400);
+      }, 3000);
+
+    } else if (perm === 'denied') {
+      btn.innerHTML    = '<i class="fas fa-bell-slash" style="font-size:11px;pointer-events:none"></i>'
+                       + '<span style="pointer-events:none">Notifikasi Diblokir</span>';
+      btn.style.color  = '#94A3B8';
+      btn.style.border = '1px solid rgba(148,163,184,0.2)';
+      btn.title        = 'Aktifkan di pengaturan browser (klik ikon gembok / info di address bar)';
+
+    } else {
+      // default — kembalikan ke biru
+      btn.innerHTML    = '<i class="fas fa-bell" style="font-size:11px;pointer-events:none"></i>'
+                       + '<span style="pointer-events:none">Aktifkan Notifikasi</span>';
+      btn.style.color  = '#60A5FA';
+      btn.style.border = '1px solid rgba(59,130,246,0.35)';
+      btn.onclick      = window.requestPushPermission;
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // Helper VAPID
+  // ─────────────────────────────────────────────
   function urlB64ToUint8(b64) {
-    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const pad = '='.repeat((4 - (b64.length % 4)) % 4);
     const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
     const arr = new Uint8Array(raw.length);
     for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
     return arr;
   }
 
-  // ── Init ──
+  // ─────────────────────────────────────────────
+  // Init — daftarkan SW + langganan push
+  // ─────────────────────────────────────────────
   async function init() {
     try {
       await registerSW();
@@ -253,7 +415,19 @@
     try { if (_msgChannel) window.supabase?.removeChannel(_msgChannel); } catch (_) {}
   });
 
-  document.readyState === 'loading'
-    ? document.addEventListener('DOMContentLoaded', init)
-    : init();
+  // ─────────────────────────────────────────────
+  // Bootstrap — jalankan setelah DOM siap
+  // ─────────────────────────────────────────────
+  function bootstrap() {
+    createNotifButton(); // inject tombol ke <body>
+    init();              // daftarkan SW & push
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    // DOM sudah siap (script di-load dengan defer / di akhir body)
+    bootstrap();
+  }
+
 })();
