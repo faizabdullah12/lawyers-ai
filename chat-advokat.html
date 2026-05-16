@@ -36,7 +36,6 @@
 
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* iOS fix: use dvh for true viewport height */
         html {
             height: 100%;
             height: -webkit-fill-available;
@@ -47,14 +46,12 @@
             color: var(--text-1);
             transition: background 0.3s, color 0.3s;
             margin: 0; padding: 0;
-            /* iOS: prevent bounce scroll on body */
             height: 100vh;
             height: 100dvh;
             overflow: hidden;
             position: fixed;
             width: 100%;
             -webkit-text-size-adjust: 100%;
-            /* Prevent iOS text inflation */
             -webkit-overflow-scrolling: touch;
         }
 
@@ -67,7 +64,6 @@
             height: 100vh;
             height: 100dvh;
             overflow: hidden;
-            /* Prevent iOS rubber-banding on outer container */
             overscroll-behavior: none;
         }
 
@@ -111,7 +107,6 @@
         @media (max-width: 768px) {
             #inbox-panel {
                 width: 100%;
-                /* iOS: absolute instead of fixed to avoid keyboard issues */
                 position: absolute; z-index: 10;
                 height: 100%; height: 100dvh;
                 transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
@@ -196,12 +191,10 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 10px 12px 10px 34px;
-            font-size: 13px; color: var(--text-1);
+            font-size: 16px; color: var(--text-1);
             font-family: 'Plus Jakarta Sans', sans-serif;
             outline: none; transition: border-color 0.2s;
             min-height: 42px;
-            /* iOS: prevent zoom on focus */
-            font-size: 16px;
         }
         .search-box input:focus { border-color: var(--accent); }
         .search-box input::placeholder { color: var(--text-3); }
@@ -224,7 +217,6 @@
             transition: background 0.12s;
             position: relative;
             min-height: 72px;
-            /* iOS tap feedback */
             -webkit-tap-highlight-color: rgba(59,130,246,0.08);
         }
         .conv-item:hover { background: rgba(255,255,255,0.025); }
@@ -244,7 +236,6 @@
             display: flex; align-items: center; justify-content: space-between;
             flex-shrink: 0;
             min-height: calc(var(--header-h) + var(--safe-top));
-            /* iOS: use native blur */
             -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
         }
@@ -286,7 +277,6 @@
             cursor: pointer; color: var(--text-2); font-size: 13px;
             transition: all 0.15s;
             -webkit-tap-highlight-color: transparent;
-            /* iOS: minimum tap target */
             min-width: 44px; min-height: 44px;
         }
         .header-btn:hover { background: var(--bg-4); color: var(--text-1); }
@@ -403,7 +393,6 @@
             border: 1.5px solid var(--border);
             border-radius: 20px;
             padding: 10px 46px 10px 16px;
-            /* iOS: prevent zoom — minimum 16px */
             font-size: 16px;
             color: var(--text-1);
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -411,7 +400,6 @@
             min-height: 44px; max-height: 120px;
             overflow-y: auto; transition: border-color 0.2s;
             display: block; line-height: 1.5;
-            /* iOS: remove inner shadow on inputs */
             -webkit-appearance: none;
             appearance: none;
         }
@@ -474,10 +462,7 @@
         body.light .qr-chip { background: #F8FAFC; border-color: #E2E8F0; color: #475569; }
         body.light .qr-chip:hover { background: #EFF6FF; border-color: #93C5FD; color: #2563EB; }
 
-        /* ─── MODALS
-             iOS FIX: Ganti position:fixed → position:absolute dengan wrapper bertinggi eksplisit
-             agar modal tidak collapse di iOS WebView / WKWebView
-        ─── */
+        /* ─── MODALS ─── */
         .modal-host {
             position: fixed;
             inset: 0;
@@ -486,7 +471,6 @@
             align-items: flex-end;
             justify-content: center;
             padding: 0;
-            /* iOS: pointer events */
             touch-action: none;
         }
         .modal-host.open { display: flex; }
@@ -510,9 +494,7 @@
             background: var(--bg-2);
             border: 1px solid var(--border-2);
             border-bottom: none;
-            /* iOS safe area at bottom */
             padding-bottom: max(var(--safe-bottom), 16px);
-            /* iOS: prevent modal from being taller than screen */
             max-height: 92dvh;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
@@ -635,7 +617,6 @@
         .spin { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--border-2); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Toast: pakai position absolute terhadap wrapper, bukan fixed */
         #toast-container {
             position: fixed;
             bottom: calc(80px + var(--safe-bottom));
@@ -643,8 +624,6 @@
             z-index: 999;
             display: flex; flex-direction: column; align-items: center; gap: 8px;
             pointer-events: none;
-            /* iOS: force above keyboard */
-            padding-bottom: 0;
         }
         .toast {
             background: var(--bg-2); border: 1px solid var(--border-2);
@@ -732,7 +711,15 @@
         body.light .btn-report-modal { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2); color: #DC2626; }
         body.light .btn-report-modal:hover { background: rgba(239,68,68,0.1); }
 
-        /* iOS keyboard: shrink chat-box when keyboard opens */
+        /* ─── DEBUG BADGE — hapus setelah konfirmasi fix ─── */
+        #debug-badge {
+            position: fixed; top: calc(var(--safe-top) + 4px); right: 8px;
+            z-index: 9998; font-size: 9px; font-weight: 700;
+            padding: 3px 8px; border-radius: 20px;
+            background: rgba(0,0,0,0.6); color: #fff;
+            pointer-events: none; display: none;
+        }
+
         @supports (height: 100dvh) {
             #app { height: 100dvh; }
         }
@@ -742,6 +729,7 @@
 <body>
 
 <div id="toast-container"></div>
+<div id="debug-badge" id="debug-badge"></div>
 <div id="load-overlay">
     <div style="text-align:center">
         <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#1D4ED8,#3B82F6);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px;font-style:italic;font-weight:800;color:#fff;letter-spacing:-1px">L</div>
@@ -799,7 +787,7 @@
                     <p id="conv-count" style="font-size:10px;color:var(--text-3);margin-top:2px;font-weight:500">0 percakapan</p>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                    <button id="menu-toggle" onclick="openSidebar()" style="width:44px;height:44px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);display:none;align-items:center;justify-content:color:var(--text-2);cursor:pointer;font-size:13px">
+                    <button id="menu-toggle" onclick="openSidebar()" style="width:44px;height:44px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--text-2);cursor:pointer;font-size:13px">
                         <i class="fas fa-bars"></i>
                     </button>
                     <button class="theme-toggle" onclick="window.toggleTheme?.()" title="Mode Siang/Malam">
@@ -908,7 +896,7 @@
     </div>
 </div>
 
-<!-- RATING MODAL — pakai .modal-host agar iOS tidak collapse -->
+<!-- RATING MODAL -->
 <div id="rating-modal" class="modal-host">
     <div class="modal-overlay" onclick="closeRatingModal()"></div>
     <div class="rating-card">
@@ -1006,6 +994,7 @@ let rtChannel = null;
 let typingHideTimer = null, typingStopTimer = null;
 let _lastTypingSent = 0;
 let autoMsgSent = false, _advAvatarCache = null;
+let _isSending = false; // ← FIX Bug 2: guard flag agar send tidak double-trigger
 
 const SUPA_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
@@ -1027,6 +1016,36 @@ function imgSrc(url,name) {
     const base=url.split('?')[0];
     if(base.includes('supabase')) return base+'?t='+Math.floor(Date.now()/60000);
     return url;
+}
+
+// ══════════════════════════════════════════════
+// FIX BUG 1 — Refresh isPremium langsung dari DB
+// Dipanggil di window.onload SETELAH fetch profile
+// ══════════════════════════════════════════════
+async function refreshPremiumStatus(userId) {
+    try {
+        // Ambil fresh dari DB, bypass cache apapun
+        const { data, error } = await window.supabase
+            .from('profiles')
+            .select('is_premium')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.warn('[Premium] Gagal fetch is_premium:', error.message);
+            return false;
+        }
+
+        // Coba berbagai nama kolom yang mungkin dipakai
+        const val = data?.is_premium ?? data?.isPremium ?? data?.premium ?? false;
+        const result = val === true || val === 1 || val === 'true';
+
+        console.log('[Premium] is_premium raw:', val, '→ parsed:', result);
+        return result;
+    } catch(e) {
+        console.error('[Premium] Exception:', e);
+        return false;
+    }
 }
 
 // ══════════════════════════════════════════════
@@ -1144,46 +1163,91 @@ async function fetchPartnerName(uid) {
     return 'Advokat';
 }
 
+// ══════════════════════════════════════════════
+// FIX — Apply UI state sesuai isPremium
+// ══════════════════════════════════════════════
+function applyPremiumUI() {
+    if (isPremium) {
+        document.getElementById('session-tag').textContent = 'PRO SULTAN';
+        document.getElementById('session-tag').style.color = '#F59E0B';
+        document.getElementById('side-plan-badge').textContent = 'PRO';
+        document.getElementById('side-plan-badge').style.background = 'linear-gradient(135deg,#F59E0B,#D97706)';
+        document.getElementById('side-plan-title').textContent = 'PRO Sultan Aktif 💎';
+        document.getElementById('side-plan-sub').textContent = 'Akses penuh seumur hidup';
+        document.getElementById('premium-marker').style.display = '';
+    }
+    // Refresh tampilan chat panel jika sudah terbuka
+    const chatView = document.getElementById('chat-view');
+    if (chatView && chatView.style.display !== 'none') {
+        applyInputState();
+    }
+}
+
+// FIX — Pisahkan logika tampil input/upgrade wall
+function applyInputState() {
+    const wall = document.getElementById('upgrade-wall');
+    const wrap = document.getElementById('input-wrap');
+    const qrBar = document.getElementById('quick-reply-bar');
+
+    if (isPremium) {
+        if (wall) wall.style.display = 'none';
+        if (wrap) wrap.style.display = 'block';
+    } else {
+        if (wall) wall.style.display = 'block';
+        if (wrap) wrap.style.display = 'none';
+        if (qrBar) qrBar.classList.remove('show');
+    }
+}
+
 window.onload = async () => {
     const theme = localStorage.getItem('lawyers_ai_theme') || 'dark';
     if(theme==='light') document.body.classList.add('light');
-    const{data:{session}}=await window.supabase.auth.getSession();
-    if(!session){location.href='login.html';return;}
-    currentUser=session.user;
-    const{data:mitraCheck}=await window.supabase.from('mitra_ahli').select('id').eq('user_id',currentUser.id).eq('status_verifikasi','verified').maybeSingle();
-    if(mitraCheck){location.href='dashboard-mitra.html';return;}
-    const{data:profile}=await window.supabase.from('profiles').select('*').eq('id',currentUser.id).single();
-    isPremium=!!profile?.is_premium; currentProfile=profile;
+
+    const { data: { session } } = await window.supabase.auth.getSession();
+    if(!session){ location.href='login.html'; return; }
+    currentUser = session.user;
+
+    // Cek apakah mitra
+    const { data: mitraCheck } = await window.supabase
+        .from('mitra_ahli').select('id')
+        .eq('user_id', currentUser.id)
+        .eq('status_verifikasi','verified')
+        .maybeSingle();
+    if(mitraCheck){ location.href='dashboard-mitra.html'; return; }
+
+    // Fetch profile
+    const { data: profile } = await window.supabase
+        .from('profiles').select('*')
+        .eq('id', currentUser.id).single();
+    currentProfile = profile;
+
+    // ── FIX BUG 1: Cek is_premium secara eksplisit ──
+    isPremium = await refreshPremiumStatus(currentUser.id);
+
     if(profile){
-        const n=profile.full_name||currentUser.email?.split('@')[0]||'Pengguna';
-        document.getElementById('side-name').textContent=n;
-        document.getElementById('side-avatar').src=profile.avatar_url||avatarFallback(n);
-        document.getElementById('side-avatar').onerror=function(){this.src=avatarFallback(n);};
+        const n = profile.full_name || currentUser.email?.split('@')[0] || 'Pengguna';
+        document.getElementById('side-name').textContent = n;
+        document.getElementById('side-avatar').src = profile.avatar_url || avatarFallback(n);
+        document.getElementById('side-avatar').onerror = function(){ this.src = avatarFallback(n); };
     }
-    if(isPremium){
-        document.getElementById('session-tag').textContent='PRO SULTAN';
-        document.getElementById('session-tag').style.color='#F59E0B';
-        document.getElementById('side-plan-badge').textContent='PRO';
-        document.getElementById('side-plan-badge').style.background='linear-gradient(135deg,#F59E0B,#D97706)';
-        document.getElementById('side-plan-title').textContent='PRO Sultan Aktif 💎';
-        document.getElementById('side-plan-sub').textContent='Akses penuh seumur hidup';
-        document.getElementById('premium-marker').style.display='';
-    }
-    if(window.innerWidth<=1024) document.getElementById('menu-toggle').style.display='flex';
-    if(window.innerWidth<=768) document.getElementById('back-btn').style.display='flex';
+
+    applyPremiumUI();
+
+    if(window.innerWidth <= 1024) document.getElementById('menu-toggle').style.display = 'flex';
+    if(window.innerWidth <= 768) document.getElementById('back-btn').style.display = 'flex';
 
     await updateMyLastSeen();
     setInterval(updateMyLastSeen, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) updateMyLastSeen(); });
-
-    // iOS: update last seen on resume from background
     window.addEventListener('focus', () => updateMyLastSeen());
     window.addEventListener('pageshow', () => updateMyLastSeen());
 
     await loadInbox();
-    document.getElementById('load-overlay').style.opacity='0';
-    setTimeout(()=>document.getElementById('load-overlay').style.display='none',300);
-    if(receiverId){showChatView();await loadChatMode();if(window.innerWidth<=768)hideMobileInbox();}
+
+    document.getElementById('load-overlay').style.opacity = '0';
+    setTimeout(() => document.getElementById('load-overlay').style.display = 'none', 300);
+
+    if(receiverId){ showChatView(); await loadChatMode(); if(window.innerWidth<=768) hideMobileInbox(); }
 };
 
 // ══════════════════════════════════════════════
@@ -1273,20 +1337,13 @@ function backToInbox(){showMobileInbox();}
 function showChatView(){
     document.getElementById('chat-empty').style.display='none';
     document.getElementById('chat-view').style.display='flex';
-    if(!isPremium){
-        document.getElementById('upgrade-wall').style.display='block';
-        document.getElementById('input-wrap').style.display='none';
-    } else {
-        document.getElementById('upgrade-wall').style.display='none';
-        document.getElementById('input-wrap').style.display='block';
-    }
+    applyInputState(); // ← FIX: pakai fungsi terpusat, bukan inline
 }
 
 // ══════════════════════════════════════════════
 // LOAD CHAT MODE
 // ══════════════════════════════════════════════
 async function loadChatMode() {
-    // Bersihkan semua channel lama — SATU titik cleanup
     if(rtChannel){
         try{ window.supabase.removeChannel(rtChannel); }catch(e){}
         rtChannel = null;
@@ -1325,10 +1382,7 @@ async function loadChatMode() {
     activeConvId=ex?.[0]?.conversation_id||crypto.randomUUID();
 
     await renderMessages();
-
-    // Subscribe SATU channel untuk semua events
     subscribeRT();
-
     await updateOnlineStatus();
     window._onlineCheckInterval = setInterval(updateOnlineStatus, 15000);
     await checkAutoMsg();
@@ -1393,13 +1447,11 @@ async function renderMessages() {
 }
 
 // ══════════════════════════════════════════════
-// REALTIME — SATU channel untuk semua event
-// FIX: hapus subscribeTypingRealtime() terpisah yang menyebabkan konflik
+// REALTIME
 // ══════════════════════════════════════════════
 function subscribeRT() {
     if(!receiverId || !currentUser?.id) return;
 
-    // Nama channel simetris — sama untuk kedua sisi
     const channelName = 'chat-' + [currentUser.id, receiverId].sort().join('-');
 
     rtChannel = window.supabase.channel(channelName, {
@@ -1408,11 +1460,8 @@ function subscribeRT() {
             presence: { key: currentUser.id }
         }
     })
-    // ── Pesan baru (postgres_changes) ──
     .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages'
+        event: 'INSERT', schema: 'public', table: 'messages'
     }, payload => {
         const m = payload.new;
         if(!m) return;
@@ -1423,7 +1472,6 @@ function subscribeRT() {
             if(m.sender_id !== currentUser.id) playNotifSound();
         }
     })
-    // ── Typing: Broadcast (latensi <100ms) ──
     .on('broadcast', { event: 'typing' }, ({ payload }) => {
         if(!payload) return;
         if(payload.from === receiverId && payload.to === currentUser.id) {
@@ -1431,11 +1479,8 @@ function subscribeRT() {
             else hideTyping();
         }
     })
-    // ── Typing: postgres_changes UPDATE fallback ──
     .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'typing_status'
+        event: 'UPDATE', schema: 'public', table: 'typing_status'
     }, payload => {
         const row = payload.new;
         if(!row) return;
@@ -1444,41 +1489,29 @@ function subscribeRT() {
             else { clearTimeout(typingHideTimer); hideTyping(); }
         }
     })
-    // ── Typing: postgres_changes INSERT fallback ──
     .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'typing_status'
+        event: 'INSERT', schema: 'public', table: 'typing_status'
     }, payload => {
         const row = payload.new;
         if(!row) return;
-        if(row.user_id === receiverId && row.target_id === currentUser.id && row.is_typing) {
-            showTyping();
-        }
+        if(row.user_id === receiverId && row.target_id === currentUser.id && row.is_typing) showTyping();
     })
-    // ── Online status ──
     .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles'
+        event: 'UPDATE', schema: 'public', table: 'profiles'
     }, payload => {
         const row = payload.new;
         if(row?.id === receiverId) applyOnlineStatus(row.last_seen);
     })
     .subscribe((status, err) => {
         if(err) console.error('[RT] error:', err);
-        // Reconnect jika channel tertutup — penting untuk iOS background resume
         if(status === 'CHANNEL_ERROR' || status === 'CLOSED') {
-            setTimeout(() => {
-                if(receiverId) subscribeRT();
-            }, 3000);
+            setTimeout(() => { if(receiverId) subscribeRT(); }, 3000);
         }
     });
 }
 
 // ══════════════════════════════════════════════
-// NOTIFY TYPING — Hybrid: Broadcast + DB upsert
-// FIX: broadcast via rtChannel yang sudah ada, tidak buat channel baru
+// NOTIFY TYPING
 // ══════════════════════════════════════════════
 async function notifyTyping() {
     if(!currentUser?.id || !receiverId || !rtChannel) return;
@@ -1486,18 +1519,15 @@ async function notifyTyping() {
     clearTimeout(typingStopTimer);
 
     const now = Date.now();
-    // Throttle broadcast agar tidak spam (max 1x per 1.5 detik)
     if(now - _lastTypingSent > 1500) {
         _lastTypingSent = now;
 
-        // Broadcast via channel yang sudah ada (paling cepat)
         rtChannel.send({
             type: 'broadcast',
             event: 'typing',
             payload: { from: currentUser.id, to: receiverId, is_typing: true }
         }).catch(() => {});
 
-        // DB upsert sebagai fallback (async, tidak block UI)
         window.supabase.from('typing_status').upsert({
             user_id: currentUser.id,
             target_id: receiverId,
@@ -1506,7 +1536,6 @@ async function notifyTyping() {
         }, { onConflict: 'user_id,target_id' }).then(() => {}).catch(() => {});
     }
 
-    // Auto-stop setelah 1.8 detik berhenti mengetik
     typingStopTimer = setTimeout(() => {
         if(rtChannel) {
             rtChannel.send({
@@ -1520,21 +1549,31 @@ async function notifyTyping() {
             target_id: receiverId,
             is_typing: false,
             updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id,target_id' }).then(() => {}).catch(() => {});
+        }, { onConflict: 'user_id,target_id' }).catch(() => {});
     }, 1800);
 }
 
 // ══════════════════════════════════════════════
-// SEND MESSAGE
+// SEND MESSAGE — FIX BUG 2: guard + reset btn
 // ══════════════════════════════════════════════
 async function sendMsg() {
-    if(!isPremium){toast('🔒 Upgrade PRO untuk membalas pesan','warn');return;}
-    if(!receiverId){toast('Pilih percakapan terlebih dahulu','warn');return;}
-    const inp=document.getElementById('msg-input');
-    const text=inp.value.trim();
-    if(!text&&!attachedFile) return;
-    const btn=document.getElementById('send-btn');
-    btn.disabled=true; inp.value=''; autoResize(inp);
+    if(!isPremium){ toast('🔒 Upgrade PRO untuk membalas pesan','warn'); return; }
+    if(!receiverId){ toast('Pilih percakapan terlebih dahulu','warn'); return; }
+
+    // FIX: guard flag agar tidak double-trigger
+    if(_isSending) return;
+
+    const inp = document.getElementById('msg-input');
+    const text = inp.value.trim();
+    if(!text && !attachedFile) return;
+
+    _isSending = true;
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+
+    const sentText = inp.value;
+    inp.value = '';
+    autoResize(inp);
 
     // Stop typing indicator segera saat kirim
     clearTimeout(typingStopTimer);
@@ -1553,8 +1592,8 @@ async function sendMsg() {
     }, { onConflict: 'user_id,target_id' }).catch(() => {});
 
     try{
-        const msgText=text||`📎 ${attachedFile?.name}`;
-        await window.supabase.from('messages').insert([{
+        const msgText = text || `📎 ${attachedFile?.name}`;
+        const { error } = await window.supabase.from('messages').insert([{
             sender_id: currentUser.id,
             receiver_id: receiverId,
             lawyer_id: lawyerTableId,
@@ -1562,15 +1601,29 @@ async function sendMsg() {
             message_text: msgText,
             is_read: false
         }]);
+
+        // FIX: cek error dari insert
+        if(error) throw error;
+
         clearAttach();
-        const cv=allConvs.find(c=>c.pid===receiverId);
-        if(cv){cv.preview=msgText;cv.isMe=true;cv.time='Baru';renderConvList(allConvs);}
-    }catch(e){toast('Gagal kirim: '+e.message,'error');}
-    finally{btn.disabled=false;inp.focus();}
+        const cv = allConvs.find(c=>c.pid===receiverId);
+        if(cv){ cv.preview=msgText; cv.isMe=true; cv.time='Baru'; renderConvList(allConvs); }
+
+    } catch(e) {
+        // FIX: kembalikan teks jika gagal kirim
+        inp.value = sentText;
+        autoResize(inp);
+        toast('Gagal kirim: ' + (e.message || 'Coba lagi'), 'error');
+
+    } finally {
+        // FIX: SELALU reset state, tidak peduli sukses/gagal
+        _isSending = false;
+        btn.disabled = false;
+        inp.focus();
+    }
 }
 
 function handleKey(e){
-    // iOS: Enter di keyboard virtual tidak trigger newline
     if(e.key==='Enter'&&!e.shiftKey){
         e.preventDefault();
         sendMsg();
@@ -1656,7 +1709,6 @@ function openContactModal() {
 function closeContactModal(){document.getElementById('contact-modal').classList.remove('open');}
 function copyWA(){
     const wa=advData?.wa_number;if(!wa) return;
-    // iOS: clipboard API kadang perlu interaksi user langsung
     if(navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(wa).then(()=>{
             const l=document.getElementById('copy-wa-label');l.textContent='✓ Tersalin!';
@@ -1667,7 +1719,6 @@ function copyWA(){
     }
 }
 function fallbackCopy(text) {
-    // iOS fallback: buat input sementara
     const el = document.createElement('input');
     el.value = text;
     el.style.cssText = 'position:fixed;top:-999px;left:-999px;opacity:0';
@@ -1728,7 +1779,6 @@ let soundEnabled=localStorage.getItem('chat_sound')!=='off';
 let audioCtx=null;
 function getAudioCtx(){
     if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    // iOS: resume jika suspended
     if(audioCtx.state==='suspended') audioCtx.resume();
     return audioCtx;
 }
@@ -1741,7 +1791,7 @@ function playNotifSound(){
         osc.frequency.setValueAtTime(1100,ctx.currentTime+0.08);
         osc.frequency.setValueAtTime(880,ctx.currentTime+0.16);
         gain.gain.setValueAtTime(0.3,ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.4);
+        gain.gain.exponentialRampToValueAtValue(0.001,ctx.currentTime+0.4);
         osc.start(ctx.currentTime);osc.stop(ctx.currentTime+0.4);
     }catch(e){}
 }
@@ -1813,7 +1863,7 @@ async function submitRating(){
 }
 
 // ══════════════════════════════════════════════
-// DOMContentLoaded — event listeners
+// DOMContentLoaded
 // ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
     const btn=document.getElementById('sound-toggle');
@@ -1823,7 +1873,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(inp){
         inp.addEventListener('focus',()=>{
             if(!inp.value.trim()) document.getElementById('quick-reply-bar').classList.add('show');
-            // iOS: scroll ke bawah saat keyboard muncul
             setTimeout(() => {
                 const box = document.getElementById('chat-box');
                 if(box) box.scrollTop = box.scrollHeight;
@@ -1835,12 +1884,10 @@ document.addEventListener('DOMContentLoaded',()=>{
             else bar.classList.add('show');
         });
         inp.addEventListener('blur', () => {
-            // iOS: collapse quick reply saat keyboard turun
             setTimeout(() => document.getElementById('quick-reply-bar').classList.remove('show'), 200);
         });
     }
 
-    // iOS: resume AudioContext pada interaksi user pertama
     document.addEventListener('touchstart', () => {
         if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }, { once: true });
