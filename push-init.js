@@ -1,10 +1,10 @@
 // ============================================
-// push-init.js — LawyersAI v3.3
-// FIX: tombol selalu muncul kecuali sudah granted
+// push-init.js — LawyersAI v3.4
+// Multi-device push notification support
 // ============================================
 (function () {
 
-  const VAPID_PUBLIC_KEY = 'BKArWxpciBnB6q2vr3qg_42j-PUhgZ-pous04tOTODzBjRQjolTrKqG_LowfCn322hyd2aPep6NdQjwyklAfKSo'
+  const VAPID_PUBLIC_KEY = 'BKArWxpciBnB6q2vr3gg_42j-PUhgZ-pous04tOTODzBjRQjo1TrKgG_LowfCn322hyd2aPep6NdQjwyk1AfKSo';
 
   const SW_PATH = './sw.js';
 
@@ -63,7 +63,7 @@
           auth:       j.keys?.auth,
           user_agent: navigator.userAgent.slice(0, 200),
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+        }, { onConflict: 'endpoint' });
       }
       return sub;
     } catch (e) {
@@ -221,7 +221,6 @@
       _setBtnDenied(btn);
       return;
     }
-    // default — tampilkan dialog
     const perm = await Notification.requestPermission();
     if (perm === 'granted') {
       _showToast('🔔 Notifikasi berhasil diaktifkan!');
@@ -261,8 +260,6 @@
   // ── 6. Inject tombol ke <body> ──
   function createNotifButton() {
     if (document.getElementById('push-notif-btn')) return;
-
-    // Sudah granted = tidak perlu tombol
     if (typeof Notification !== 'undefined' && Notification.permission === 'granted') return;
 
     const btn = document.createElement('button');
