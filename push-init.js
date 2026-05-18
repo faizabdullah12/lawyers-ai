@@ -61,7 +61,6 @@
           endpoint:   j.endpoint,
           p256dh:     j.keys?.p256dh,
           auth:       j.keys?.auth,
-          user_agent: navigator.userAgent.slice(0, 200),
           updated_at: new Date().toISOString(),
         }, { onConflict: 'endpoint' });
         if (error) console.warn('[Push] Upsert error:', error.message);
@@ -322,7 +321,7 @@
       const { data: { user } } = await window.supabase.auth.getUser();
       if (!user) return;
 
-      // FIX: selalu subscribe ulang saat init kalau permission sudah granted
+      // Selalu subscribe saat init kalau permission sudah granted
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         await subscribePush(user.id);
       }
