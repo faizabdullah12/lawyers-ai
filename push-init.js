@@ -120,3 +120,32 @@
   init();
 
 })();
+window.addEventListener("load", async () => {
+
+  console.log("AUTO PUSH INIT");
+
+  try {
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+
+      console.log("BELUM LOGIN");
+
+      return;
+
+    }
+
+    console.log("USER LOGIN:", user.id);
+
+    await window.requestPushPermission();
+
+  } catch (err) {
+
+    console.error("AUTO PUSH ERROR:", err);
+
+  }
+
+});
