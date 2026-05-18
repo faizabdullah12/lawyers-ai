@@ -1,11 +1,33 @@
 self.addEventListener("install", (event) => {
+
   console.log("SW installed");
+
   self.skipWaiting();
+
 });
 
 self.addEventListener("activate", (event) => {
+
   console.log("SW activated");
-  event.waitUntil(clients.claim());
+
+  event.waitUntil(
+
+    (async () => {
+
+      // claim semua tab
+      await clients.claim();
+
+      // bersihin cache lama
+      const keys = await caches.keys();
+
+      await Promise.all(
+        keys.map(key => caches.delete(key))
+      );
+
+    })()
+
+  );
+
 });
 
 // =========================
@@ -24,6 +46,8 @@ self.addEventListener("push", (event) => {
 
   } catch (e) {
 
+    console.error("PUSH PARSE ERROR:", e);
+
     data = {
       title: "Pesan Baru",
       body: "Ada pesan baru"
@@ -31,20 +55,45 @@ self.addEventListener("push", (event) => {
 
   }
 
-  const title = data.title || "Pesan Baru";
+  console.log("PUSH DATA:", data);
+
+  const title =
+    data.title || "Pesan Baru";
 
   const options = {
-    body: data.body || "Ada pesan masuk",
-    icon: data.icon || "/icon-192.png",
-    badge: data.badge || "/badge-72.png",
+    body:
+      data.body || "Ada pesan masuk",
+
+    icon:
+      data.icon ||
+      "https://lawyers-ai-faiz-abdullahs-projects-e95c3533.vercel.app/icon-192.png",
+
+    badge:
+      data.badge ||
+      "https://lawyers-ai-faiz-abdullahs-projects-e95c3533.vercel.app/badge-72.png",
+
     vibrate: [200, 100, 200],
-    tag: data.tag || "lawyers-ai-chat",
+
+    tag:
+      data.tag || "lawyers-ai-chat",
+
+    renotify: true,
+
     requireInteraction: true,
-    data: data.data || {}
+
+    data:
+      data.data || {
+        url: "/dashboard-mitra.html"
+      }
   };
 
   event.waitUntil(
-    self.registration.showNotification(title, options)
+
+    self.registration.showNotification(
+      title,
+      options
+    )
+
   );
 
 });
@@ -53,33 +102,54 @@ self.addEventListener("push", (event) => {
 // CLICK NOTIFICATION
 // =========================
 
-self.addEventListener("notificationclick", (event) => {
+self.addEventListener(
+  "notificationclick",
+  (event) => {
 
-  event.notification.close();
+    console.log("NOTIFICATION CLICK");
 
-  const targetUrl =
-    event.notification.data?.url ||
-    "/dashboard-mitra.html";
+    event.notification.close();
 
-  event.waitUntil(
+    const targetUrl =
+      event.notification.data?.url ||
+      "/dashboard-mitra.html";
 
-    clients.matchAll({
-      type: "window",
-      includeUncontrolled: true
-    }).then((clientList) => {
+    event.waitUntil(
 
-      for (const client of clientList) {
+      clients.matchAll({
+        type: "window",
+        includeUncontrolled: true
+      }).then((clientList) => {
 
-        if (client.url.includes(targetUrl)) {
-          return client.focus();
+        for (const client of clientList) {
+
+          if (
+            client.url.includes(targetUrl)
+          ) {
+
+            return client.focus();
+
+          }
+
         }
 
-      }
+        return clients.openWindow(
+          targetUrl
+        );
 
-      return clients.openWindow(targetUrl);
+      })
 
-    })
+    );
 
-  );
+  }
+);
+
+// =========================
+// OPTIONAL DEBUG
+// =========================
+
+self.addEventListener("message", (event) => {
+
+  console.log("SW MESSAGE:", event.data);
 
 });
