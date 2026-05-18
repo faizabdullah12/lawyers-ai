@@ -146,6 +146,8 @@
 </head>
 <body>
 
+    <!-- ── SIDEBAR (shared-sidebar.js akan inject ini otomatis) ── -->
+
     <div class="main-scroll">
         <div class="konsultasi-wrap">
 
@@ -225,19 +227,28 @@
     </div><!-- /main-scroll -->
 
     <script>
-        // Ambil API key dari config.js jika tersedia, fallback ke key lokal
-        function getProxyEndpoint() {
-            return '/api/ai-proxy';
-        }
+        // ══════════════════════════════════════════
+        // GROQ API — via /api/ai-proxy (Vercel serverless)
+        // Tidak perlu model chain di frontend, backend yang handle fallback
+        // ══════════════════════════════════════════
+        async function fetchWithFallback(prompt) {
+            const res = await fetch('/api/ai-proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.7,
+                    max_tokens: 3000
+                })
+            });
 
-        // Model fallback chain — dicoba satu per satu jika 429/error
-        const MODEL_CHAIN = [
-            'deepseek/deepseek-r1:free',
-            'deepseek/deepseek-chat-v3-0324:free',
-            'meta-llama/llama-3.3-70b-instruct:free',
-            'qwen/qwen-2.5-72b-instruct:free',
-            'mistralai/mistral-7b-instruct:free',
-        ];
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: res.statusText }));
+                throw new Error(err.error || `HTTP ${res.status}`);
+            }
+
+            return res.json();
+        }
 
         let currentAnalysis = null;
 
@@ -255,7 +266,7 @@
                 </div>
                 <div>
                     <p class="ai-title">Lawyers AI Assistant</p>
-                    <p class="ai-label" style="margin-top:2px;">Powered by AI — Selalu siap 24/7</p>
+                    <p class="ai-label" style="margin-top:2px;">Powered by Groq — Selalu siap 24/7</p>
                 </div>
             </div>
             <p class="ai-body">Selamat datang! Saya siap membantu menganalisis kasus hukum Anda. Ceritakan kronologi kasusnya secara detail.</p>
@@ -355,7 +366,6 @@
             if (window.showLALToast) showLALToast('success', 'Riwayat Dihapus', 'Chat baru siap dimulai.');
         }
 
-        // Append ke DOM + simpan ke history array
         function appendToChat(html, role) {
             const chatBox = document.getElementById('chat-box');
             const tmp = document.createElement('div');
@@ -365,45 +375,6 @@
             chatBox.scrollTop = chatBox.scrollHeight;
             chatHistory.push({ role, html, ts: Date.now() });
             saveHistory();
-        }
-        async function fetchWithFallback(prompt) {
-            let lastError = null;
-            for (const model of MODEL_CHAIN) {
-                try {
-                    console.log(`🤖 Mencoba model: ${model}`);
-                    const res = await fetch('/api/ai-proxy', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            model,
-                            messages: [{ role: 'user', content: prompt }],
-                            temperature: 0.7,
-                            max_tokens: 3000
-                        })
-                    });
-                    if (res.status === 429 || res.status === 503 || res.status === 404) {
-                        console.warn(`⚠️ ${model} tidak tersedia (${res.status}), mencoba model berikutnya...`);
-                        lastError = new Error(`Model ${model} tidak tersedia (${res.status})`);
-                        continue;
-                    }
-                    if (!res.ok) {
-                        const errTxt = await res.text();
-                        throw new Error(`API Error ${res.status}: ${errTxt.substring(0,120)}`);
-                    }
-                    const data = await res.json();
-                    console.log(`✅ Berhasil dengan model: ${model}`);
-                    return data;
-                } catch(e) {
-                    lastError = e;
-                    if (e.message.includes('429') || e.message.includes('503') || e.message.includes('404') || e.message.includes('rate') || e.message.includes('penuh') || e.message.includes('tersedia')) {
-                        continue; // coba model berikutnya
-                    }
-                    throw e; // error lain langsung lempar
-                }
-            }
-            throw new Error(`Semua model AI sedang overload. Coba lagi dalam beberapa menit.\n(${lastError?.message || 'Rate limit'})`);
         }
 
         async function sendMessage() {
@@ -468,7 +439,7 @@ Pesan user: ${msg}`;
                 } else {
                     if (!parsed.summary || !parsed.pasal) throw new Error('Data analisis tidak lengkap');
                     currentAnalysis = parsed;
-                    saveHistory(); // simpan analysis terbaru
+                    saveHistory();
 
                     const legalHtml = `
                         <div class="message-ai">
@@ -499,7 +470,7 @@ Pesan user: ${msg}`;
 
             } catch (err) {
                 console.error('❌ Error:', err);
-                const is429 = err.message.includes('429') || err.message.includes('overload') || err.message.includes('rate') || err.message.includes('penuh');
+                const is429 = err.message.includes('429') || err.message.includes('overload') || err.message.includes('rate') || err.message.includes('sibuk');
                 appendToChat(`
                     <div class="message-ai" style="border-color:rgba(239,68,68,0.3);">
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
@@ -510,7 +481,7 @@ Pesan user: ${msg}`;
                         </div>
                         ${is429 ? `
                         <p style="font-size:13px;color:var(--text-1);font-weight:700;margin-bottom:8px;">Server AI sedang kelebihan permintaan 🔄</p>
-                        <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:10px;">Semua model gratis sedang ramai dipakai. Ini normal terjadi pada jam sibuk.</p>
+                        <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:10px;">Semua model Groq sedang ramai dipakai. Ini normal terjadi pada jam sibuk.</p>
                         <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:12px;margin-bottom:10px;">
                             <p style="font-size:10px;font-weight:800;color:#60A5FA;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;">💡 Yang bisa kamu lakukan:</p>
                             <p style="font-size:11px;color:var(--text-2);line-height:1.7;margin:0;">• Tunggu 1–2 menit lalu kirim ulang pesan<br>• Coba kirim pertanyaan lebih singkat<br>• Atau konsultasi langsung dengan advokat kami</p>
@@ -576,10 +547,10 @@ Pesan user: ${msg}`;
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-                const pw  = doc.internal.pageSize.getWidth();   // 210
-                const ph  = doc.internal.pageSize.getHeight();  // 297
+                const pw  = doc.internal.pageSize.getWidth();
+                const ph  = doc.internal.pageSize.getHeight();
                 const ml  = 25, mr = 25, mt = 20;
-                const cw  = pw - ml - mr; // 160mm
+                const cw  = pw - ml - mr;
                 let y     = mt;
 
                 const tanggal = new Date().toLocaleDateString('id-ID', {
@@ -587,22 +558,8 @@ Pesan user: ${msg}`;
                 });
                 const nomorSurat = `${String(Math.floor(Math.random()*900)+100)}/SOMASI/LAI/${new Date().getFullYear()}`;
 
-                // ── Helpers ──
                 const checkPage = (need = 10) => {
                     if (y + need > ph - 20) { doc.addPage(); y = mt; }
-                };
-                const writeText = (text, x, fontSize, style, color, maxWidth) => {
-                    doc.setFontSize(fontSize);
-                    doc.setFont('helvetica', style || 'normal');
-                    doc.setTextColor(...(color || [30,30,30]));
-                    if (maxWidth) {
-                        const lines = doc.splitTextToSize(text, maxWidth);
-                        doc.text(lines, x, y);
-                        return lines.length;
-                    } else {
-                        doc.text(text, x, y);
-                        return 1;
-                    }
                 };
                 const hline = (x1, x2, lw = 0.3, color = [30,30,30]) => {
                     doc.setLineWidth(lw);
@@ -610,32 +567,23 @@ Pesan user: ${msg}`;
                     doc.line(x1, y, x2, y);
                 };
 
-                // ══════════════════════════════════════════
                 // KOP SURAT
-                // ══════════════════════════════════════════
-                // Garis atas tebal
                 doc.setLineWidth(1.2);
                 doc.setDrawColor(37,99,235);
                 doc.line(ml, y, pw - mr, y);
                 y += 6;
 
-                writeText('LAWYERS AI', ml, 18, 'bold', [37,99,235]);
-                y += 7;
-                writeText('Konsultan & Asisten Hukum Digital', ml, 9, 'normal', [80,80,80]);
-                y += 5;
-                writeText('Jl. Hukum Digital No. 1, Jakarta Pusat 10110  |  www.lawyers-ai.id  |  info@lawyers-ai.id', ml, 8, 'normal', [120,120,120]);
-                y += 4;
+                doc.setFontSize(18); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
+                doc.text('LAWYERS AI', ml, y); y += 7;
+                doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+                doc.text('Konsultan & Asisten Hukum Digital', ml, y); y += 5;
+                doc.setFontSize(8); doc.setTextColor(120,120,120);
+                doc.text('Jl. Hukum Digital No. 1, Jakarta Pusat 10110  |  www.lawyers-ai.id  |  info@lawyers-ai.id', ml, y); y += 4;
 
-                // Garis bawah kop
-                doc.setLineWidth(0.3);
-                doc.setDrawColor(37,99,235);
-                doc.line(ml, y, pw - mr, y);
-                y += 8;
+                doc.setLineWidth(0.3); doc.setDrawColor(37,99,235);
+                doc.line(ml, y, pw - mr, y); y += 8;
 
-                // ══════════════════════════════════════════
                 // IDENTITAS SURAT
-                // ══════════════════════════════════════════
-                // Nomor & tanggal — 2 kolom
                 doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
                 const col2 = ml + 85;
                 doc.text(`Nomor     : ${nomorSurat}`, ml, y);
@@ -647,7 +595,6 @@ Pesan user: ${msg}`;
                 doc.setFont('helvetica','normal');
                 y += 10;
 
-                // ── Kepada ──
                 doc.text('Kepada Yth.', ml, y); y += 6;
                 doc.setFont('helvetica','bold');
                 doc.text('[NAMA PIHAK YANG DISOMASI]', ml, y); y += 6;
@@ -660,12 +607,9 @@ Pesan user: ${msg}`;
                 doc.setFont('helvetica','normal');
                 y += 10;
 
-                // Garis pemisah tipis
                 hline(ml, pw - mr, 0.2, [200,200,200]); y += 8;
 
-                // ══════════════════════════════════════════
                 // PEMBUKAAN
-                // ══════════════════════════════════════════
                 const pembukaan = `Dengan hormat,\n\nYang bertanda tangan di bawah ini, kami dari Lawyers AI, selaku kuasa hukum dan/atau pihak yang berkepentingan, dengan ini menyampaikan SOMASI (Surat Teguran Hukum) kepada Saudara/i sebagaimana tersebut di atas, berkenaan dengan hal-hal sebagai berikut:`;
                 doc.setFontSize(11); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
                 const pembukaanLines = doc.splitTextToSize(pembukaan, cw);
@@ -673,33 +617,25 @@ Pesan user: ${msg}`;
                 doc.text(pembukaanLines, ml, y);
                 y += pembukaanLines.length * 6 + 8;
 
-                // ══════════════════════════════════════════
-                // BAGIAN I — DUDUK PERMASALAHAN
-                // ══════════════════════════════════════════
+                // BAGIAN I
                 checkPage(20);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('I.  DUDUK PERMASALAHAN', ml, y); y += 7;
-
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 const summaryLines = doc.splitTextToSize(currentAnalysis.summary || '-', cw);
                 checkPage(summaryLines.length * 6 + 6);
                 doc.text(summaryLines, ml, y);
                 y += summaryLines.length * 6 + 8;
 
-                // ══════════════════════════════════════════
-                // BAGIAN II — DASAR HUKUM
-                // ══════════════════════════════════════════
+                // BAGIAN II
                 checkPage(30);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('II.  DASAR HUKUM', ml, y); y += 7;
-
                 doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 doc.text(currentAnalysis.pasal || '-', ml, y); y += 6;
-
                 doc.setFont('helvetica','italic'); doc.setTextColor(60,60,60); doc.setFontSize(10);
                 const pasalText = `"${currentAnalysis.isi_pasal || '-'}"`;
                 const pasalLines = doc.splitTextToSize(pasalText, cw - 8);
-                // Box abu tipis untuk kutipan pasal
                 checkPage(pasalLines.length * 5.5 + 12);
                 doc.setFillColor(245, 247, 250);
                 doc.setDrawColor(200, 200, 200);
@@ -707,8 +643,6 @@ Pesan user: ${msg}`;
                 doc.roundedRect(ml, y - 3, cw, pasalLines.length * 5.5 + 6, 2, 2, 'FD');
                 doc.text(pasalLines, ml + 4, y + 2);
                 y += pasalLines.length * 5.5 + 10;
-
-                // Kategori
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 doc.text(`Kategori Hukum  :  `, ml, y);
                 doc.setFont('helvetica','bold');
@@ -716,20 +650,15 @@ Pesan user: ${msg}`;
                 doc.setFont('helvetica','normal');
                 y += 10;
 
-                // ══════════════════════════════════════════
-                // BAGIAN III — TUNTUTAN / SOMASI
-                // ══════════════════════════════════════════
+                // BAGIAN III
                 checkPage(40);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('III.  TUNTUTAN DAN PERMINTAAN', ml, y); y += 7;
-
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 const tuntutanIntro = 'Berdasarkan uraian di atas, kami dengan ini menuntut dan meminta kepada Saudara/i untuk:';
                 const tIntroLines = doc.splitTextToSize(tuntutanIntro, cw);
                 doc.text(tIntroLines, ml, y);
                 y += tIntroLines.length * 6 + 4;
-
-                // Tuntutan dari saran AI, dipecah jadi poin-poin
                 const saranRaw = currentAnalysis.saran || 'Segera menyelesaikan permasalahan ini secara hukum.';
                 const saranPoin = saranRaw.split(/[.;]\s+/).filter(s => s.trim().length > 10);
                 saranPoin.forEach((poin, i) => {
@@ -741,7 +670,7 @@ Pesan user: ${msg}`;
                 });
                 y += 4;
 
-                // Deadline
+                // Deadline box
                 checkPage(20);
                 doc.setFillColor(254, 242, 242);
                 doc.setDrawColor(220, 80, 80);
@@ -753,13 +682,10 @@ Pesan user: ${msg}`;
                 doc.text('Selambat-lambatnya 14 (empat belas) hari kalender sejak diterimanya surat ini.', ml + 4, y + 9);
                 y += 22;
 
-                // ══════════════════════════════════════════
-                // BAGIAN IV — PENUTUP
-                // ══════════════════════════════════════════
+                // BAGIAN IV
                 checkPage(40);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('IV.  PENUTUP', ml, y); y += 7;
-
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 const penutup = `Apabila dalam batas waktu yang telah ditentukan Saudara/i tidak memenuhi tuntutan di atas, maka kami akan mengambil langkah-langkah hukum lebih lanjut, termasuk namun tidak terbatas pada gugatan perdata dan/atau laporan pidana kepada pihak berwajib sesuai ketentuan perundang-undangan yang berlaku di Negara Kesatuan Republik Indonesia.\n\nDemikian surat somasi ini kami sampaikan dengan sebenar-benarnya. Atas perhatian dan kerja sama Saudara/i, kami ucapkan terima kasih.`;
                 const penutupLines = doc.splitTextToSize(penutup, cw);
@@ -767,26 +693,19 @@ Pesan user: ${msg}`;
                 doc.text(penutupLines, ml, y);
                 y += penutupLines.length * 6 + 12;
 
-                // ══════════════════════════════════════════
                 // TANDA TANGAN
-                // ══════════════════════════════════════════
                 checkPage(50);
-                // 2 blok TTD — Pembuat & Penerima
                 const ttdX1 = ml;
                 const ttdX2 = ml + 95;
-
                 doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
                 doc.text(`Jakarta, ${tanggal}`, ttdX1, y);
                 doc.text('Hormat kami,', ttdX1, y + 6);
                 doc.text('Yang Menerima,', ttdX2, y + 6);
-
-                y += 30; // ruang TTD
-                // Garis TTD
+                y += 30;
                 doc.setLineWidth(0.3); doc.setDrawColor(30,30,30);
                 doc.line(ttdX1, y, ttdX1 + 70, y);
                 doc.line(ttdX2, y, ttdX2 + 70, y);
                 y += 5;
-
                 doc.setFont('helvetica','bold'); doc.setFontSize(10);
                 doc.text('[NAMA PEMBUAT SOMASI]', ttdX1, y);
                 doc.text('[NAMA PENERIMA]', ttdX2, y); y += 5;
@@ -794,20 +713,15 @@ Pesan user: ${msg}`;
                 doc.text('Penggugat / Pelapor', ttdX1, y);
                 doc.text('Tergugat / Terlapor', ttdX2, y);
                 y += 14;
-
-                // ── Materai placeholder ──
                 doc.setDrawColor(100,100,100); doc.setLineWidth(0.3);
                 doc.rect(ttdX1 + 15, y - 38, 28, 20);
                 doc.setFontSize(7); doc.setTextColor(130,130,130); doc.setFont('helvetica','italic');
                 doc.text('Materai\nRp 10.000', ttdX1 + 22, y - 31);
 
-                // ══════════════════════════════════════════
-                // FOOTER SEMUA HALAMAN
-                // ══════════════════════════════════════════
+                // FOOTER
                 const pc = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pc; i++) {
                     doc.setPage(i);
-                    // Garis footer
                     doc.setLineWidth(0.3); doc.setDrawColor(37,99,235);
                     doc.line(ml, ph - 14, pw - mr, ph - 14);
                     doc.setFontSize(7.5); doc.setFont('helvetica','italic'); doc.setTextColor(120,120,120);
@@ -831,8 +745,8 @@ Pesan user: ${msg}`;
             const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
         }
 
-        window.sendMessage   = sendMessage;
-        window.generatePDF   = generatePDF;
+        window.sendMessage  = sendMessage;
+        window.generatePDF  = generatePDF;
 
         // ── AUTO-TRIGGER DARI KATEGORI BERANDA ──
         const CATEGORY_MAP = {
@@ -875,7 +789,6 @@ Pesan user: ${msg}`;
                 _profileComplete = true;
                 return [];
             } catch(e) {
-                // Jika supabase error (misal offline), biarkan tetap bisa chat
                 _profileComplete = true;
                 return [];
             }
@@ -898,13 +811,10 @@ Pesan user: ${msg}`;
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Load history tersimpan
             loadHistory();
 
-            // Cek profil di background
             const missing = await checkProfileComplete();
             if (missing && missing.length > 0) {
-                // Tampilkan banner peringatan di atas chat
                 const chatBox = document.getElementById('chat-box');
                 const banner = document.createElement('div');
                 banner.id = 'profile-incomplete-banner';
@@ -913,7 +823,7 @@ Pesan user: ${msg}`;
                         <i class="fas fa-circle-exclamation" style="color:#FBBF24;font-size:16px;flex-shrink:0;"></i>
                         <div style="flex:1;min-width:0;">
                             <p style="font-size:12px;font-weight:700;color:#FDE68A;margin:0 0 2px;">Profil Belum Lengkap</p>
-                            <p style="font-size:11px;color:#92400E;color:#D97706;margin:0;">${missing.map(f=>FIELD_LABELS[f]||f).join(' & ')} belum diisi. <a href="profile.html" style="color:#FBBF24;font-weight:700;text-decoration:underline;">Lengkapi sekarang →</a></p>
+                            <p style="font-size:11px;color:#D97706;margin:0;">${missing.map(f=>FIELD_LABELS[f]||f).join(' & ')} belum diisi. <a href="profile.html" style="color:#FBBF24;font-weight:700;text-decoration:underline;">Lengkapi sekarang →</a></p>
                         </div>
                         <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#92400E;cursor:pointer;font-size:14px;flex-shrink:0;padding:0;"><i class="fas fa-xmark"></i></button>
                     </div>`;
