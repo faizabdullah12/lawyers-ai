@@ -1,156 +1,93 @@
-// ============================================
-// push-init.js — LawyersAI FINAL
-// ============================================
-
 (function () {
 
   const VAPID_PUBLIC_KEY = 'BMbQeTQ8SjeSbkUDcmBMTaFjrYE4Mk7DZhLZz4WiDY1udAgda3Ef_0f_IL6-LaH_NRQ2dlILJEjCtpYq0LNb98Y';
 
-  const SW_PATH = '/sw.js';
+  let swReg = null;
 
-  let _swReg = null;
-
-  // =========================
-  // Register Service Worker
-  // =========================
   async function registerSW() {
 
     if (!('serviceWorker' in navigator)) {
-      console.warn('[Push] Service Worker tidak didukung');
-      return null;
+      console.warn('SW not supported');
+      return;
     }
 
     try {
 
-      const reg = await navigator.serviceWorker.register(SW_PATH);
+      swReg = await navigator.serviceWorker.register('/sw.js');
 
-      _swReg = reg;
-
-      console.log('[Push] SW registered');
-
-      return reg;
+      console.log('SW registered');
 
     } catch (err) {
 
-      console.error('[Push] SW gagal:', err);
+      console.error('SW register failed', err);
 
-      return null;
     }
   }
 
-  // =========================
-  // Base64 → Uint8
-  // =========================
   function urlBase64ToUint8Array(base64String) {
 
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
 
     const base64 = (base64String + padding)
-      .replace(/\-/g, '+')
+      .replace(/-/g, '+')
       .replace(/_/g, '/');
 
     const rawData = atob(base64);
 
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-
-    return outputArray;
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
   }
 
-  // =========================
-  // Subscribe Push
-  // =========================
   async function subscribePush(userId) {
 
-    if (!_swReg) {
-      console.warn('[Push] SW belum ready');
-      return null;
+    if (!swReg) return;
+
+    let sub = await swReg.pushManager.getSubscription();
+
+    if (!sub) {
+
+      sub = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey:
+          urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+
     }
 
-    try {
+    console.log('SUB:', sub);
 
-      let permission = Notification.permission;
+    const json = sub.toJSON();
 
-      if (permission === 'default') {
-        permission = await Notification.requestPermission();
-      }
+    const { error } = await window.supabase
+      .from('push_subscriptions')
+      .upsert({
+        user_id: userId,
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth: json.keys.auth,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'endpoint'
+      });
 
-      if (permission !== 'granted') {
-        console.warn('[Push] Notification denied');
-        return null;
-      }
+    if (error) {
 
-      let subscription =
-        await _swReg.pushManager.getSubscription();
+      console.error(error);
 
-      if (!subscription) {
+    } else {
 
-        subscription =
-          await _swReg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey:
-              urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-          });
+      console.log('Subscription saved');
 
-        console.log('[Push] Subscription dibuat');
-      }
-
-      console.log('[Push] Subscription:', subscription);
-
-      // =========================
-      // Simpan ke Supabase
-      // =========================
-
-      if (window.supabase && userId) {
-
-        const json = subscription.toJSON();
-
-        const { data, error } =
-          await window.supabase
-            .from('push_subscriptions')
-            .upsert({
-              user_id: userId,
-              endpoint: json.endpoint,
-              p256dh: json.keys.p256dh,
-              auth: json.keys.auth,
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'endpoint'
-            });
-
-        if (error) {
-
-          console.error('[Push] Gagal simpan:', error);
-
-        } else {
-
-          console.log('[Push] Subscription tersimpan');
-
-        }
-      }
-
-      return subscription;
-
-    } catch (err) {
-
-      console.error('[Push] Subscribe error:', err);
-
-      return null;
     }
   }
 
-  // =========================
-  // Public function
-  // =========================
   window.requestPushPermission = async function () {
 
     try {
 
-      if (!window.supabase) {
-        console.error('[Push] Supabase belum ada');
+      const perm = await Notification.requestPermission();
+
+      if (perm !== 'granted') {
+        console.warn('Notification denied');
         return;
       }
 
@@ -159,7 +96,7 @@
       } = await window.supabase.auth.getUser();
 
       if (!user) {
-        console.warn('[Push] User belum login');
+        console.warn('No user');
         return;
       }
 
@@ -167,51 +104,19 @@
 
     } catch (err) {
 
-      console.error('[Push] requestPushPermission error:', err);
+      console.error(err);
 
     }
   };
 
-  // =========================
-  // Init
-  // =========================
   async function init() {
 
     await registerSW();
 
-    if (
-      typeof Notification !== 'undefined' &&
-      Notification.permission === 'granted'
-    ) {
-
-      const {
-        data: { user }
-      } = await window.supabase.auth.getUser();
-
-      if (user) {
-
-        await subscribePush(user.id);
-
-      }
-    }
-
-    console.log('[Push] Init selesai');
-  }
-
-  // =========================
-  // Bootstrap
-  // =========================
-  if (document.readyState === 'loading') {
-
-    document.addEventListener(
-      'DOMContentLoaded',
-      init
-    );
-
-  } else {
-
-    init();
+    console.log('Push init loaded');
 
   }
+
+  init();
 
 })();
