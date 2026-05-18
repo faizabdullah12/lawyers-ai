@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaduan Advokat — Lawyers AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="shared.css">
+    <script src="shared-sidebar.js" defer></script>
+    <script src="shared-modal.js" defer></script>
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .main-scroll { flex: 1; overflow-y: auto; min-width: 0; }
+        .page-wrap { max-width: 680px; margin: 0 auto; padding: 28px 20px 80px; }
+        @media(min-width:1024px){ .page-wrap { padding-top: 40px; } }
+
+        /* ── Page Loading ── */
+        #page-loading {
+            position: fixed; inset: 0; z-index: 500;
+            background: var(--bg-base);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 14px;
+            transition: opacity 0.3s;
+        }
+        .spin-lg {
+            width: 40px; height: 40px; border-radius: 50%;
+            border: 3px solid var(--border); border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Fade Up Animations ── */
+        .fade-up { opacity: 0; transform: translateY(18px); animation: fadeUp 0.5s ease forwards; }
+        .fade-up-1 { animation-delay: 0.05s; }
+        .fade-up-2 { animation-delay: 0.12s; }
+        .fade-up-3 { animation-delay: 0.19s; }
+        .fade-up-4 { animation-delay: 0.26s; }
+        .fade-up-5 { animation-delay: 0.33s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Header Banner ── */
+        .report-banner {
+            border-radius: 22px;
+            background: linear-gradient(135deg, #1A0808 0%, #2D0F0F 50%, #3B1111 100%);
+            border: 1px solid rgba(239,68,68,0.18);
+            padding: 28px 28px 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .report-banner::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 85% 30%, rgba(239,68,68,0.12), transparent 55%),
+                        radial-gradient(circle at 15% 80%, rgba(245,158,11,0.06), transparent 50%);
+        }
+        .report-banner::after {
+            content: '⚖';
+            position: absolute; right: 20px; bottom: -10px;
+            font-size: 90px; opacity: 0.04; line-height: 1;
+            user-select: none;
+        }
+        .banner-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.25);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #F87171; margin-bottom: 16px;
+            position: relative;
+        }
+        .banner-title {
+            font-size: 22px; font-weight: 900; font-style: italic;
+            color: #FECACA; letter-spacing: -0.5px; margin: 0 0 8px; position: relative;
+        }
+        .banner-sub {
+            font-size: 12.5px; font-weight: 500; color: rgba(252,165,165,0.6);
+            margin: 0; line-height: 1.6; position: relative; max-width: 440px;
+        }
+
+        /* ── Advokat Target Card ── */
+        .target-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        body.light .target-card { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        .target-avatar {
+            width: 54px; height: 54px; border-radius: 14px;
+            object-fit: cover; flex-shrink: 0;
+            border: 2px solid var(--border);
+        }
+        .target-name {
+            font-size: 15px; font-weight: 800; font-style: italic;
+            color: var(--text-1); margin: 0 0 4px;
+        }
+        .target-spec {
+            font-size: 11px; font-weight: 700; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: 0.07em; margin: 0;
+        }
+        .target-tag {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 20px; font-size: 10px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+            background: rgba(239,68,68,0.1); color: #F87171; margin-top: 5px;
+        }
+
+        /* ── Form Card ── */
+        .form-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 14px;
+        }
+        body.light .form-card { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+
+        .form-section-title {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.14em; color: var(--text-3);
+            margin: 0 0 18px; display: flex; align-items: center; gap: 8px;
+        }
+        .form-section-title i { color: var(--accent); font-size: 11px; }
+
+        /* ── Category Selector ── */
+        .category-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            margin-bottom: 0;
+        }
+        @media(max-width:480px) { .category-grid { grid-template-columns: 1fr; } }
+
+        .cat-option {
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex; align-items: flex-start; gap: 11px;
+            background: transparent;
+        }
+        .cat-option:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-hover);
+        }
+        .cat-option.selected {
+            border-color: #EF4444;
+            background: rgba(239,68,68,0.07);
+        }
+        .cat-option-icon {
+            width: 32px; height: 32px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; flex-shrink: 0;
+            background: var(--bg-input);
+        }
+        .cat-option.selected .cat-option-icon { background: rgba(239,68,68,0.15); color: #F87171; }
+        .cat-option-label {
+            font-size: 12px; font-weight: 700; color: var(--text-1); margin: 0 0 2px;
+        }
+        .cat-option-desc {
+            font-size: 10px; font-weight: 500; color: var(--text-3); margin: 0; line-height: 1.4;
+        }
+        .cat-option.selected .cat-option-label { color: #F87171; }
+        .cat-radio { display: none; }
+
+        /* ── Form Fields ── */
+        .field-group { margin-bottom: 18px; }
+        .field-label {
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text-3); margin: 0 0 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .field-label .req { color: #EF4444; }
+        .field-input, .field-textarea, .field-select {
+            width: 100%; padding: 13px 15px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            color: var(--text-1);
+            font-size: 13.5px; font-weight: 500;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            resize: none;
+        }
+        body.light .field-input, body.light .field-textarea, body.light .field-select {
+            background: #F8FAFC; border-color: #E2E8F0; color: #0F172A;
+        }
+        .field-input:focus, .field-textarea:focus, .field-select:focus {
+            border-color: #EF4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+        }
+        .field-input::placeholder, .field-textarea::placeholder { color: var(--text-4); }
+        .field-textarea { min-height: 120px; max-height: 280px; }
+        .field-hint {
+            font-size: 10px; font-weight: 500; color: var(--text-3);
+            margin: 6px 0 0; line-height: 1.5;
+        }
+        .char-count {
+            font-size: 10px; font-weight: 600; color: var(--text-3);
+            text-align: right; margin-top: 5px;
+        }
+        .char-count.warn { color: #F59E0B; }
+        .char-count.over { color: #EF4444; }
+
+        /* ── Severity Slider ── */
+        .severity-wrap {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+        }
+        .severity-label {
+            font-size: 11px; font-weight: 700; color: var(--text-2);
+            min-width: 40px; text-align: center;
+        }
+        input[type="range"].sev-range {
+            flex: 1; -webkit-appearance: none; height: 4px;
+            background: linear-gradient(to right, #EF4444 0%, #EF4444 var(--sev), var(--border) var(--sev), var(--border) 100%);
+            border-radius: 2px; outline: none; cursor: pointer;
+        }
+        input[type="range"].sev-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #EF4444; cursor: pointer;
+            border: 2px solid var(--bg-base);
+            box-shadow: 0 2px 8px rgba(239,68,68,0.4);
+            transition: transform 0.15s;
+        }
+        input[type="range"].sev-range::-webkit-slider-thumb:active { transform: scale(1.2); }
+        .severity-chips {
+            display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .sev-chip {
+            padding: 4px 10px; border-radius: 20px; font-size: 10px;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .sev-chip.low  { background: rgba(16,185,129,0.12); color: #34D399; }
+        .sev-chip.med  { background: rgba(245,158,11,0.12); color: #FBBF24; }
+        .sev-chip.high { background: rgba(239,68,68,0.12);  color: #F87171; }
+
+        /* ── Evidence Upload ── */
+        .upload-zone {
+            border: 1.5px dashed var(--border);
+            border-radius: 14px; padding: 24px;
+            text-align: center; cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: rgba(239,68,68,0.4);
+            background: rgba(239,68,68,0.04);
+        }
+        .upload-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 1;
+        }
+        .upload-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-input); margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--text-3);
+        }
+        .upload-title { font-size: 13px; font-weight: 700; color: var(--text-1); margin: 0 0 4px; }
+        .upload-sub   { font-size: 11px; font-weight: 500; color: var(--text-3); margin: 0; }
+
+        .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .file-item {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 10px; padding: 9px 12px;
+        }
+        .file-item i { color: var(--accent); font-size: 13px; flex-shrink: 0; }
+        .file-name { font-size: 12px; font-weight: 600; color: var(--text-1); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-size { font-size: 10px; color: var(--text-3); flex-shrink: 0; }
+        .file-remove { background: none; border: none; color: var(--text-3); cursor: pointer; padding: 2px 5px; border-radius: 5px; font-size: 13px; transition: color 0.15s; flex-shrink: 0; }
+        .file-remove:hover { color: #EF4444; }
+
+        /* ── Disclaimer ── */
+        .disclaimer-box {
+            background: rgba(245,158,11,0.06);
+            border: 1px solid rgba(245,158,11,0.15);
+            border-radius: 14px; padding: 16px 18px;
+            display: flex; gap: 12px; align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .disclaimer-box i { color: #FBBF24; margin-top: 1px; font-size: 14px; flex-shrink: 0; }
+        .disclaimer-text { font-size: 11.5px; font-weight: 500; color: var(--text-2); line-height: 1.65; margin: 0; }
+        .disclaimer-text strong { color: #FBBF24; font-weight: 800; }
+
+        /* ── Anonymous Toggle ── */
+        .anon-toggle {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 13px; margin-bottom: 18px;
+        }
+        .anon-left { display: flex; align-items: center; gap: 10px; }
+        .anon-left i { color: var(--text-3); font-size: 14px; }
+        .anon-title { font-size: 13px; font-weight: 700; color: var(--text-1); margin: 0 0 2px; }
+        .anon-sub { font-size: 10px; font-weight: 500; color: var(--text-3); margin: 0; }
+
+        /* Toggle switch */
+        .toggle-sw { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+        .toggle-sw input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute; inset: 0; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 24px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .toggle-slider::before {
+            content: ''; position: absolute;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--text-3); bottom: 2px; left: 2px;
+            transition: all 0.2s;
+        }
+        .toggle-sw input:checked + .toggle-slider { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.3); }
+        .toggle-sw input:checked + .toggle-slider::before { transform: translateX(18px); background: #EF4444; }
+
+        /* ── Submit Button ── */
+        .btn-submit {
+            width: 100%; padding: 16px;
+            background: #DC2626;
+            border: none; border-radius: 15px;
+            color: #fff; font-size: 13px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            cursor: pointer; transition: all 0.2s;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            box-shadow: 0 6px 24px rgba(220,38,38,0.35);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-submit:hover:not(:disabled) { background: #B91C1C; transform: translateY(-2px); box-shadow: 0 10px 32px rgba(220,38,38,0.4); }
+        .btn-submit:active:not(:disabled) { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+        .btn-submit .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; animation: spin 0.7s linear infinite; }
+
+        /* ── Success State ── */
+        #success-screen {
+            display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 60px 24px; text-align: center; gap: 18px;
+        }
+        .success-icon {
+            width: 80px; height: 80px; border-radius: 24px;
+            background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; color: #34D399;
+            animation: popIn 0.5s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes popIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .success-title { font-size: 22px; font-weight: 900; font-style: italic; color: var(--text-1); margin: 0; }
+        .success-sub { font-size: 13px; font-weight: 500; color: var(--text-2); line-height: 1.7; max-width: 340px; margin: 0; }
+        .ticket-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 14px 18px;
+            font-size: 12px; color: var(--text-3); font-weight: 600;
+        }
+        .ticket-box span { font-size: 15px; font-weight: 800; font-style: italic; color: var(--text-1); display: block; font-family: monospace; margin-top: 4px; letter-spacing: 0.1em; }
+
+        /* ── Progress Steps ── */
+        .progress-steps {
+            display: flex; gap: 6px; align-items: center; margin-bottom: 22px;
+        }
+        .step-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border); transition: all 0.3s; flex-shrink: 0;
+        }
+        .step-dot.active { background: #EF4444; width: 24px; border-radius: 4px; }
+        .step-dot.done { background: #10B981; }
+        .step-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--text-3); margin-left: 4px;
+        }
+        .step-label span { color: #EF4444; }
+    </style>
+</head>
+<body>
+
+<!-- Page loading -->
+<div id="page-loading">
+    <div class="spin-lg"></div>
+    <span style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);">Memuat halaman...</span>
+</div>
+
+<div class="main-scroll">
+<div class="page-wrap">
+
+    <!-- Topbar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;" class="fade-up">
+        <button onclick="history.back()" class="btn-ghost" style="padding:9px 16px;font-size:11px;gap:7px;">
+            <i class="fas fa-arrow-left"></i> Kembali
+        </button>
+        <button onclick="window.toggleTheme?.()" class="theme-toggle"><div class="knob">🌙</div></button>
+    </div>
+
+    <!-- Form utama -->
+    <div id="form-screen">
+
+        <!-- Banner -->
+        <div class="report-banner fade-up fade-up-1">
+            <div class="banner-icon"><i class="fas fa-flag"></i></div>
+            <p class="banner-title">Laporkan Advokat</p>
+            <p class="banner-sub">Laporkan advokat yang bermasalah, tidak profesional, atau melanggar etika. Laporan kamu akan diproses secara rahasia oleh tim Lawyers AI.</p>
+        </div>
+
+        <!-- Target Advokat (diisi JS) -->
+        <div id="target-wrap" class="fade-up fade-up-2"></div>
+
+        <!-- Progress -->
+        <div class="progress-steps fade-up fade-up-2">
+            <div class="step-dot active" id="s1"></div>
+            <div class="step-dot" id="s2"></div>
+            <div class="step-dot" id="s3"></div>
+            <span class="step-label">Langkah <span id="step-label-num">1</span> dari 3</span>
+        </div>
+
+        <!-- Step 1: Kategori -->
+        <div id="step-1" class="form-card fade-up fade-up-2">
+            <p class="form-section-title"><i class="fas fa-list-ul"></i> Pilih Kategori Pengaduan</p>
+            <div class="category-grid">
+                <label class="cat-option" data-val="penipuan">
+                    <input type="radio" class="cat-radio" name="kategori" value="penipuan">
+                    <div class="cat-option-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+                    <div>
+                        <p class="cat-option-label">Penipuan / Penggelapan</p>
+                        <p class="cat-option-desc">Meminta biaya tidak wajar atau menghilang</p>
+                    </div>
+                </label>
+                <label class="cat-option" data-val="tidak_kompeten">
+                    <input type="radio" class="cat-radio" name="kategori" value="tidak_kompeten">
+                    <div class="cat-option-icon"><i class="fas fa-graduation-cap"></i></div>
+                    <div>
+                        <p class="cat-option-label">Tidak Kompeten</p>
+                        <p class="cat-option-desc">Saran hukum salah atau menyesatkan</p>
+                    </div>
+                </label>
+                <label class="cat-option" data-val="etika">
+                    <input type="radio" class="cat-radio" name="kategori" value="etika">
+                    <div class="cat-option-icon"><i class="fas fa-scale-balanced"></i></div>
+                    <div>
+                        <p class="cat-option-label">Pelanggaran Etika</p>
+                        <p class="cat-option-desc">Melanggar kode etik advokat PERADI/KAI</p>
+                    </div>
+                </label>
+                <label class="cat-option" data-val="tidak_responsif">
+                    <input type="radio" class="cat-radio" name="kategori" value="tidak_responsif">
+                    <div class="cat-option-icon"><i class="fas fa-comment-slash"></i></div>
+                    <div>
+                        <p class="cat-option-label">Tidak Responsif</p>
+                        <p class="cat-option-desc">Tidak membalas setelah pembayaran</p>
+                    </div>
+                </label>
+                <label class="cat-option" data-val="pelecehan">
+                    <input type="radio" class="cat-radio" name="kategori" value="pelecehan">
+                    <div class="cat-option-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div>
+                        <p class="cat-option-label">Pelecehan / Intimidasi</p>
+                        <p class="cat-option-desc">Kata-kata kasar atau ancaman</p>
+                    </div>
+                </label>
+                <label class="cat-option" data-val="lainnya">
+                    <input type="radio" class="cat-radio" name="kategori" value="lainnya">
+                    <div class="cat-option-icon"><i class="fas fa-ellipsis"></i></div>
+                    <div>
+                        <p class="cat-option-label">Lainnya</p>
+                        <p class="cat-option-desc">Masalah lain yang tidak tercantum</p>
+                    </div>
+                </label>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+                <button class="btn-ghost" id="btn-next-1" onclick="nextStep(2)" disabled style="padding:10px 20px;font-size:11px;gap:7px;background:var(--accent);color:#fff;border:none;opacity:0.4;">
+                    Lanjut <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Detail -->
+        <div id="step-2" class="form-card fade-up fade-up-3" style="display:none;">
+            <p class="form-section-title"><i class="fas fa-pen-line"></i> Detail Pengaduan</p>
+
+            <div class="field-group">
+                <p class="field-label">Judul Singkat <span class="req">*</span></p>
+                <input type="text" class="field-input" id="laporan-judul" placeholder="Contoh: Advokat meminta biaya tambahan tidak jelas" maxlength="120">
+            </div>
+
+            <div class="field-group">
+                <p class="field-label">Uraian Kejadian <span class="req">*</span></p>
+                <textarea class="field-textarea" id="laporan-isi" placeholder="Ceritakan secara detail apa yang terjadi, kapan, dan dampaknya pada kamu. Semakin detail semakin mudah kami tindaklanjuti." maxlength="2000" oninput="updateCharCount(this,'cc-isi',2000)"></textarea>
+                <p class="char-count" id="cc-isi">0 / 2000</p>
+            </div>
+
+            <div class="field-group">
+                <p class="field-label">Tingkat Keparahan</p>
+                <div class="severity-wrap">
+                    <span class="severity-label" id="sev-label">5</span>
+                    <input type="range" class="sev-range" id="sev-range" min="1" max="10" value="5" oninput="updateSeverity(this)">
+                </div>
+                <div class="severity-chips">
+                    <span class="sev-chip low">Ringan (1–3)</span>
+                    <span class="sev-chip med">Sedang (4–6)</span>
+                    <span class="sev-chip high">Berat (7–10)</span>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <p class="field-label">Tanggal Kejadian</p>
+                <input type="date" class="field-input" id="laporan-tanggal">
+            </div>
+
+            <div style="display:flex;justify-content:space-between;margin-top:4px;gap:10px;">
+                <button class="btn-ghost" onclick="nextStep(1)" style="padding:10px 18px;font-size:11px;gap:7px;">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </button>
+                <button class="btn-ghost" id="btn-next-2" onclick="nextStep(3)" style="padding:10px 20px;font-size:11px;gap:7px;background:var(--accent);color:#fff;border:none;">
+                    Lanjut <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Bukti + Submit -->
+        <div id="step-3" class="form-card fade-up fade-up-3" style="display:none;">
+            <p class="form-section-title"><i class="fas fa-paperclip"></i> Lampiran Bukti (Opsional)</p>
+
+            <div class="upload-zone" id="upload-zone">
+                <input type="file" id="file-input" multiple accept="image/*,.pdf,.doc,.docx" onchange="handleFiles(this.files)">
+                <div class="upload-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                <p class="upload-title">Unggah Bukti</p>
+                <p class="upload-sub">Foto, screenshot, atau dokumen PDF · Maks. 5MB per file</p>
+            </div>
+            <div class="file-list" id="file-list"></div>
+
+            <div style="margin-top:20px;">
+                <p class="form-section-title" style="margin-bottom:14px;"><i class="fas fa-eye-slash"></i> Privasi</p>
+                <div class="anon-toggle">
+                    <div class="anon-left">
+                        <i class="fas fa-user-secret"></i>
+                        <div>
+                            <p class="anon-title">Kirim Secara Anonim</p>
+                            <p class="anon-sub">Identitasmu tidak akan ditampilkan ke advokat</p>
+                        </div>
+                    </div>
+                    <label class="toggle-sw">
+                        <input type="checkbox" id="toggle-anon" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="disclaimer-box">
+                <i class="fas fa-triangle-exclamation"></i>
+                <p class="disclaimer-text"><strong>Perhatian:</strong> Laporan palsu atau fitnah dapat berakibat hukum. Laporan yang masuk akan diverifikasi oleh tim Lawyers AI sebelum diproses. Kami menjaga kerahasiaan identitas pelapor.</p>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;gap:10px;">
+                <button class="btn-ghost" onclick="nextStep(2)" style="padding:10px 18px;font-size:11px;gap:7px;">
+                    <i class="fas fa-arrow-left"></i> Kembali
+                </button>
+                <button class="btn-submit" id="btn-submit" onclick="submitLaporan()" style="flex:1;max-width:220px;">
+                    <i class="fas fa-paper-plane"></i> Kirim Laporan
+                </button>
+            </div>
+        </div>
+
+    </div><!-- /form-screen -->
+
+    <!-- Success Screen -->
+    <div id="success-screen">
+        <div class="success-icon"><i class="fas fa-check"></i></div>
+        <p class="success-title">Laporan Terkirim!</p>
+        <p class="success-sub">Laporan kamu telah kami terima dan akan ditindaklanjuti dalam 3–5 hari kerja. Terima kasih telah membantu menjaga kualitas layanan.</p>
+        <div class="ticket-box">
+            Nomor Tiket Laporan
+            <span id="ticket-number">LAW-XXXX-XXXX</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+            <button onclick="history.back()" class="btn-ghost" style="padding:11px 20px;font-size:11px;">
+                <i class="fas fa-arrow-left"></i> Kembali ke Profil
+            </button>
+            <a href="mitra.html" class="btn-ghost" style="padding:11px 20px;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:7px;">
+                <i class="fas fa-users"></i> Lihat Advokat Lain
+            </a>
+        </div>
+    </div>
+
+</div><!-- /page-wrap -->
+</div><!-- /main-scroll -->
+
+<script>
+// ── Helpers ──
+function esc(s) { return window.escapeHtml ? window.escapeHtml(s) : String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── URL Params ──
+const params = new URLSearchParams(location.search);
+const advokatId = params.get('id') || params.get('advokat_id');
+
+// ── Current Step ──
+let currentStep = 1;
+
+// ── Files State ──
+let selectedFiles = [];
+
+// ── Init ──
+async function init() {
+    const session = await window.requireAuth?.('login.html');
+    if (!session) return;
+
+    hidePage();
+    await loadTarget();
+    updateStep(1);
+    setupCategoryListeners();
+    setupSeverity();
+    setupDragDrop();
+    setupDateDefault();
+    showPage();
+}
+
+function hidePage() {
+    const pl = document.getElementById('page-loading');
+    if (pl) pl.style.opacity = '0.8';
+}
+function showPage() {
+    const pl = document.getElementById('page-loading');
+    if (pl) { pl.style.opacity = '0'; setTimeout(() => pl.remove(), 350); }
+}
+
+// ── Load Advokat Target ──
+async function loadTarget() {
+    if (!advokatId) return;
+    try {
+        const { data } = await window.supabase
+            .from('mitra_ahli')
+            .select('nama_lengkap, spesialisasi, foto_url, user_id')
+            .eq('id', advokatId)
+            .single();
+        if (!data) return;
+        const foto = data.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nama_lengkap||'A')}&background=1E3A5F&color=60A5FA&bold=true`;
+        document.getElementById('target-wrap').innerHTML = `
+            <div class="target-card">
+                <img src="${esc(foto)}" class="target-avatar" alt="${esc(data.nama_lengkap)}" onerror="this.src='https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA'">
+                <div>
+                    <p class="target-name">${esc(data.nama_lengkap || 'Advokat')}</p>
+                    <p class="target-spec">${esc(data.spesialisasi || 'Advokat')}</p>
+                    <span class="target-tag"><i class="fas fa-flag" style="font-size:9px;"></i> Sedang Dilaporkan</span>
+                </div>
+            </div>`;
+    } catch(e) {}
+}
+
+// ── Category ──
+function setupCategoryListeners() {
+    document.querySelectorAll('.cat-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            document.querySelectorAll('.cat-option').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            const btn = document.getElementById('btn-next-1');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+        });
+    });
+}
+
+// ── Step Navigation ──
+function nextStep(n) {
+    if (n === 3) {
+        const judul = document.getElementById('laporan-judul').value.trim();
+        const isi   = document.getElementById('laporan-isi').value.trim();
+        if (!judul) { window.showLALToast?.('warning','Judul diperlukan','Isi judul singkat laporan dulu ya.'); return; }
+        if (isi.length < 30) { window.showLALToast?.('warning','Uraian terlalu pendek','Ceritakan minimal 30 karakter tentang kejadiannya.'); return; }
+    }
+    document.getElementById('step-' + currentStep).style.display = 'none';
+    currentStep = n;
+    document.getElementById('step-' + currentStep).style.display = '';
+    updateStep(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateStep(n) {
+    document.getElementById('step-label-num').textContent = n;
+    for (let i = 1; i <= 3; i++) {
+        const dot = document.getElementById('s' + i);
+        if (!dot) continue;
+        dot.classList.remove('active','done');
+        if (i < n) dot.classList.add('done');
+        else if (i === n) dot.classList.add('active');
+    }
+}
+
+// ── Severity ──
+function setupSeverity() {
+    const r = document.getElementById('sev-range');
+    if (r) updateSeverity(r);
+}
+
+function updateSeverity(range) {
+    const val = parseInt(range.value);
+    document.getElementById('sev-label').textContent = val;
+    const pct = ((val - 1) / 9 * 100) + '%';
+    range.style.setProperty('--sev', pct);
+}
+
+// ── Char Count ──
+function updateCharCount(el, counterId, max) {
+    const len = el.value.length;
+    const counter = document.getElementById(counterId);
+    if (!counter) return;
+    counter.textContent = len + ' / ' + max;
+    counter.className = 'char-count' + (len > max * 0.9 ? (len >= max ? ' over' : ' warn') : '');
+}
+
+// ── File Upload ──
+function setupDragDrop() {
+    const zone = document.getElementById('upload-zone');
+    if (!zone) return;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault(); zone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+}
+
+function handleFiles(files) {
+    Array.from(files).forEach(f => {
+        if (f.size > 5 * 1024 * 1024) {
+            window.showLALToast?.('warning','File Terlalu Besar', f.name + ' melebihi 5MB.');
+            return;
+        }
+        if (selectedFiles.some(sf => sf.name === f.name && sf.size === f.size)) return;
+        if (selectedFiles.length >= 5) {
+            window.showLALToast?.('warning','Batas Tercapai','Maksimum 5 file per laporan.'); return;
+        }
+        selectedFiles.push(f);
+    });
+    renderFileList();
+}
+
+function renderFileList() {
+    const list = document.getElementById('file-list');
+    if (!list) return;
+    list.innerHTML = selectedFiles.map((f, i) => `
+        <div class="file-item">
+            <i class="fas ${getFileIcon(f.name)}"></i>
+            <span class="file-name">${esc(f.name)}</span>
+            <span class="file-size">${formatBytes(f.size)}</span>
+            <button class="file-remove" onclick="removeFile(${i})"><i class="fas fa-times"></i></button>
+        </div>`).join('');
+}
+
+function removeFile(i) { selectedFiles.splice(i, 1); renderFileList(); }
+function getFileIcon(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    if (['jpg','jpeg','png','gif','webp'].includes(ext)) return 'fa-image';
+    if (ext === 'pdf') return 'fa-file-pdf';
+    return 'fa-file-lines';
+}
+function formatBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// ── Date Default ──
+function setupDateDefault() {
+    const el = document.getElementById('laporan-tanggal');
+    if (el) el.value = new Date().toISOString().split('T')[0];
+}
+
+// ── Submit ──
+async function submitLaporan() {
+    const kategori = document.querySelector('.cat-option.selected')?.dataset.val;
+    const judul = document.getElementById('laporan-judul').value.trim();
+    const isi   = document.getElementById('laporan-isi').value.trim();
+    const sev   = parseInt(document.getElementById('sev-range').value);
+    const tgl   = document.getElementById('laporan-tanggal').value;
+    const anon  = document.getElementById('toggle-anon').checked;
+
+    if (!kategori || !judul || isi.length < 30) {
+        window.showLALToast?.('error','Data Tidak Lengkap','Lengkapi semua kolom yang wajib diisi.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Mengirim...';
+
+    try {
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) throw new Error('Session expired');
+
+        // Generate ticket number
+        const ticketNum = 'LAW-' + Date.now().toString(36).toUpperCase().slice(-4) + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+
+        // Insert ke tabel pengaduan
+        const insertData = {
+            reporter_id:    anon ? null : session.user.id,
+            advokat_id:     advokatId || null,
+            kategori,
+            judul,
+            isi,
+            keparahan:      sev,
+            tanggal_kejadian: tgl || null,
+            is_anonim:      anon,
+            ticket_number:  ticketNum,
+            status:         'pending',
+        };
+
+        const { error } = await window.supabase
+            .from('pengaduan')
+            .insert(insertData);
+
+        if (error) throw error;
+
+        // Show success
+        document.getElementById('form-screen').style.display = 'none';
+        const ss = document.getElementById('success-screen');
+        ss.style.display = 'flex';
+        document.getElementById('ticket-number').textContent = ticketNum;
+        window.showLALToast?.('success','Laporan Terkirim!','Tim kami akan meninjau dalam 3–5 hari kerja.');
+
+    } catch(e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Laporan';
+        window.showLALToast?.('error','Gagal Mengirim','Coba lagi beberapa saat. (' + (e.message || 'Error') + ')');
+    }
+}
+
+// ── Boot ──
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
