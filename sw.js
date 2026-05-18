@@ -14,14 +14,23 @@ self.addEventListener("activate", (event) => {
 
     (async () => {
 
-      // claim semua tab
+      // aktifkan semua tab
       await clients.claim();
 
-      // bersihin cache lama
+      // hapus cache lama
       const keys = await caches.keys();
 
       await Promise.all(
         keys.map(key => caches.delete(key))
+      );
+
+      // TEST notif activate
+      await self.registration.showNotification(
+        "SW ACTIVE",
+        {
+          body: "Service Worker aktif",
+          icon: "https://lawyers-ai-faiz-abdullahs-projects-e95c3533.vercel.app/icon-192.png"
+        }
       );
 
     })()
@@ -61,15 +70,14 @@ self.addEventListener("push", (event) => {
     data.title || "Pesan Baru";
 
   const options = {
+
     body:
       data.body || "Ada pesan masuk",
 
     icon:
-      data.icon ||
       "https://lawyers-ai-faiz-abdullahs-projects-e95c3533.vercel.app/icon-192.png",
 
     badge:
-      data.badge ||
       "https://lawyers-ai-faiz-abdullahs-projects-e95c3533.vercel.app/badge-72.png",
 
     vibrate: [200, 100, 200],
@@ -83,8 +91,9 @@ self.addEventListener("push", (event) => {
 
     data:
       data.data || {
-        url: "/dashboard-mitra.html"
+        url: "https://lawyers-ai-faiz-abdullahs-projects-e95c3533.vercel.app/dashboard-mitra.html"
       }
+
   };
 
   event.waitUntil(
@@ -112,7 +121,7 @@ self.addEventListener(
 
     const targetUrl =
       event.notification.data?.url ||
-      "/dashboard-mitra.html";
+      "https://lawyers-ai-faiz-abdullahs-projects-e95c3533.vercel.app/dashboard-mitra.html";
 
     event.waitUntil(
 
