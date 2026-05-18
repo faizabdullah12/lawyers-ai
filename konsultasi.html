@@ -140,6 +140,9 @@
         .ai-title { font-size: 14px; font-weight: 900; font-style: italic; color: var(--text-1); }
         .ai-body  { font-size: 13px; color: var(--text-2); line-height: 1.7; }
 
+        /* Render markdown-lite: bold */
+        .ai-body strong, .ai-body b { font-weight: 800; color: var(--text-1); }
+
         .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5,end) infinite; }
         @keyframes dots { 0%,20%{color:rgba(0,0,0,0)} 40%{color:white} 60%{text-shadow:.25em 0 0 white} 80%,100%{text-shadow:.25em 0 0 white,.5em 0 0 white} }
 
@@ -192,7 +195,7 @@
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-top:4px;">
-                        <button onclick="clewisrHistory()" title="Hapus riwayat chat"
+                        <button onclick="clearHistory()" title="Hapus riwayat chat"
                             style="width:34px;height:34px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text-3);font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;"
                             onmouseover="this.style.borderColor='#F87171';this.style.color='#F87171'"
                             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-3)'">
@@ -255,15 +258,92 @@
 
     <script>
         // ══════════════════════════════════════════
+        // SYSTEM PROMPT — Karakter & Perilaku lewis
+        // ══════════════════════════════════════════
+        const LEWIS_SYSTEM_PROMPT = `Kamu adalah lewis, asisten hukum AI dari platform Lawyers AI — cerdas, adaptif, dan terasa seperti ngobrol sama teman yang kebetulan ahli hukum.
+
+KEPRIBADIAN & GAYA KOMUNIKASI
+
+Baca user, adaptasi gaya:
+- Kalau user casual/santai (pakai "aku", "gak", "nih", dll) → balas casual juga, pakai bahasa gaul yang wajar tapi tetap informatif
+- Kalau user formal → balas formal, profesional, lugas
+- Kalau user sedang panik/marah/tertekan → empati dulu, validasi perasaan mereka, baru kasih solusi
+- Kalau user newbie hukum → hindari jargon, pakai analogi sederhana, jelaskan step by step
+- Kalau user kayaknya sudah paham hukum → bisa langsung teknis, pakai terminologi
+
+Personality traits:
+- Hangat dan genuine, bukan robot
+- Direct — langsung ke inti, tidak basa-basi berlebihan  
+- Percaya diri tapi tidak sombong
+- Selalu ada di sisi user, tidak menghakimi
+
+CARA MENJAWAB
+
+Untuk sapaan atau small talk:
+Balas hangat dan singkat. Tanya apa yang bisa dibantu. JANGAN panjang-panjang.
+
+Untuk pertanyaan hukum umum (tidak ada kasus spesifik):
+- Jelasin dengan clear, pakai struktur kalau perlu
+- Kasih contoh konkret kalau relevan
+- Tutup dengan tawaran untuk diskusi lebih lanjut
+
+Untuk kasus hukum spesifik:
+- Tunjukkan empati dulu (1-2 kalimat) kalau situasinya berat
+- Analisis situasi mereka secara langsung
+- Berikan jawaban yang actionable — langkah konkret apa yang bisa dilakukan
+- Sebutkan pasal/hukum yang relevan dengan bahasa yang bisa dimengerti
+- Ingatkan batasan AI (rekomendasikan advokat untuk kasus serius) tapi jangan berlebihan
+
+Untuk kasus yang darurat atau serius (KDRT, pidana berat, dll):
+- Prioritaskan keselamatan user
+- Berikan langkah immediate yang bisa dilakukan sekarang
+- Arahkan ke sumber bantuan bila perlu (LBH, kepolisian, dll)
+
+FORMAT JAWABAN
+- Paragraf mengalir untuk jawaban pendek
+- Poin bernomor untuk langkah-langkah
+- **bold** untuk istilah penting
+- Emoji boleh kalau suasananya santai, jangan dipaksakan
+- Panjang proporsional: sapaan singkat, kasus kompleks komprehensif
+- JANGAN disclaimer panjang di setiap pesan
+
+TAG LEGAL_DATA — WAJIB untuk kasus hukum spesifik
+
+Setiap kali user menceritakan kasus hukum spesifik yang melibatkan pelanggaran hak, sengketa, atau tindak pidana/perdata, WAJIB sertakan tag ini di paling akhir respons persis seperti format ini:
+
+[LEGAL_DATA]{"pasal":"nama pasal lengkap","isi_pasal":"bunyi ringkas pasal 1-2 kalimat","kategori":"kategori bidang hukum","saran":"satu saran tindakan paling penting sekarang"}[/LEGAL_DATA]
+
+Kapan HARUS pakai tag ini:
+- User cerita ada yang menipu, menggelapkan, atau merugikan mereka
+- Ada sengketa tanah, warisan, kontrak, dll
+- Ada tindak pidana: kekerasan, pencurian, pelecehan, dll
+- Ada masalah ketenagakerjaan: PHK, gaji tidak dibayar, dll
+- Ada pelanggaran hak konsumen, hak cipta, dll
+- User nanya "bisa dipidana gak?" atau "bisa digugat gak?"
+
+Kapan TIDAK perlu tag:
+- Sapaan biasa atau small talk
+- Pertanyaan hukum umum tanpa kasus spesifik
+- Follow-up yang tidak menambahkan kasus baru
+
+Isi tag harus selalu dalam Bahasa Indonesia, akurat, dan spesifik ke kasus user. Format JSON harus valid, tidak boleh ada karakter aneh atau line break di dalam JSON.`;
+
+        // ══════════════════════════════════════════
         // GROQ API — via /api/ai-proxy (Vercel serverless)
         // ══════════════════════════════════════════
         async function fetchWithFallback(messages) {
+            // Inject system prompt sebagai pesan pertama
+            const messagesWithSystem = [
+                { role: 'system', content: LEWIS_SYSTEM_PROMPT },
+                ...messages
+            ];
+
             const res = await fetch('/api/ai-proxy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages,
-                    temperature: 0.85,
+                    messages: messagesWithSystem,
+                    temperature: 0.8,
                     max_tokens: 3000
                 })
             });
@@ -285,7 +365,7 @@
         const ANALYSIS_KEY = 'lawyers_ai_last_analysis';
         const CONV_KEY     = 'lawyers_ai_conversation';
         let chatHistory    = [];
-        let conversationMessages = []; // untuk konteks multi-turn ke AI
+        let conversationMessages = [];
 
         const WELCOME_HTML = `<div class="message-ai" id="welcome-bubble">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -334,7 +414,7 @@
                 badge.style.cssText = 'text-align:center;padding:6px 0 10px;';
                 badge.innerHTML = `<span style="font-size:9px;font-weight:700;color:var(--text-4);background:var(--bg-input);border:1px solid var(--border);padding:4px 14px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;">
                     📂 ${chatHistory.length} pesan tersimpan &nbsp;·&nbsp;
-                    <button onclick="clewisrHistory()" style="background:none;border:none;color:#F87171;font-size:9px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;padding:0;font-family:inherit;">Hapus Semua</button>
+                    <button onclick="clearHistory()" style="background:none;border:none;color:#F87171;font-size:9px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;padding:0;font-family:inherit;">Hapus Semua</button>
                 </span>`;
                 const welcome = document.getElementById('welcome-bubble');
                 if (welcome) welcome.after(badge); else chatBox.prepend(badge);
@@ -369,7 +449,7 @@
             </div>`;
         }
 
-        async function clewisrHistory() {
+        async function clearHistory() {
             const ok = await laiConfirm({
                 type: 'danger',
                 title: 'Hapus Riwayat Chat',
@@ -431,9 +511,18 @@
             if (el) el.remove();
         }
 
-        // Deteksi apakah pesan mengandung konteks hukum
-        function isLegalQuery(msg) {
-            return /kasus|hukum|pasal|gugat|somasi|pidana|perdata|cerai|talak|tanah|kontrak|phk|sengketa|lapor|polisi|pengadilan|advokat|kuasa|warisan|hutang|tipu|penipuan|penggelapan|kekerasan|ite|siber|pajak|haki|imigrasi|visa|paten|merek|pecat|pesangon|sertifikat|akta|notaris|waris|hibah|jaminan|kredit|pinjaman|utang|lelang|sitaan|korupsi|pungli|suap|pencemaran|fitnah|pencurian|perampokan|penganiayaan|pemerkosaan|narkoba|bnn|polda|kejaksaan|pengadilan negeri|mahkamah|peraturan|undang-undang|kuhp|kuhperdata|perpu|pp nomor/i.test(msg);
+        // Render markdown-lite: **bold** dan numbered list
+        function renderMarkdown(text) {
+            let html = escapeHtml(text);
+            // Bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Numbered list: baris yang diawali "1. " atau "- "
+            html = html.replace(/^(\d+)\.\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:4px 0;"><span style="font-weight:800;color:var(--accent);min-width:18px;">$1.</span><span>$2</span></div>');
+            html = html.replace(/^[-•]\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:4px 0;"><span style="color:var(--accent);min-width:12px;">•</span><span>$1</span></div>');
+            // Line breaks
+            html = html.replace(/\n\n/g, '</p><p style="margin-top:10px;">');
+            html = html.replace(/\n/g, '<br>');
+            return html;
         }
 
         async function sendMessage() {
@@ -445,7 +534,7 @@
 
             const input   = document.getElementById('user-input');
             const msg     = input.value.trim();
-            if (!msg || msg.length < 3) {
+            if (!msg || msg.length < 2) {
                 if (window.showLALToast) showLALToast('warning', 'Terlalu Pendek', 'Ketik pesan dulu ya.');
                 return;
             }
@@ -471,26 +560,16 @@
             showTyping();
 
             try {
-                // Kalau kasus hukum, tambahkan instruksi legal data di pesan terakhir
-                let messagesForAPI = [...conversationMessages];
-                if (isLegalQuery(msg)) {
-                    // Tambahkan instruksi ekstraksi data di pesan user terakhir
-                    messagesForAPI[messagesForAPI.length - 1] = {
-                        role: 'user',
-                        content: msg + `\n\n[Instruksi sistem: Setelah jawaban utama kamu, tambahkan satu baris di paling akhir dengan format ini persis — jangan diubah formatnya: [LEGAL_DATA]{"pasal":"nama pasal lengkap","isi_pasal":"bunyi singkat pasal tersebut","kategori":"kategori bidang hukum","saran":"saran tindakan singkat 1 kalimat"}[/LEGAL_DATA]]`
-                    };
-                }
-
-                const data = await fetchWithFallback(messagesForAPI);
+                // Kirim langsung — system prompt sudah diinject di fetchWithFallback
+                const data = await fetchWithFallback(conversationMessages);
                 let raw = data.choices[0].message.content.trim();
 
-                // Ekstrak legal data kalau ada
+                // ── Ekstrak LEGAL_DATA dengan regex yang toleran ──
                 const legalMatch = raw.match(/\[LEGAL_DATA\]([\s\S]*?)\[\/LEGAL_DATA\]/);
-                const clewisnReply = raw.replace(/\[LEGAL_DATA\][\s\S]*?\[\/LEGAL_DATA\]/g, '').trim();
+                const cleanReply = raw.replace(/\[LEGAL_DATA\][\s\S]*?\[\/LEGAL_DATA\]/g, '').trim();
 
                 // Simpan respons AI ke konteks (tanpa tag internal)
-                conversationMessages.push({ role: 'assistant', content: clewisnReply });
-                // Batasi konteks biar ga terlalu panjang
+                conversationMessages.push({ role: 'assistant', content: cleanReply });
                 if (conversationMessages.length > 20) {
                     conversationMessages = conversationMessages.slice(-20);
                 }
@@ -498,14 +577,18 @@
                 hideTyping();
 
                 if (legalMatch) {
-                    // ── MODE LEGAL ──
+                    // ── MODE LEGAL — ada kasus spesifik ──
                     let legalData = {};
-                    try { legalData = JSON.parse(legalMatch[1]); } catch(e) {
-                        console.warn('Legal data parse error:', e);
+                    try {
+                        // Bersihkan JSON dari karakter tak terduga sebelum parse
+                        const jsonRaw = legalMatch[1].trim().replace(/[\u0000-\u001F\u007F]/g, ' ');
+                        legalData = JSON.parse(jsonRaw);
+                    } catch(e) {
+                        console.warn('Legal data parse error:', e, legalMatch[1]);
                     }
 
                     currentAnalysis = {
-                        summary:   clewisnReply,
+                        summary:   cleanReply,
                         pasal:     legalData.pasal     || '',
                         isi_pasal: legalData.isi_pasal || '',
                         kategori:  legalData.kategori  || 'Hukum Umum',
@@ -524,11 +607,11 @@
                                     ${legalData.kategori ? `<p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin:2px 0 0;">${escapeHtml(legalData.kategori)}</p>` : ''}
                                 </div>
                             </div>
-                            <p class="ai-body" style="white-space:pre-wrap;">${escapeHtml(clewisnReply)}</p>
+                            <p class="ai-body">${renderMarkdown(cleanReply)}</p>
                         </div>`;
                     appendToChat(legalHtml, 'ai');
 
-                    // Update panel kanan
+                    // Update panel kanan kalau ada data pasal
                     if (legalData.pasal) {
                         document.getElementById('pasal-box').innerHTML = buildPasalHTML(currentAnalysis);
                         const pdfBtn = document.getElementById('btn-pdf');
@@ -549,7 +632,7 @@
                                 </div>
                                 <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">lewis — Lawyers AI</p>
                             </div>
-                            <p class="ai-body" style="white-space:pre-wrap;">${escapeHtml(clewisnReply)}</p>
+                            <p class="ai-body">${renderMarkdown(cleanReply)}</p>
                         </div>`, 'ai');
                 }
 
@@ -711,7 +794,9 @@
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('I.  DUDUK PERMASALAHAN', ml, y); y += 7;
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
-                const summaryLines = doc.splitTextToSize(currentAnalysis.summary || '-', cw);
+                // Strip HTML tags dari summary
+                const summaryPlain = currentAnalysis.summary.replace(/<[^>]+>/g, '');
+                const summaryLines = doc.splitTextToSize(summaryPlain || '-', cw);
                 checkPage(summaryLines.length * 6 + 6);
                 doc.text(summaryLines, ml, y);
                 y += summaryLines.length * 6 + 8;
@@ -831,11 +916,13 @@
         }
 
         function escapeHtml(t) {
+            if (!t) return '';
             const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
         }
 
         window.sendMessage  = sendMessage;
         window.generatePDF  = generatePDF;
+        window.clearHistory = clearHistory;
 
         // ── AUTO-TRIGGER DARI KATEGORI BERANDA ──
         const CATEGORY_MAP = {
@@ -852,7 +939,7 @@
             'konsumen':   'Mau tanya soal hak konsumen. Apa aja hak aku sebagai konsumen dan kalau kena produk/jasa yang merugikan, bisa nuntut ganti rugi gak?',
         };
 
-        // ── PROFILE akuRD ──
+        // ── PROFILE CHECK ──
         let _currentUser    = null;
         let _profileComplete = false;
 
@@ -869,7 +956,6 @@
                     .from('profiles').select('full_name,wa_number,avatar_url')
                     .eq('id', _currentUser.id).maybeSingle();
 
-                // Update avatar di header
                 const avatar = profile?.avatar_url ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name||'U')}&background=1E3A5F&color=60A5FA`;
                 const headerAvatar = document.getElementById('header-avatar');
