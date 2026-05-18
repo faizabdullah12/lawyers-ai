@@ -190,7 +190,7 @@
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;margin-top:4px;">
-                        <button onclick="clearHistory()" title="Hapus riwayat chat"
+                        <button onclick="clewisrHistory()" title="Hapus riwayat chat"
                             style="width:34px;height:34px;background:var(--bg-input);border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text-3);font-size:11px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;"
                             onmouseover="this.style.borderColor='#F87171';this.style.color='#F87171'"
                             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-3)'">
@@ -291,11 +291,11 @@
                     <i class="fas fa-robot" style="color:#60A5FA;font-size:13px;"></i>
                 </div>
                 <div>
-                    <p class="ai-title">Lea — Lawyers AI</p>
+                    <p class="ai-title">lewis — Lawyers AI</p>
                     <p class="ai-label" style="margin-top:2px;">Asisten Hukum · Siap 24/7</p>
                 </div>
             </div>
-            <p class="ai-body">Hei! Gua Lea, asisten hukum di sini. Mau konsultasi soal kasus hukum, atau sekedar nanya-nanya soal hukum juga boleh. Ceritain aja kasusnya, gua bantu analisis.</p>
+            <p class="ai-body">Hei! aku lewis, asisten hukum di sini. Mau konsultasi soal kasus hukum, atau sekedar nanya-nanya soal hukum juga boleh. Ceritain aja kasusnya, aku bantu analisis.</p>
         </div>`;
 
         function saveHistory() {
@@ -332,7 +332,7 @@
                 badge.style.cssText = 'text-align:center;padding:6px 0 10px;';
                 badge.innerHTML = `<span style="font-size:9px;font-weight:700;color:var(--text-4);background:var(--bg-input);border:1px solid var(--border);padding:4px 14px;border-radius:20px;text-transform:uppercase;letter-spacing:0.1em;">
                     📂 ${chatHistory.length} pesan tersimpan &nbsp;·&nbsp;
-                    <button onclick="clearHistory()" style="background:none;border:none;color:#F87171;font-size:9px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;padding:0;font-family:inherit;">Hapus Semua</button>
+                    <button onclick="clewisrHistory()" style="background:none;border:none;color:#F87171;font-size:9px;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em;padding:0;font-family:inherit;">Hapus Semua</button>
                 </span>`;
                 const welcome = document.getElementById('welcome-bubble');
                 if (welcome) welcome.after(badge); else chatBox.prepend(badge);
@@ -367,7 +367,7 @@
             </div>`;
         }
 
-        async function clearHistory() {
+        async function clewisrHistory() {
             const ok = await laiConfirm({
                 type: 'danger',
                 title: 'Hapus Riwayat Chat',
@@ -437,7 +437,7 @@
         async function sendMessage() {
             // Cek profil lengkap sebelum bisa chat
             if (!_profileComplete) {
-                const allowed = await guardProfile();
+                const allowed = await akurdProfile();
                 if (!allowed) return;
             }
 
@@ -484,10 +484,10 @@
 
                 // Ekstrak legal data kalau ada
                 const legalMatch = raw.match(/\[LEGAL_DATA\]([\s\S]*?)\[\/LEGAL_DATA\]/);
-                const cleanReply = raw.replace(/\[LEGAL_DATA\][\s\S]*?\[\/LEGAL_DATA\]/g, '').trim();
+                const clewisnReply = raw.replace(/\[LEGAL_DATA\][\s\S]*?\[\/LEGAL_DATA\]/g, '').trim();
 
                 // Simpan respons AI ke konteks (tanpa tag internal)
-                conversationMessages.push({ role: 'assistant', content: cleanReply });
+                conversationMessages.push({ role: 'assistant', content: clewisnReply });
                 // Batasi konteks biar ga terlalu panjang
                 if (conversationMessages.length > 20) {
                     conversationMessages = conversationMessages.slice(-20);
@@ -503,7 +503,7 @@
                     }
 
                     currentAnalysis = {
-                        summary:   cleanReply,
+                        summary:   clewisnReply,
                         pasal:     legalData.pasal     || '',
                         isi_pasal: legalData.isi_pasal || '',
                         kategori:  legalData.kategori  || 'Hukum Umum',
@@ -522,7 +522,7 @@
                                     ${legalData.kategori ? `<p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin:2px 0 0;">${escapeHtml(legalData.kategori)}</p>` : ''}
                                 </div>
                             </div>
-                            <p class="ai-body" style="white-space:pre-wrap;">${escapeHtml(cleanReply)}</p>
+                            <p class="ai-body" style="white-space:pre-wrap;">${escapeHtml(clewisnReply)}</p>
                         </div>`;
                     appendToChat(legalHtml, 'ai');
 
@@ -545,9 +545,9 @@
                                 <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                     <i class="fas fa-robot" style="color:#60A5FA;font-size:11px;"></i>
                                 </div>
-                                <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">Lea — Lawyers AI</p>
+                                <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">lewis — Lawyers AI</p>
                             </div>
-                            <p class="ai-body" style="white-space:pre-wrap;">${escapeHtml(cleanReply)}</p>
+                            <p class="ai-body" style="white-space:pre-wrap;">${escapeHtml(clewisnReply)}</p>
                         </div>`, 'ai');
                 }
 
@@ -611,7 +611,7 @@
                         <p style="font-size:8px;font-weight:800;color:#34D399;text-transform:uppercase;letter-spacing:0.1em;margin:2px 0 0;">Rekomendasi</p>
                     </div>
                 </div>
-                <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:14px;">Analisis gua bersifat umum ya. Buat penanganan yang lebih dalam dan spesifik, mending konsultasikan langsung sama advokat berlisensi kita.</p>
+                <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:14px;">Analisis aku bersifat umum ya. Buat penanganan yang lebih dalam dan spesifik, mending konsultasikan langsung sama advokat berlisensi kita.</p>
                 <div style="display:flex;gap:8px;">
                     <button onclick="location.href='mitra.html'" class="btn-primary" style="flex:1;justify-content:center;font-size:10px;padding:10px 14px;">
                         <i class="fas fa-user-tie"></i> Cari Advokat
@@ -838,7 +838,7 @@
         // ── AUTO-TRIGGER DARI KATEGORI BERANDA ──
         const CATEGORY_MAP = {
             'pidana':     'Mau nanya soal hukum pidana nih. Bisa jelasin gak perbuatan apa aja yang masuk kategori pidana di Indonesia, hak-hak tersangka, dan kalau jadi korban tindak pidana harus ngapain?',
-            'perdata':    'Pengen konsultasi soal hukum perdata. Gimana cara kerjanya, contoh kasusnya apa, dan kalau hak perdata gua dilanggar orang, langkah hukumnya gimana?',
+            'perdata':    'Pengen konsultasi soal hukum perdata. Gimana cara kerjanya, contoh kasusnya apa, dan kalau hak perdata aku dilanggar orang, langkah hukumnya gimana?',
             'keluarga':   'Mau tanya soal hukum keluarga nih — pernikahan, perceraian, hak asuh anak, sama waris di Indonesia. Bisa bantu jelasin?',
             'ite':        'Pengen nanya soal hukum ITE dan kejahatan siber. Perbuatan apa yang kena UU ITE, sanksinya gimana, dan kalau jadi korban harus gimana?',
             'kerja':      'Mau konsultasi soal hak-hak pekerja. Soal PHK, pesangon, upah, dan kalau ada masalah sama perusahaan, langkah hukumnya apa?',
@@ -847,10 +847,10 @@
             'pajak':      'Mau konsultasi soal perpajakan. Kewajiban pajak gimana, sanksi pelanggarannya apa, dan kalau mau keberatan sama ketetapan pajak bisa ngapain?',
             'imigrasi':   'Mau tanya soal imigrasi — visa, izin tinggal, kewarganegaraan. Apa yang terjadi kalau ada pelanggaran keimigrasian?',
             'haki':       'Pengen nanya soal HAKI — hak cipta, merek, paten. Gimana daftarnya dan kalau ada yang niru karya/merek, langkah hukumnya apa?',
-            'konsumen':   'Mau tanya soal hak konsumen. Apa aja hak gua sebagai konsumen dan kalau kena produk/jasa yang merugikan, bisa nuntut ganti rugi gak?',
+            'konsumen':   'Mau tanya soal hak konsumen. Apa aja hak aku sebagai konsumen dan kalau kena produk/jasa yang merugikan, bisa nuntut ganti rugi gak?',
         };
 
-        // ── PROFILE GUARD ──
+        // ── PROFILE akuRD ──
         let _currentUser    = null;
         let _profileComplete = false;
 
@@ -886,7 +886,7 @@
             }
         }
 
-        async function guardProfile() {
+        async function akurdProfile() {
             const missing = await checkProfileComplete();
             if (!missing || missing.length === 0) return true;
 
