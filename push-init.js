@@ -1,5 +1,5 @@
 // ============================================
-// push-init.js — LawyersAI v3.4
+// push-init.js — LawyersAI v3.5
 // Multi-device push notification support
 // ============================================
 (function () {
@@ -56,7 +56,7 @@
 
       if (userId && window.supabase) {
         const j = sub.toJSON();
-        await window.supabase.from('push_subscriptions').upsert({
+        const { error } = await window.supabase.from('push_subscriptions').upsert({
           user_id:    userId,
           endpoint:   j.endpoint,
           p256dh:     j.keys?.p256dh,
@@ -64,6 +64,8 @@
           user_agent: navigator.userAgent.slice(0, 200),
           updated_at: new Date().toISOString(),
         }, { onConflict: 'endpoint' });
+        if (error) console.warn('[Push] Upsert error:', error.message);
+        else console.log('[Push] Subscription tersimpan untuk user:', userId);
       }
       return sub;
     } catch (e) {
@@ -214,6 +216,10 @@
     if (Notification.permission === 'granted') {
       _showToast('🔔 Notifikasi sudah aktif');
       _setBtnGranted(btn);
+      if (window.supabase) {
+        const { data: { user } } = await window.supabase.auth.getUser();
+        if (user) await subscribePush(user.id);
+      }
       return;
     }
     if (Notification.permission === 'denied') {
@@ -315,7 +321,12 @@
       if (!window.supabase) return;
       const { data: { user } } = await window.supabase.auth.getUser();
       if (!user) return;
-      await subscribePush(user.id);
+
+      // FIX: selalu subscribe ulang saat init kalau permission sudah granted
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        await subscribePush(user.id);
+      }
+
       await listenMessages(user.id);
     } catch (e) {
       console.error('[Push] Init gagal:', e);
