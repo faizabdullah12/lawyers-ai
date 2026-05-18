@@ -120,32 +120,36 @@
   init();
 
 })();
-window.addEventListener("load", async () => {
+window.addEventListener("load", () => {
 
-  console.log("AUTO PUSH INIT");
+  setTimeout(async () => {
 
-  try {
+    console.log("AUTO PUSH INIT");
 
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
+    try {
 
-    if (!user) {
+      const {
+        data: { user }
+      } = await window.supabase.auth.getUser();
 
-      console.log("BELUM LOGIN");
+      if (!user) {
 
-      return;
+        console.log("BELUM LOGIN");
+
+        return;
+
+      }
+
+      console.log("USER LOGIN:", user.id);
+
+      await window.requestPushPermission();
+
+    } catch (err) {
+
+      console.error("AUTO PUSH ERROR:", err);
 
     }
 
-    console.log("USER LOGIN:", user.id);
-
-    await window.requestPushPermission();
-
-  } catch (err) {
-
-    console.error("AUTO PUSH ERROR:", err);
-
-  }
+  }, 4000);
 
 });
