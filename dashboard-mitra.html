@@ -1981,36 +1981,42 @@ async function updatePerfSidebar() {
 
   let rating = 0;
 
-  try {
+try {
 
-    const { data, error } =
-      await supabase
-        .from('mitra_rating_summary')
-        .select('*')
-        .eq('mitra_id', currentMitra.id)
-        .single();
+  const { data, error } =
+    await supabase
+      .from('mitra_rating_summary')
+      .select('*')
+      .eq('mitra_id', currentMitra.id)
+      .single();
 
-    if (!error && data) {
+  console.log(
+    'RATING DATA:',
+    data
+  );
 
-      rating =
-        Number(
-          data.average_rating ||
-          data.rating ||
-          data.avg_rating ||
-          0
-        );
+  if (!error && data) {
 
-    }
-
-  } catch (err) {
-
-    console.error(
-      'RATING ERROR:',
-      err
-    );
+    rating =
+      Number(
+        data.avg_rating || 0
+      );
 
   }
 
+} catch (err) {
+
+  console.error(
+    'RATING ERROR:',
+    err
+  );
+
+}
+
+document.getElementById(
+  'perf-rating'
+).textContent =
+  rating.toFixed(1);
   // =========================
   // UPDATE TEXT
   // =========================
