@@ -892,38 +892,72 @@
     <div class="modal-overlay" onclick="closeRatingModal()"></div>
     <div class="rating-card">
         <div style="height:5px;background:linear-gradient(90deg,#F59E0B,#FBBF24);"></div>
-        <div style="padding:22px 20px 20px;">
+        <div id="rating-form-wrap" style="padding:22px 20px 20px;">
+
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                <div>
-                    <h3 style="font-size:17px;font-weight:900;font-style:italic;letter-spacing:-0.3px;margin:0;color:var(--text-1);">Beri Rating</h3>
-                    <p id="rating-adv-name" style="font-size:11px;color:var(--text-3);margin:3px 0 0;font-weight:600;"></p>
+                <div style="display:flex;align-items:center;gap:11px;">
+                    <img id="rating-adv-img" src="" style="width:44px;height:44px;border-radius:13px;object-fit:cover;border:1.5px solid var(--border-2);" onerror="this.src=avatarFallback('A')" alt="">
+                    <div>
+                        <h3 style="font-size:16px;font-weight:900;font-style:italic;letter-spacing:-0.3px;margin:0;color:var(--text-1);">Beri Ulasan</h3>
+                        <p id="rating-adv-name" style="font-size:11px;color:var(--text-3);margin:2px 0 0;font-weight:600;"></p>
+                    </div>
                 </div>
-                <button onclick="closeRatingModal()" style="width:44px;height:44px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+                <button onclick="closeRatingModal()" style="width:44px;height:44px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div style="display:flex;justify-content:center;gap:6px;margin:18px 0 6px;" id="star-row">
+
+            <div id="already-rated-info" style="display:none;padding:10px 13px;border-radius:11px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);margin-bottom:14px;">
+                <p style="font-size:11px;font-weight:700;color:#34D399;margin:0;">
+                    <i class="fas fa-check-circle" style="margin-right:5px;"></i>
+                    Anda sudah memberi ulasan — submit akan memperbarui yang lama.
+                </p>
+            </div>
+
+            <p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);margin:0 0 8px;">Nilai Layanan</p>
+            <div style="display:flex;justify-content:center;gap:2px;margin:0 0 4px;" id="star-row">
                 <button class="star-btn" data-val="1" onclick="setRating(1)"><i class="fas fa-star"></i></button>
                 <button class="star-btn" data-val="2" onclick="setRating(2)"><i class="fas fa-star"></i></button>
                 <button class="star-btn" data-val="3" onclick="setRating(3)"><i class="fas fa-star"></i></button>
                 <button class="star-btn" data-val="4" onclick="setRating(4)"><i class="fas fa-star"></i></button>
                 <button class="star-btn" data-val="5" onclick="setRating(5)"><i class="fas fa-star"></i></button>
             </div>
-            <p id="rating-label" style="text-align:center;font-size:12.5px;font-weight:700;color:var(--text-3);margin:0 0 14px;min-height:20px;"></p>
-            <textarea id="rating-comment" placeholder="Tulis ulasan singkat (opsional)..." maxlength="200"
-                style="width:100%;padding:11px 14px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;color:var(--text-1);outline:none;resize:none;min-height:72px;line-height:1.5;box-sizing:border-box;transition:border-color 0.2s;-webkit-appearance:none;"
-                onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-            <div id="already-rated-info" style="display:none;text-align:center;padding:8px 12px;border-radius:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);margin:10px 0 0;">
-                <p style="font-size:11px;font-weight:600;color:#34D399;margin:0;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Anda sudah memberi rating. Rating baru akan mengganti yang lama.</p>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:14px;">
-                <button onclick="closeRatingModal()" style="flex:1;padding:12px;border-radius:12px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;min-height:46px;font-family:'Plus Jakarta Sans',sans-serif;">Batal</button>
-                <button id="submit-rating-btn" onclick="submitRating()" style="flex:2;padding:12px;border-radius:12px;background:#F59E0B;color:#fff;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;cursor:pointer;border:none;opacity:0.4;pointer-events:none;transition:opacity 0.2s;min-height:46px;font-family:'Plus Jakarta Sans',sans-serif;">
-                    <i class="fas fa-paper-plane"></i> Kirim Rating
+            <p id="rating-label" style="text-align:center;font-size:13px;font-weight:700;color:var(--gold);margin:0 0 16px;min-height:20px;transition:all .2s;"></p>
+
+            <p style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--text-3);margin:0 0 8px;">Ceritakan Pengalaman Anda</p>
+            <textarea id="rating-comment"
+                placeholder="Opsional — bagikan kesan konsultasi Anda untuk membantu klien lain..."
+                maxlength="500"
+                style="width:100%;padding:12px 14px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--text-1);outline:none;resize:none;min-height:80px;line-height:1.5;box-sizing:border-box;transition:border-color .2s;-webkit-appearance:none;display:block;"
+                onfocus="this.style.borderColor='var(--accent)'"
+                onblur="this.style.borderColor='var(--border)'"
+                oninput="updateRatingCharCount(this)"></textarea>
+            <p id="rating-char-count" style="font-size:9px;font-weight:600;color:var(--text-3);text-align:right;margin:4px 0 16px;">0/500</p>
+
+            <div style="display:flex;gap:8px;">
+                <button onclick="closeRatingModal()"
+                    style="flex:1;padding:12px;border-radius:12px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;min-height:46px;font-family:'Plus Jakarta Sans',sans-serif;">
+                    Batal
+                </button>
+                <button id="submit-rating-btn" onclick="submitRating()"
+                    style="flex:2;padding:12px;border-radius:12px;background:#F59E0B;color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;border:none;opacity:.4;pointer-events:none;transition:opacity .2s;min-height:46px;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;">
+                    <i class="fas fa-paper-plane"></i> Kirim Ulasan
                 </button>
             </div>
         </div>
+
+        <div id="rating-success" style="display:none;padding:30px 20px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:12px;animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1);">⭐</div>
+            <p style="font-size:18px;font-weight:900;font-style:italic;color:var(--text-1);margin:0 0 8px;letter-spacing:-0.03em;">Terima Kasih!</p>
+            <p style="font-size:12px;color:var(--text-3);margin:0 0 18px;line-height:1.7;">Ulasan Anda membantu klien lain<br>menemukan advokat terbaik.</p>
+            <div id="success-stars" style="display:flex;justify-content:center;gap:4px;font-size:24px;margin-bottom:20px;"></div>
+            <button onclick="closeRatingModal()"
+                style="padding:11px 32px;border-radius:12px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#FBBF24;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+                Tutup
+            </button>
+        </div>
     </div>
 </div>
-
 <!-- CONTACT MODAL -->
 <div id="contact-modal" class="modal-host">
     <div class="modal-overlay" onclick="closeContactModal()"></div>
@@ -1362,11 +1396,18 @@ async function loadChatMode() {
         .not('conversation_id','is',null).limit(1);
     activeConvId=ex?.[0]?.conversation_id||crypto.randomUUID();
 
-    await renderMessages();
-    subscribeRT();
-    await updateOnlineStatus();
-    window._onlineCheckInterval = setInterval(updateOnlineStatus, 15000);
-    await checkAutoMsg();
+        await renderMessages();
+        
+        subscribeRT();
+        
+        await updateOnlineStatus();
+        
+        window._onlineCheckInterval =
+            setInterval(updateOnlineStatus, 15000);
+        
+        await checkAutoMsg();
+        
+        await checkCaseStatus();
 }
 
 // ══════════════════════════════════════════════
@@ -1754,77 +1795,499 @@ function useQuickReply(el){
 }
 
 // ══════════════════════════════════════════════
-// RATING MODAL
+// RATING / REVIEW — pakai tabel "reviews"
 // ══════════════════════════════════════════════
-let selectedRating=0;
-const RATING_LABELS=['','Kurang Memuaskan','Cukup','Baik','Sangat Baik','Luar Biasa! ⭐'];
 
-function setRating(val){
-    selectedRating=val;
-    document.querySelectorAll('.star-btn').forEach(btn=>btn.classList.toggle('active',parseInt(btn.dataset.val)<=val));
-    document.getElementById('rating-label').textContent=RATING_LABELS[val]||'';
-    const sb=document.getElementById('submit-rating-btn');sb.style.opacity='1';sb.style.pointerEvents='';
+let selectedRating = 0;
+let _existingReviewId = null;
+let _mitraTableId = null;
+
+const RATING_LABELS = [
+    '',
+    '😞 Kurang',
+    '😐 Cukup',
+    '😊 Baik',
+    '😄 Sangat Baik',
+    '🤩 Luar Biasa!'
+];
+
+function setRating(val) {
+    selectedRating = val;
+
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.classList.toggle(
+            'active',
+            parseInt(btn.dataset.val) <= val
+        );
+    });
+
+    document.getElementById('rating-label').textContent =
+        RATING_LABELS[val] || '';
+
+    const sb = document.getElementById('submit-rating-btn');
+
+    sb.style.opacity = '1';
+    sb.style.pointerEvents = '';
 }
 
-async function openRatingModal(){
-    if(!receiverId) return;
-    selectedRating=0;
-    document.getElementById('rating-adv-name').textContent=advName||'Advokat';
-    document.getElementById('rating-label').textContent='';
-    document.getElementById('rating-comment').value='';
-    document.getElementById('already-rated-info').style.display='none';
-    document.querySelectorAll('.star-btn').forEach(btn=>btn.classList.remove('active'));
-    const sb=document.getElementById('submit-rating-btn');sb.style.opacity='0.4';sb.style.pointerEvents='none';
-    try{
-        const{data:ex}=await window.supabase.from('ratings').select('score,comment').eq('reviewer_id',currentUser.id).eq('advokat_id',receiverId).maybeSingle();
-        if(ex){setRating(ex.score);document.getElementById('rating-comment').value=ex.comment||'';document.getElementById('already-rated-info').style.display='block';}
-    }catch(e){}
-    document.getElementById('rating-modal').classList.add('open');
-}
+function updateRatingCharCount(el) {
+    const cc = document.getElementById('rating-char-count');
 
-function closeRatingModal(){
-    document.getElementById('rating-modal').classList.remove('open');
-}
-
-async function submitRating(){
-    if(!selectedRating||!receiverId) return;
-    const btn=document.getElementById('submit-rating-btn');
-    btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';btn.style.pointerEvents='none';
-    try{
-        const comment=document.getElementById('rating-comment').value.trim();
-        const{error}=await window.supabase.from('ratings').upsert({reviewer_id:currentUser.id,advokat_id:receiverId,lawyer_id:lawyerTableId,score:selectedRating,comment:comment||null,updated_at:new Date().toISOString()},{onConflict:'reviewer_id,advokat_id'});
-        if(error) throw error;
-        closeRatingModal();toast('⭐ Rating berhasil dikirim!','success');
-    }catch(e){
-        if(e.message?.includes('does not exist')||e.message?.includes('relation'))toast('⚠️ Tabel ratings belum dibuat di Supabase','warn');
-        else toast('Gagal kirim rating: '+e.message,'error');
-        btn.innerHTML='<i class="fas fa-paper-plane"></i> Kirim Rating';btn.style.pointerEvents='';
+    if (cc) {
+        cc.textContent = `${el.value.length}/500`;
     }
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
-    const btn=document.getElementById('sound-toggle');
-    if(btn&&!soundEnabled){btn.innerHTML='<i class="fas fa-volume-xmark"></i>';btn.style.color='var(--text-3)';btn.classList.add('muted');}
+async function openRatingModal() {
+    if (!receiverId) return;
 
-    const inp=document.getElementById('msg-input');
-    if(inp){
-        inp.addEventListener('focus',()=>{
-            if(!inp.value.trim()) document.getElementById('quick-reply-bar').classList.add('show');
-            setTimeout(() => {
-                const box = document.getElementById('chat-box');
-                if(box) box.scrollTop = box.scrollHeight;
-            }, 350);
-        });
-        inp.addEventListener('input',()=>{
-            const bar=document.getElementById('quick-reply-bar');
-            if(inp.value.trim()) bar.classList.remove('show');
-            else bar.classList.add('show');
-        });
-        inp.addEventListener('blur', () => {
-            setTimeout(() => document.getElementById('quick-reply-bar').classList.remove('show'), 200);
-        });
+    selectedRating = 0;
+    _existingReviewId = null;
+
+    document.getElementById('rating-adv-name').textContent =
+        advName || 'Advokat';
+
+    const imgEl = document.getElementById('rating-adv-img');
+
+    if (imgEl) {
+        imgEl.src =
+            _advAvatarCache ||
+            avatarFallback(advName || 'A');
+
+        imgEl.onerror = function () {
+            this.src = avatarFallback(advName || 'A');
+        };
     }
 
+    document.getElementById('rating-label').textContent = '';
+
+    document.getElementById('rating-comment').value = '';
+
+    document.getElementById('rating-char-count').textContent =
+        '0/500';
+
+    document.getElementById('already-rated-info').style.display =
+        'none';
+
+    document.getElementById('rating-success').style.display =
+        'none';
+
+    document.getElementById('rating-form-wrap').style.display =
+        'block';
+
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    const sb = document.getElementById('submit-rating-btn');
+
+    sb.style.opacity = '0.4';
+    sb.style.pointerEvents = 'none';
+
+    sb.innerHTML =
+        '<i class="fas fa-paper-plane"></i> Kirim Ulasan';
+
+    try {
+        let mitraId = lawyerTableId || _mitraTableId;
+
+        if (!mitraId) {
+            const { data: mitraRow } =
+                await window.supabase
+                    .from('mitra_ahli')
+                    .select('id')
+                    .eq('user_id', receiverId)
+                    .maybeSingle();
+
+            mitraId = mitraRow?.id || null;
+
+            _mitraTableId = mitraId;
+        }
+
+        if (mitraId) {
+            const { data: existing } =
+                await window.supabase
+                    .from('reviews')
+                    .select('id, rating, komentar')
+                    .eq('mitra_id', mitraId)
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+
+            if (existing) {
+                _existingReviewId = existing.id;
+
+                setRating(existing.rating);
+
+                document.getElementById(
+                    'rating-comment'
+                ).value =
+                    existing.komentar || '';
+
+                updateRatingCharCount(
+                    document.getElementById(
+                        'rating-comment'
+                    )
+                );
+
+                document.getElementById(
+                    'already-rated-info'
+                ).style.display = 'block';
+
+                sb.innerHTML =
+                    '<i class="fas fa-floppy-disk"></i> Perbarui Ulasan';
+
+                sb.style.opacity = '1';
+                sb.style.pointerEvents = '';
+            }
+        }
+    } catch (e) {
+        console.warn(
+            '[Review] Cek existing gagal:',
+            e.message
+        );
+    }
+
+    document
+        .getElementById('rating-modal')
+        .classList.add('open');
+}
+
+function closeRatingModal() {
+    document
+        .getElementById('rating-modal')
+        .classList.remove('open');
+
+    setTimeout(() => {
+        document.getElementById(
+            'rating-success'
+        ).style.display = 'none';
+
+        document.getElementById(
+            'rating-form-wrap'
+        ).style.display = 'block';
+    }, 300);
+}
+
+async function submitRating() {
+    if (
+        !selectedRating ||
+        !receiverId ||
+        !currentUser?.id
+    ) return;
+
+    const btn =
+        document.getElementById(
+            'submit-rating-btn'
+        );
+
+    btn.innerHTML =
+        '<i class="fas fa-circle-notch fa-spin"></i> Menyimpan...';
+
+    btn.style.pointerEvents = 'none';
+
+    const komentar =
+        document
+            .getElementById('rating-comment')
+            .value
+            .trim() || null;
+
+    try {
+        let mitraId =
+            lawyerTableId || _mitraTableId;
+
+        if (!mitraId) {
+            const { data: mitraRow } =
+                await window.supabase
+                    .from('mitra_ahli')
+                    .select('id')
+                    .eq('user_id', receiverId)
+                    .maybeSingle();
+
+            if (!mitraRow?.id) {
+                throw new Error(
+                    'Data advokat tidak ditemukan di tabel mitra_ahli.'
+                );
+            }
+
+            mitraId = mitraRow.id;
+
+            _mitraTableId = mitraId;
+        }
+
+        let kasusId = null;
+
+        try {
+            const { data: kasusRow } =
+                await window.supabase
+                    .from('riwayat_konsultasi')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq(
+                        'assigned_lawyer_id',
+                        mitraId
+                    )
+                    .in('handling_status', [
+                        'selesai',
+                        'sedang_ditangani'
+                    ])
+                    .order('created_at', {
+                        ascending: false
+                    })
+                    .limit(1)
+                    .maybeSingle();
+
+            kasusId = kasusRow?.id || null;
+        } catch (e) {}
+
+        if (_existingReviewId) {
+            const { error } =
+                await window.supabase
+                    .from('reviews')
+                    .update({
+                        rating: selectedRating,
+                        komentar,
+                        updated_at:
+                            new Date().toISOString()
+                    })
+                    .eq(
+                        'id',
+                        _existingReviewId
+                    );
+
+            if (error) throw error;
+
+        } else {
+            const { error } =
+                await window.supabase
+                    .from('reviews')
+                    .insert([
+                        {
+                            mitra_id: mitraId,
+                            user_id: currentUser.id,
+                            kasus_id: kasusId,
+                            rating: selectedRating,
+                            komentar
+                        }
+                    ]);
+
+            if (error) throw error;
+        }
+
+        showRatingSuccess(selectedRating);
+
+        toast(
+            '⭐ Ulasan berhasil dikirim!',
+            'success'
+        );
+
+        const oldBanner =
+            document.getElementById(
+                'case-done-banner'
+            );
+
+        if (oldBanner) oldBanner.remove();
+
+    } catch (e) {
+        console.error(
+            '[Review] Submit error:',
+            e
+        );
+
+        toast(
+            'Gagal kirim ulasan: ' +
+                (e.message || 'Coba lagi'),
+            'error'
+        );
+
+        btn.innerHTML =
+            '<i class="fas fa-paper-plane"></i> Kirim Ulasan';
+
+        btn.style.pointerEvents = '';
+    }
+}
+
+function showRatingSuccess(rating) {
+    const starsEl =
+        document.getElementById(
+            'success-stars'
+        );
+
+    starsEl.innerHTML = '';
+
+    for (let i = 1; i <= 5; i++) {
+        const s =
+            document.createElement('span');
+
+        s.style.color =
+            i <= rating
+                ? '#F59E0B'
+                : 'rgba(245,158,11,0.2)';
+
+        s.textContent = '★';
+
+        starsEl.appendChild(s);
+    }
+
+    document.getElementById(
+        'rating-form-wrap'
+    ).style.display = 'none';
+
+    document.getElementById(
+        'rating-success'
+    ).style.display = 'block';
+}
+
+// ─────────────────────────────────────────────
+// CASE DONE REVIEW BANNER
+// ─────────────────────────────────────────────
+
+async function checkCaseStatus() {
+    if (!currentUser?.id || !receiverId) return;
+
+    let mitraId =
+        lawyerTableId || _mitraTableId;
+
+    if (!mitraId) {
+        try {
+            const { data: m } =
+                await window.supabase
+                    .from('mitra_ahli')
+                    .select('id')
+                    .eq('user_id', receiverId)
+                    .maybeSingle();
+
+            mitraId = m?.id || null;
+
+            _mitraTableId = mitraId;
+        } catch (e) {
+            return;
+        }
+    }
+
+    if (!mitraId) return;
+
+    try {
+        const { data: kasus } =
+            await window.supabase
+                .from('riwayat_konsultasi')
+                .select(
+                    'id, handling_status, updated_at'
+                )
+                .eq(
+                    'user_id',
+                    currentUser.id
+                )
+                .eq(
+                    'assigned_lawyer_id',
+                    mitraId
+                )
+                .eq(
+                    'handling_status',
+                    'selesai'
+                )
+                .order('updated_at', {
+                    ascending: false
+                })
+                .limit(1)
+                .maybeSingle();
+
+        if (!kasus) return;
+
+        const { data: sudahReview } =
+            await window.supabase
+                .from('reviews')
+                .select('id')
+                .eq('mitra_id', mitraId)
+                .eq(
+                    'user_id',
+                    currentUser.id
+                )
+                .maybeSingle();
+
+        if (sudahReview) return;
+
+        showCaseDoneBanner();
+
+    } catch (e) {
+        console.warn(e);
+    }
+}
+
+function showCaseDoneBanner() {
+    const old =
+        document.getElementById(
+            'case-done-banner'
+        );
+
+    if (old) old.remove();
+
+    const banner =
+        document.createElement('div');
+
+    banner.id = 'case-done-banner';
+
+    banner.style.cssText = `
+        padding:12px 14px;
+        background:linear-gradient(
+            135deg,
+            rgba(16,185,129,0.1),
+            rgba(16,185,129,0.05)
+        );
+        border-top:1px solid rgba(16,185,129,0.2);
+        border-bottom:1px solid rgba(16,185,129,0.15);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+    `;
+
+    banner.innerHTML = `
+        <div>
+            <div style="
+                font-size:12px;
+                font-weight:800;
+                color:#34D399;
+            ">
+                Kasus Selesai
+            </div>
+
+            <div style="
+                font-size:11px;
+                color:var(--text-2);
+                margin-top:2px;
+            ">
+                Berikan ulasan untuk advokat ini.
+            </div>
+        </div>
+
+        <button
+            onclick="openRatingModal()"
+            style="
+                padding:10px 14px;
+                border:none;
+                border-radius:10px;
+                background:#10B981;
+                color:white;
+                font-size:11px;
+                font-weight:800;
+                cursor:pointer;
+            "
+        >
+            ⭐ Review
+        </button>
+    `;
+
+    const inputWrap =
+        document.getElementById(
+            'input-wrap'
+        );
+
+    if (inputWrap?.parentNode) {
+        inputWrap.parentNode.insertBefore(
+            banner,
+            inputWrap
+        );
+    }
+}
     document.addEventListener('touchstart', () => {
         if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }, { once: true });
