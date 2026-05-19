@@ -1953,7 +1953,103 @@ function showLoadError(msg){
 
 function updateSidebarUI(){if(!currentMitra)return;const av=currentMitra.foto_profil_url||avatarFb(currentMitra.nama_lengkap);const sa=document.getElementById('side-avatar');if(sa){sa.src=av;sa.onerror=()=>sa.src=avatarFb(currentMitra.nama_lengkap);}const sn=document.getElementById('side-name');if(sn)sn.textContent=currentMitra.nama_lengkap||'Advokat';const ss=document.getElementById('side-spec');if(ss)ss.textContent=currentMitra.spesialisasi||'Advokat';const pi=document.getElementById('profil-avatar-img');if(pi)pi.src=av;}
 
-function updatePerfSidebar(){const myK=allKasus.filter(k=>k.assigned_lawyer_id===currentMitra.id);document.getElementById('perf-total').textContent=myK.length;document.getElementById('perf-selesai').textContent=myK.filter(k=>k.handling_status==='selesai').length;document.getElementById('perf-rating').textContent='4.8';const stars=document.getElementById('perf-stars');stars.innerHTML='';for(let i=1;i<=5;i++){const s=document.createElement('i');s.className='fas fa-star';s.style.color=i<=4?'#F59E0B':'rgba(245,158,11,0.3)';stars.appendChild(s);}}
+function updatePerfSidebar(){const myK=allKasus.filter(k=>k.assigned_lawyer_id===currentMitra.id);document.getElementById('perf-total').textContent=myK.length;document.getElementById('perf-selesai').textContent=myK.filter(k=>k.handling_status==='selesai').length;
+async function updatePerfSidebar() {
+
+  // =========================
+  // KASUS
+  // =========================
+
+  const myK = allKasus.filter(
+    k => k.assigned_lawyer_id === currentMitra.id
+  );
+
+  document.getElementById(
+    'perf-total'
+  ).textContent = myK.length;
+
+  document.getElementById(
+    'perf-selesai'
+  ).textContent =
+    myK.filter(
+      k => k.handling_status === 'selesai'
+    ).length;
+
+  // =========================
+  // RATING REALTIME
+  // =========================
+
+  let rating = 0;
+
+  try {
+
+    const { data, error } =
+      await supabase
+        .from('mitra_rating_summary')
+        .select('*')
+        .eq('mitra_id', currentMitra.id)
+        .single();
+
+    if (!error && data) {
+
+      rating =
+        Number(
+          data.average_rating ||
+          data.rating ||
+          data.avg_rating ||
+          0
+        );
+
+    }
+
+  } catch (err) {
+
+    console.error(
+      'RATING ERROR:',
+      err
+    );
+
+  }
+
+  // =========================
+  // UPDATE TEXT
+  // =========================
+
+  document.getElementById(
+    'perf-rating'
+  ).textContent =
+    rating.toFixed(1);
+
+  // =========================
+  // UPDATE STARS
+  // =========================
+
+  const stars =
+    document.getElementById(
+      'perf-stars'
+    );
+
+  stars.innerHTML = '';
+
+  for (let i = 1; i <= 5; i++) {
+
+    const s =
+      document.createElement('i');
+
+    s.className =
+      'fas fa-star';
+
+    s.style.color =
+      i <= Math.round(rating)
+        ? '#F59E0B'
+        : 'rgba(245,158,11,0.3)';
+
+    stars.appendChild(s);
+
+  }
+
+}
+const stars=document.getElementById('perf-stars');stars.innerHTML='';for(let i=1;i<=5;i++){const s=document.createElement('i');s.className='fas fa-star';s.style.color=i<=4?'#F59E0B':'rgba(245,158,11,0.3)';stars.appendChild(s);}}
 
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebar-overlay').classList.add('show');}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('show');}
@@ -2058,6 +2154,51 @@ window.addEventListener('load',()=>{
         showLoadError(err.message||'Terjadi kesalahan tidak terduga.');
     });
 });
+<script>
+
+// =========================
+// FUNCTION
+// =========================
+
+async function updatePerfSidebar() {
+
+  // isi function...
+}
+
+// =========================
+// LOAD AWAL
+// =========================
+
+updatePerfSidebar();
+
+// =========================
+// REALTIME
+// =========================
+
+supabase
+  .channel('rating-sidebar')
+
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'mitra_rating_summary'
+    },
+    () => {
+
+      console.log(
+        'SIDEBAR RATING UPDATE'
+      );
+
+      updatePerfSidebar();
+
+    }
+  )
+
+  .subscribe();
+
+</script>
 </script>
 <script src="mobile-fix.js"></script>
 <script src="push-init.js"></script>
