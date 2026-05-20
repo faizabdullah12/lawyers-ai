@@ -3,163 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Daftar Akun - Lawyers AI Enterprise</title>
     <link rel="icon" href="/logo4.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; min-height: 100vh; position: relative; overflow-x: hidden; }
-
-        /* ── Animated background ── */
-        .animated-bg { position: fixed; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); overflow: hidden; z-index: 0; }
-        .stripe { position: absolute; width: 200%; height: 2px; background: linear-gradient(90deg, transparent 0%, rgba(59,130,246,.3) 50%, transparent 100%); animation: moveStripe 8s linear infinite; }
-        .stripe:nth-child(1){top:10%;animation-delay:0s;opacity:.4}
-        .stripe:nth-child(2){top:25%;animation-delay:2s;opacity:.6}
-        .stripe:nth-child(3){top:40%;animation-delay:4s;opacity:.3}
-        .stripe:nth-child(4){top:55%;animation-delay:1s;opacity:.5}
-        .stripe:nth-child(5){top:70%;animation-delay:3s;opacity:.4}
-        .stripe:nth-child(6){top:85%;animation-delay:5s;opacity:.6}
-        @keyframes moveStripe { 0%{transform:translateX(-100%) rotate(-5deg)} 100%{transform:translateX(0%) rotate(-5deg)} }
-
-        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .3; animation: floatOrb 20s ease-in-out infinite; }
-        .orb1 { width:400px;height:400px;background:radial-gradient(circle,rgba(59,130,246,.6) 0%,transparent 70%);top:-200px;left:-200px; }
-        .orb2 { width:500px;height:500px;background:radial-gradient(circle,rgba(139,92,246,.5) 0%,transparent 70%);bottom:-250px;right:-250px;animation-delay:5s; }
-        .orb3 { width:300px;height:300px;background:radial-gradient(circle,rgba(6,182,212,.4) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:10s; }
-        @keyframes floatOrb { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(50px,-50px) scale(1.1)} 66%{transform:translate(-50px,50px) scale(.9)} }
-
-        .grid-pattern { position: absolute; inset: 0; background-image: linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px); background-size: 50px 50px; animation: gridMove 20s linear infinite; }
-        @keyframes gridMove { 0%{transform:translate(0,0)} 100%{transform:translate(50px,50px)} }
-
-        /* ── Layout ── */
-        .main-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; position: relative; z-index: 2; }
-        .form-card { width: 100%; max-width: 500px; background: rgba(255,255,255,.97); backdrop-filter: blur(20px); border-radius: 32px; padding: 50px 45px; box-shadow: 0 30px 60px rgba(0,0,0,.5); animation: slideUp .8s cubic-bezier(.16,1,.3,1); position: relative; overflow: hidden; }
-        .form-card::before { content:''; position:absolute;top:0;left:0;right:0;height:4px; background:linear-gradient(90deg,#3b82f6 0%,#8b5cf6 50%,#06b6d4 100%); }
-        @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-
-        /* ── Logo ── */
-        .logo-section { text-align:center; margin-bottom:40px; }
-        .logo { font-size:42px;font-weight:800;font-style:italic;color:#0f172a;letter-spacing:-2px;margin-bottom:8px; }
-        .logo span { color:#3b82f6; }
-        .logo-tagline { color:#64748b;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px; }
-
-        /* ── Form Header ── */
-        .form-header { text-align:center;margin-bottom:35px; }
-        .form-title { font-size:28px;font-weight:800;color:#0f172a;margin-bottom:8px; }
-        .form-subtitle { color:#64748b;font-size:14px;font-weight:500; }
-
-        /* ── Inputs ── */
-        .form-group { margin-bottom:22px; }
-        .form-label { display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px;margin-left:4px; }
-        .input-wrapper { position:relative; }
-        .form-input { width:100%;padding:15px 18px;font-size:15px;font-weight:500;color:#0f172a;background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;outline:none;transition:all .3s ease;font-family:'Plus Jakarta Sans',sans-serif; }
-        .form-input:focus { background:white;border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.1);transform:translateY(-2px); }
-        .form-input.input-error { border-color:#ef4444;background:#fff5f5; }
-        .input-icon { position:absolute;left:18px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:15px;pointer-events:none; }
-        .input-with-icon { padding-left:50px; }
-        .toggle-password { position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#94a3b8;cursor:pointer;padding:8px;background:none;border:none; }
-
-        /* ── Password strength ── */
-        .password-strength { height:4px;background:#e2e8f0;border-radius:2px;margin-top:8px;overflow:hidden; }
-        .password-strength-bar { height:100%;width:0;transition:all .4s ease; }
-        .strength-weak  { width:50%;background:#f87171; }
-        .strength-strong{ width:100%;background:#34d399; }
-        .strength-text { font-size:11px;font-weight:600;margin-top:6px; }
-
-        /* ── Errors ── */
-        .error-message { color:#ef4444;font-size:12px;font-weight:600;margin-top:6px;display:none; }
-        .error-message.show { display:block; }
-
-        /* ── Alert banner ── */
-        .alert-banner { display:none;padding:13px 18px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:20px;align-items:center;gap:10px; }
-        .alert-banner.show { display:flex; }
-        .alert-banner.error   { background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca; }
-        .alert-banner.success { background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0; }
-        .alert-banner.info    { background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe; }
-
-        /* ── Grid & checkbox ── */
-        .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
-        .checkbox-wrapper { display:flex;align-items:flex-start;gap:12px;margin:24px 0; }
-        .form-checkbox { width:18px;height:18px;margin-top:2px;accent-color:#3b82f6;cursor:pointer; }
-        .checkbox-label { font-size:13px;color:#64748b;line-height:1.6; }
-        .checkbox-label a { color:#3b82f6;font-weight:600;text-decoration:none; }
-        .checkbox-label a:hover { text-decoration:underline; }
-
-        /* ── Buttons ── */
-        .submit-button { width:100%;padding:16px;font-size:14px;font-weight:800;text-transform:uppercase;color:white;background:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 100%);border:none;border-radius:14px;cursor:pointer;transition:all .4s;box-shadow:0 10px 30px rgba(59,130,246,.4);font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.5px; }
-        .submit-button:hover:not(:disabled) { transform:translateY(-3px);box-shadow:0 15px 40px rgba(59,130,246,.5); }
-        .submit-button:disabled { opacity:.65;cursor:not-allowed;transform:none; }
-
-        /* ── Loading overlay ── */
-        .loading-overlay { position:fixed;inset:0;background:rgba(15,23,42,.95);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:9999; }
-        .loading-overlay.active { display:flex; }
-        .spinner { width:60px;height:60px;border:4px solid rgba(59,130,246,.2);border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite; }
-        @keyframes spin { to{transform:rotate(360deg)} }
-
-        /* ── OTP STEP ── */
-        #otpStep { display:none; }
-        .otp-info { background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-radius:16px;padding:20px;margin-bottom:24px;text-align:center; }
-        .otp-info .otp-email { font-size:14px;font-weight:700;color:#1d4ed8;margin-top:6px;word-break:break-all; }
-        .otp-info p { font-size:13px;color:#475569;margin-top:4px; }
-        .otp-boxes { display:flex;gap:10px;justify-content:center;margin:24px 0; }
-        .otp-box { width:52px;height:60px;text-align:center;font-size:24px;font-weight:800;color:#0f172a;background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;outline:none;transition:all .25s;font-family:'Plus Jakarta Sans',sans-serif; }
-        .otp-box:focus { border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.15);background:white;transform:translateY(-2px); }
-        .otp-box.filled { border-color:#8b5cf6;background:#faf5ff; }
-        .otp-resend { text-align:center;font-size:13px;color:#64748b;margin-bottom:20px; }
-        .otp-resend button { background:none;border:none;color:#3b82f6;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px; }
-        .otp-resend button:disabled { color:#94a3b8;cursor:not-allowed; }
-        .back-link { text-align:center;margin-top:18px; }
-        .back-link button { background:none;border:none;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif; }
-        .back-link button:hover { color:#0f172a; }
-        .countdown { color:#ef4444;font-weight:700; }
-
-        /* ── TnC Modal ── */
-        .tnc-overlay { position:fixed;inset:0;background:rgba(15,23,42,.75);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s ease; }
-        .tnc-overlay.open { opacity:1;pointer-events:all; }
-        .tnc-modal { background:#fff;border-radius:28px;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 40px 80px rgba(0,0,0,.5);overflow:hidden;transform:translateY(30px) scale(.97);transition:transform .35s cubic-bezier(.16,1,.3,1);position:relative; }
-        .tnc-overlay.open .tnc-modal { transform:translateY(0) scale(1); }
-        .tnc-modal::before { content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#3b82f6,#8b5cf6,#06b6d4); }
-        .tnc-header { padding:32px 36px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-shrink:0; }
-        .tnc-header-left { display:flex;align-items:center;gap:14px; }
-        .tnc-icon { width:48px;height:48px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0; }
-        .tnc-header h2 { font-size:20px;font-weight:800;color:#0f172a;margin-bottom:3px; }
-        .tnc-header p { font-size:12px;color:#94a3b8;font-weight:500; }
-        .tnc-close { background:#f1f5f9;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:16px;transition:all .2s;flex-shrink:0; }
-        .tnc-close:hover { background:#fee2e2;color:#ef4444;transform:rotate(90deg); }
-        .tnc-body { padding:28px 36px;overflow-y:auto;flex:1;scroll-behavior:smooth; }
-        .tnc-body::-webkit-scrollbar { width:5px; }
-        .tnc-body::-webkit-scrollbar-track { background:#f8fafc; }
-        .tnc-body::-webkit-scrollbar-thumb { background:#cbd5e1;border-radius:4px; }
-        .tnc-section { margin-bottom:28px; }
-        .tnc-section:last-child { margin-bottom:0; }
-        .tnc-section-num { display:inline-flex;align-items:center;gap:10px;margin-bottom:12px; }
-        .tnc-badge { width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;border-radius:8px;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-        .tnc-section-title { font-size:14px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px; }
-        .tnc-text { font-size:13.5px;color:#475569;line-height:1.8;font-weight:400; }
-        .tnc-text ul { margin:10px 0 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px; }
-        .tnc-text ul li { color:#475569; }
-        .tnc-text strong { color:#0f172a;font-weight:700; }
-        .tnc-highlight { background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-left:3px solid #3b82f6;border-radius:10px;padding:14px 18px;margin-top:10px;font-size:13px;color:#1e40af;font-weight:500; }
-        .tnc-divider { height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);margin:20px 0; }
-        .tnc-footer { padding:20px 36px 28px;border-top:1px solid #f1f5f9;display:flex;gap:12px;flex-shrink:0; }
-        .tnc-btn-decline { flex:1;padding:13px;font-size:13px;font-weight:700;color:#64748b;background:#f1f5f9;border:none;border-radius:12px;cursor:pointer;transition:all .2s;font-family:'Plus Jakarta Sans',sans-serif; }
-        .tnc-btn-decline:hover { background:#e2e8f0;color:#0f172a; }
-        .tnc-btn-accept { flex:2;padding:13px;font-size:13px;font-weight:800;color:white;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;border-radius:12px;cursor:pointer;transition:all .3s;box-shadow:0 6px 20px rgba(59,130,246,.35);display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Plus Jakarta Sans',sans-serif; }
-        .tnc-btn-accept:hover { transform:translateY(-2px);box-shadow:0 10px 28px rgba(59,130,246,.45); }
-        .tnc-last-updated { text-align:center;font-size:11px;color:#cbd5e1;margin-top:14px;font-weight:500; }
-
-        @media (max-width:768px) {
-            .form-grid { grid-template-columns:1fr; }
-            .form-card { padding:40px 28px; border-radius:24px; }
-            .otp-box { width:44px;height:52px;font-size:20px; }
-            .tnc-header { padding:28px 24px 18px; }
-            .tnc-body { padding:22px 24px; }
-            .tnc-footer { padding:16px 24px 24px;flex-direction:column-reverse; }
-        }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Plus Jakarta Sans',sans-serif;background:#0f172a;min-height:100vh;overflow-x:hidden}
+        .animated-bg{position:fixed;inset:0;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);overflow:hidden;z-index:0}
+        .stripe{position:absolute;width:200%;height:2px;background:linear-gradient(90deg,transparent 0%,rgba(59,130,246,.3) 50%,transparent 100%);animation:moveStripe 8s linear infinite}
+        .stripe:nth-child(1){top:10%;animation-delay:0s;opacity:.4}.stripe:nth-child(2){top:25%;animation-delay:2s;opacity:.6}.stripe:nth-child(3){top:40%;animation-delay:4s;opacity:.3}.stripe:nth-child(4){top:55%;animation-delay:1s;opacity:.5}.stripe:nth-child(5){top:70%;animation-delay:3s;opacity:.4}.stripe:nth-child(6){top:85%;animation-delay:5s;opacity:.6}
+        @keyframes moveStripe{0%{transform:translateX(-100%) rotate(-5deg)}100%{transform:translateX(0%) rotate(-5deg)}}
+        .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.3;animation:floatOrb 20s ease-in-out infinite}
+        .orb1{width:400px;height:400px;background:radial-gradient(circle,rgba(59,130,246,.6) 0%,transparent 70%);top:-200px;left:-200px}
+        .orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(139,92,246,.5) 0%,transparent 70%);bottom:-250px;right:-250px;animation-delay:5s}
+        .orb3{width:300px;height:300px;background:radial-gradient(circle,rgba(6,182,212,.4) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:10s}
+        @keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(50px,-50px) scale(1.1)}66%{transform:translate(-50px,50px) scale(.9)}}
+        .grid-pattern{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.05) 1px,transparent 1px);background-size:50px 50px;animation:gridMove 20s linear infinite}
+        @keyframes gridMove{0%{transform:translate(0,0)}100%{transform:translate(50px,50px)}}
+        .main-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;z-index:2}
+        .form-card{width:100%;max-width:500px;background:rgba(255,255,255,.97);border-radius:32px;padding:50px 45px;box-shadow:0 30px 60px rgba(0,0,0,.5);animation:slideUp .8s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
+        .form-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#3b82f6 0%,#8b5cf6 50%,#06b6d4 100%)}
+        @keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        .logo-section{text-align:center;margin-bottom:40px}
+        .logo{font-size:42px;font-weight:800;font-style:italic;color:#0f172a;letter-spacing:-2px;margin-bottom:8px}
+        .logo span{color:#3b82f6}
+        .logo-tagline{color:#64748b;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px}
+        .form-header{text-align:center;margin-bottom:35px}
+        .form-title{font-size:28px;font-weight:800;color:#0f172a;margin-bottom:8px}
+        .form-subtitle{color:#64748b;font-size:14px;font-weight:500}
+        .form-group{margin-bottom:22px}
+        .form-label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px;margin-left:4px}
+        .input-wrapper{position:relative}
+        .form-input{width:100%;padding:15px 18px;font-size:15px;font-weight:500;color:#0f172a;background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;outline:none;transition:all .3s ease;font-family:'Plus Jakarta Sans',sans-serif}
+        .form-input:focus{background:white;border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.1);transform:translateY(-2px)}
+        .form-input.input-error{border-color:#ef4444;background:#fff5f5}
+        .input-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:15px;pointer-events:none}
+        .input-with-icon{padding-left:50px}
+        .toggle-password{position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#94a3b8;cursor:pointer;padding:8px;background:none;border:none}
+        .password-strength{height:4px;background:#e2e8f0;border-radius:2px;margin-top:8px;overflow:hidden}
+        .password-strength-bar{height:100%;width:0;transition:all .4s ease}
+        .strength-weak{width:50%;background:#f87171}
+        .strength-strong{width:100%;background:#34d399}
+        .strength-text{font-size:11px;font-weight:600;margin-top:6px}
+        .error-message{color:#ef4444;font-size:12px;font-weight:600;margin-top:6px;display:none}
+        .error-message.show{display:block}
+        .alert-banner{display:none;padding:13px 18px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:20px;align-items:center;gap:10px}
+        .alert-banner.show{display:flex}
+        .alert-banner.error{background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca}
+        .alert-banner.success{background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0}
+        .alert-banner.info{background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .checkbox-wrapper{display:flex;align-items:flex-start;gap:12px;margin:24px 0}
+        .form-checkbox{width:18px;height:18px;margin-top:2px;accent-color:#3b82f6;cursor:pointer}
+        .checkbox-label{font-size:13px;color:#64748b;line-height:1.6}
+        .checkbox-label a{color:#3b82f6;font-weight:600;text-decoration:none}
+        .submit-button{width:100%;padding:16px;font-size:14px;font-weight:800;text-transform:uppercase;color:white;background:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 100%);border:none;border-radius:14px;cursor:pointer;transition:all .4s;box-shadow:0 10px 30px rgba(59,130,246,.4);font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.5px}
+        .submit-button:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 15px 40px rgba(59,130,246,.5)}
+        .submit-button:disabled{opacity:.65;cursor:not-allowed;transform:none}
+        .loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.95);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:9999}
+        .loading-overlay.active{display:flex}
+        .spinner{width:60px;height:60px;border:4px solid rgba(59,130,246,.2);border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        #otpStep{display:none}
+        .otp-info{background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-radius:16px;padding:20px;margin-bottom:24px;text-align:center}
+        .otp-info .otp-email{font-size:14px;font-weight:700;color:#1d4ed8;margin-top:6px;word-break:break-all}
+        .otp-info p{font-size:13px;color:#475569;margin-top:4px}
+        .otp-boxes{display:flex;gap:10px;justify-content:center;margin:24px 0}
+        .otp-box{width:52px;height:60px;text-align:center;font-size:24px;font-weight:800;color:#0f172a;background:#f8fafc;border:2px solid #e2e8f0;border-radius:14px;outline:none;transition:all .25s;font-family:'Plus Jakarta Sans',sans-serif}
+        .otp-box:focus{border-color:#3b82f6;box-shadow:0 0 0 4px rgba(59,130,246,.15);background:white;transform:translateY(-2px)}
+        .otp-box.filled{border-color:#8b5cf6;background:#faf5ff}
+        .otp-resend{text-align:center;font-size:13px;color:#64748b;margin-bottom:20px}
+        .otp-resend button{background:none;border:none;color:#3b82f6;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px}
+        .otp-resend button:disabled{color:#94a3b8;cursor:not-allowed}
+        .back-link{text-align:center;margin-top:18px}
+        .back-link button{background:none;border:none;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+        .back-link button:hover{color:#0f172a}
+        .tnc-overlay{position:fixed;inset:0;background:rgba(15,23,42,.75);backdrop-filter:blur(8px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s ease}
+        .tnc-overlay.open{opacity:1;pointer-events:all}
+        .tnc-modal{background:#fff;border-radius:28px;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 40px 80px rgba(0,0,0,.5);overflow:hidden;transform:translateY(30px) scale(.97);transition:transform .35s cubic-bezier(.16,1,.3,1);position:relative}
+        .tnc-overlay.open .tnc-modal{transform:translateY(0) scale(1)}
+        .tnc-modal::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#3b82f6,#8b5cf6,#06b6d4)}
+        .tnc-header{padding:32px 36px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-shrink:0}
+        .tnc-header-left{display:flex;align-items:center;gap:14px}
+        .tnc-icon{width:48px;height:48px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+        .tnc-header h2{font-size:20px;font-weight:800;color:#0f172a;margin-bottom:3px}
+        .tnc-header p{font-size:12px;color:#94a3b8;font-weight:500}
+        .tnc-close{background:#f1f5f9;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:16px;transition:all .2s;flex-shrink:0}
+        .tnc-close:hover{background:#fee2e2;color:#ef4444;transform:rotate(90deg)}
+        .tnc-body{padding:28px 36px;overflow-y:auto;flex:1}
+        .tnc-section{margin-bottom:28px}
+        .tnc-section-num{display:inline-flex;align-items:center;gap:10px;margin-bottom:12px}
+        .tnc-badge{width:28px;height:28px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;border-radius:8px;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .tnc-section-title{font-size:14px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:.5px}
+        .tnc-text{font-size:13.5px;color:#475569;line-height:1.8}
+        .tnc-text ul{margin:10px 0 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+        .tnc-highlight{background:linear-gradient(135deg,#eff6ff,#f0fdf4);border-left:3px solid #3b82f6;border-radius:10px;padding:14px 18px;margin-top:10px;font-size:13px;color:#1e40af;font-weight:500}
+        .tnc-divider{height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);margin:20px 0}
+        .tnc-footer{padding:20px 36px 28px;border-top:1px solid #f1f5f9;display:flex;gap:12px;flex-shrink:0}
+        .tnc-btn-decline{flex:1;padding:13px;font-size:13px;font-weight:700;color:#64748b;background:#f1f5f9;border:none;border-radius:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+        .tnc-btn-accept{flex:2;padding:13px;font-size:13px;font-weight:800;color:white;background:linear-gradient(135deg,#3b82f6,#8b5cf6);border:none;border-radius:12px;cursor:pointer;box-shadow:0 6px 20px rgba(59,130,246,.35);display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Plus Jakarta Sans',sans-serif}
+        .tnc-last-updated{text-align:center;font-size:11px;color:#cbd5e1;margin-top:14px}
+        @media(max-width:768px){.form-grid{grid-template-columns:1fr}.form-card{padding:40px 28px;border-radius:24px}.otp-box{width:44px;height:52px;font-size:20px}.tnc-footer{flex-direction:column-reverse}}
     </style>
 </head>
 <body>
@@ -171,67 +119,33 @@
     <div class="grid-pattern"></div>
 </div>
 
-<!-- Loading overlay -->
 <div class="loading-overlay" id="loadingOverlay">
-    <div style="text-align:center;">
+    <div style="text-align:center">
         <div class="spinner"></div>
-        <p style="color:white;font-weight:600;margin-top:15px;" id="loadingText">Memproses Pendaftaran...</p>
+        <p style="color:white;font-weight:600;margin-top:15px" id="loadingText">Memproses...</p>
     </div>
 </div>
 
 <!-- TnC Modal -->
-<div class="tnc-overlay" id="tncOverlay" role="dialog" aria-modal="true" aria-labelledby="tncTitle">
+<div class="tnc-overlay" id="tncOverlay">
     <div class="tnc-modal">
         <div class="tnc-header">
             <div class="tnc-header-left">
                 <div class="tnc-icon">⚖️</div>
-                <div>
-                    <h2 id="tncTitle">Syarat &amp; Ketentuan</h2>
-                    <p>Lawyers<strong>AI</strong> Enterprise Platform</p>
-                </div>
+                <div><h2>Syarat &amp; Ketentuan</h2><p>Lawyers<strong>AI</strong> Enterprise Platform</p></div>
             </div>
-            <button class="tnc-close" id="tncClose" title="Tutup"><i class="fas fa-times"></i></button>
+            <button class="tnc-close" id="tncClose"><i class="fas fa-times"></i></button>
         </div>
         <div class="tnc-body">
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">1</span><span class="tnc-section-title">Penerimaan Ketentuan</span></div>
-                <div class="tnc-text">Dengan mendaftar dan menggunakan platform <strong>LawyersAI Enterprise</strong>, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan yang berlaku.<div class="tnc-highlight">📌 Ketentuan ini berlaku efektif sejak tanggal pendaftaran dan mengikat secara hukum.</div></div>
-            </div>
+            <div class="tnc-section"><div class="tnc-section-num"><span class="tnc-badge">1</span><span class="tnc-section-title">Penerimaan Ketentuan</span></div><div class="tnc-text">Dengan mendaftar dan menggunakan platform <strong>LawyersAI Enterprise</strong>, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh syarat dan ketentuan.<div class="tnc-highlight">📌 Ketentuan ini berlaku efektif sejak tanggal pendaftaran dan mengikat secara hukum.</div></div></div>
             <div class="tnc-divider"></div>
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">2</span><span class="tnc-section-title">Penggunaan Platform</span></div>
-                <div class="tnc-text">Platform ini dirancang khusus untuk keperluan hukum profesional. Pengguna diizinkan untuk:<ul><li>Menggunakan fitur AI untuk riset dan analisis hukum</li><li>Mengelola dokumen dan arsip perkara secara digital</li><li>Berkolaborasi dengan tim hukum dalam satu platform</li><li>Mengakses basis data hukum yang terintegrasi</li></ul></div>
-            </div>
+            <div class="tnc-section"><div class="tnc-section-num"><span class="tnc-badge">2</span><span class="tnc-section-title">Penggunaan Platform</span></div><div class="tnc-text">Platform ini dirancang khusus untuk keperluan hukum profesional.<ul><li>Menggunakan fitur AI untuk riset dan analisis hukum</li><li>Mengelola dokumen dan arsip perkara secara digital</li><li>Berkolaborasi dengan tim hukum dalam satu platform</li></ul></div></div>
             <div class="tnc-divider"></div>
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">3</span><span class="tnc-section-title">Larangan Penggunaan</span></div>
-                <div class="tnc-text">Pengguna dilarang keras:<ul><li>Menyebarkan informasi hukum yang menyesatkan atau palsu</li><li>Menggunakan platform untuk tujuan ilegal</li><li>Menyalin atau mendistribusikan konten platform tanpa izin</li><li>Melakukan akses tidak sah ke akun pengguna lain</li><li>Melakukan reverse engineering terhadap sistem kami</li></ul><div class="tnc-highlight" style="border-color:#ef4444;background:linear-gradient(135deg,#fff5f5,#fef2f2);color:#dc2626;">⚠️ Pelanggaran dapat mengakibatkan penonaktifan akun permanen dan tuntutan hukum.</div></div>
-            </div>
+            <div class="tnc-section"><div class="tnc-section-num"><span class="tnc-badge">3</span><span class="tnc-section-title">Larangan Penggunaan</span></div><div class="tnc-text">Pengguna dilarang keras:<ul><li>Menyebarkan informasi hukum yang menyesatkan</li><li>Menggunakan platform untuk tujuan ilegal</li><li>Melakukan akses tidak sah ke akun pengguna lain</li></ul><div class="tnc-highlight" style="border-color:#ef4444;background:linear-gradient(135deg,#fff5f5,#fef2f2);color:#dc2626;">⚠️ Pelanggaran dapat mengakibatkan penonaktifan akun permanen.</div></div></div>
             <div class="tnc-divider"></div>
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">4</span><span class="tnc-section-title">Privasi &amp; Keamanan Data</span></div>
-                <div class="tnc-text">Kami berkomitmen melindungi data pribadi sesuai UU PDP RI, standar ISO 27001, dan enkripsi end-to-end. Data Anda tidak akan dijual atau dibagikan tanpa persetujuan Anda.</div>
-            </div>
+            <div class="tnc-section"><div class="tnc-section-num"><span class="tnc-badge">4</span><span class="tnc-section-title">Privasi &amp; Keamanan Data</span></div><div class="tnc-text">Kami berkomitmen melindungi data pribadi sesuai UU PDP RI dan enkripsi end-to-end. Data Anda tidak akan dijual tanpa persetujuan.</div></div>
             <div class="tnc-divider"></div>
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">5</span><span class="tnc-section-title">Kerahasiaan Informasi Klien</span></div>
-                <div class="tnc-text">Seluruh data yang diunggah bersifat <strong>rahasia dan terenkripsi</strong>.<div class="tnc-highlight">🔒 Seluruh komunikasi dan dokumen dienkripsi dengan standar AES-256.</div></div>
-            </div>
-            <div class="tnc-divider"></div>
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">6</span><span class="tnc-section-title">Disclaimer AI</span></div>
-                <div class="tnc-text">Hasil analisis AI bersifat <strong>bantu semata</strong> dan bukan nasihat hukum resmi. Konsultasi dengan pengacara berlisensi tetap disarankan.</div>
-            </div>
-            <div class="tnc-divider"></div>
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">7</span><span class="tnc-section-title">Biaya &amp; Pembayaran</span></div>
-                <div class="tnc-text">Biaya langganan bersifat non-refundable kecuali ada kegagalan layanan dari pihak kami. Perubahan harga diberitahukan minimal <strong>30 hari kalender</strong> sebelumnya.</div>
-            </div>
-            <div class="tnc-divider"></div>
-            <div class="tnc-section">
-                <div class="tnc-section-num"><span class="tnc-badge">8</span><span class="tnc-section-title">Hukum yang Berlaku</span></div>
-                <div class="tnc-text">Ketentuan ini tunduk pada hukum Republik Indonesia. Sengketa diselesaikan melalui Pengadilan Negeri Jakarta Selatan.</div>
-            </div>
+            <div class="tnc-section"><div class="tnc-section-num"><span class="tnc-badge">5</span><span class="tnc-section-title">Disclaimer AI</span></div><div class="tnc-text">Hasil analisis AI bersifat <strong>bantu semata</strong> dan bukan nasihat hukum resmi.<div class="tnc-highlight">🔒 Seluruh komunikasi dienkripsi dengan standar AES-256.</div></div></div>
             <p class="tnc-last-updated">Terakhir diperbarui: 1 April 2025 · Versi 2.1</p>
         </div>
         <div class="tnc-footer">
@@ -241,107 +155,86 @@
     </div>
 </div>
 
-<!-- ============ MAIN ============ -->
 <div class="main-container">
     <div class="form-card">
-
         <div class="logo-section">
             <h1 class="logo">Lawyers<span>AI</span></h1>
             <p class="logo-tagline">Enterprise Platform</p>
         </div>
 
-        <!-- STEP 1: Register Form -->
+        <!-- STEP 1 -->
         <div id="registerStep">
             <div class="form-header">
                 <h2 class="form-title">Buat Akun Baru</h2>
                 <p class="form-subtitle">Gabung sekarang di platform hukum tercanggih</p>
             </div>
+            <div class="alert-banner" id="globalAlert"><i class="fas fa-exclamation-circle"></i><span id="globalAlertText"></span></div>
 
-            <!-- Global alert -->
-            <div class="alert-banner" id="globalAlert">
-                <i class="fas fa-exclamation-circle"></i>
-                <span id="globalAlertText"></span>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Nama Depan</label>
+                    <input type="text" id="firstName" class="form-input" placeholder="Ahmad" autocomplete="given-name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Belakang</label>
+                    <input type="text" id="lastName" class="form-input" placeholder="Santoso" autocomplete="family-name">
+                </div>
             </div>
 
-            <form id="regForm" novalidate>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Nama Depan</label>
-                        <input type="text" id="firstName" class="form-input" placeholder="Ahmad" autocomplete="given-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nama Belakang</label>
-                        <input type="text" id="lastName" class="form-input" placeholder="Santoso" autocomplete="family-name" required>
-                    </div>
+            <div class="form-group">
+                <label class="form-label">Email Aktif</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="email" id="email" class="form-input input-with-icon" placeholder="nama@gmail.com" autocomplete="email">
                 </div>
+                <div class="error-message" id="emailError">Format email tidak valid</div>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Email Aktif</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="email" class="form-input input-with-icon" placeholder="nama@gmail.com" autocomplete="email" required>
-                    </div>
-                    <div class="error-message" id="emailError">Format email tidak valid</div>
+            <div class="form-group">
+                <label class="form-label">Kata Sandi</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" class="form-input input-with-icon" placeholder="Min. 6 karakter (huruf &amp; angka)" autocomplete="new-password">
+                    <button type="button" class="toggle-password" id="togglePassword"><i class="far fa-eye" id="eyeIcon"></i></button>
                 </div>
+                <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+                <p class="strength-text" id="strengthText"></p>
+                <div class="error-message" id="passwordError">Min. 6 karakter dengan huruf &amp; angka</div>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Kata Sandi</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="password" class="form-input input-with-icon" placeholder="Min. 6 karakter (huruf &amp; angka)" autocomplete="new-password" required>
-                        <button type="button" class="toggle-password" id="togglePassword" aria-label="Tampilkan/sembunyikan sandi">
-                            <i class="far fa-eye" id="eyeIcon"></i>
-                        </button>
-                    </div>
-                    <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
-                    <p class="strength-text" id="strengthText"></p>
-                    <div class="error-message" id="passwordError">Min. 6 karakter dengan kombinasi huruf &amp; angka</div>
+            <div class="form-group">
+                <label class="form-label">Konfirmasi Kata Sandi</label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="confirmPassword" class="form-input input-with-icon" placeholder="Ulangi kata sandi" autocomplete="new-password">
                 </div>
+                <div class="error-message" id="confirmPasswordError">Kata sandi tidak cocok</div>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Konfirmasi Kata Sandi</label>
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="confirmPassword" class="form-input input-with-icon" placeholder="Ulangi kata sandi" autocomplete="new-password" required>
-                    </div>
-                    <div class="error-message" id="confirmPasswordError">Kata sandi tidak cocok</div>
-                </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="terms" class="form-checkbox">
+                <label for="terms" class="checkbox-label">Saya setuju dengan <a href="#" id="openTnc">Syarat &amp; Ketentuan</a> yang berlaku</label>
+            </div>
 
-                <div class="checkbox-wrapper">
-                    <input type="checkbox" id="terms" class="form-checkbox" required>
-                    <label for="terms" class="checkbox-label">
-                        Saya setuju dengan <a href="#" id="openTnc">Syarat &amp; Ketentuan</a> yang berlaku
-                    </label>
-                </div>
+            <button type="button" class="submit-button" id="btnRegister">Daftar Sekarang &nbsp;<i class="fas fa-arrow-right"></i></button>
 
-                <button type="submit" class="submit-button" id="btnRegister">
-                    Daftar Sekarang &nbsp;<i class="fas fa-arrow-right"></i>
-                </button>
-            </form>
-
-            <div style="text-align:center;margin-top:25px;">
-                <p style="font-size:14px;color:#64748b;">Sudah punya akun? <a href="login.html" style="color:#3b82f6;font-weight:700;text-decoration:none;">Masuk di sini</a></p>
+            <div style="text-align:center;margin-top:25px">
+                <p style="font-size:14px;color:#64748b">Sudah punya akun? <a href="login.html" style="color:#3b82f6;font-weight:700;text-decoration:none">Masuk di sini</a></p>
             </div>
         </div>
 
-        <!-- STEP 2: OTP Verification -->
+        <!-- STEP 2 -->
         <div id="otpStep">
             <div class="form-header">
                 <h2 class="form-title">Verifikasi Email</h2>
                 <p class="form-subtitle">Masukkan kode yang dikirim ke email Anda</p>
             </div>
-
-            <div class="alert-banner" id="otpAlert">
-                <i class="fas fa-exclamation-circle"></i>
-                <span id="otpAlertText"></span>
-            </div>
-
+            <div class="alert-banner" id="otpAlert"><i class="fas fa-exclamation-circle"></i><span id="otpAlertText"></span></div>
             <div class="otp-info">
-                <div style="font-size:32px;">📬</div>
+                <div style="font-size:32px">📬</div>
                 <div class="otp-email" id="otpEmailDisplay"></div>
                 <p>Kode verifikasi 6 digit telah dikirim.<br>Periksa folder Inbox atau Spam.</p>
             </div>
-
             <div class="otp-boxes" id="otpBoxes">
                 <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="one-time-code">
                 <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
@@ -350,375 +243,264 @@
                 <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
                 <input class="otp-box" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]">
             </div>
-
-            <div class="otp-resend">
-                Tidak menerima kode? &nbsp;
-                <button id="resendBtn" disabled>Kirim Ulang (<span id="countdown">60</span>s)</button>
-            </div>
-
-            <button class="submit-button" id="btnVerify" disabled>
-                Verifikasi &amp; Masuk &nbsp;<i class="fas fa-shield-alt"></i>
-            </button>
-
-            <div class="back-link">
-                <button id="btnBack"><i class="fas fa-arrow-left"></i> &nbsp;Kembali ke Pendaftaran</button>
-            </div>
+            <div class="otp-resend">Tidak menerima kode? &nbsp;<button id="resendBtn" disabled>Kirim Ulang (<span id="countdown">60</span>s)</button></div>
+            <button class="submit-button" id="btnVerify" disabled>Verifikasi &amp; Masuk &nbsp;<i class="fas fa-shield-alt"></i></button>
+            <div class="back-link"><button id="btnBack"><i class="fas fa-arrow-left"></i> &nbsp;Kembali</button></div>
         </div>
-
     </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-//  SUPABASE CONFIG — ganti dengan milik Anda
-// ══════════════════════════════════════════════
+// ── Supabase init — FIX: rename variable to avoid conflict with window.supabase ──
 const SUPABASE_URL = 'https://mrurkzuulwfudkwgwgva.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXJrenV1bHdmdWRrd2d3Z3ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1ODU1MTAsImV4cCI6MjA4NTE2MTUxMH0.3DuJCyrxX_VQuOM1pyky-M8udFsi6sf6OMawvjZAMOc';
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ══════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════
-function isStrictEmail(v) {
-    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(v);
+// ── Helpers ──
+function isValidEmail(v){ return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(v); }
+function isValidPassword(p){ return p.length >= 6 && /[a-zA-Z]/.test(p) && /\d/.test(p); }
+function setLoading(on, txt='Memproses...'){
+    document.getElementById('loadingText').textContent = txt;
+    document.getElementById('loadingOverlay').classList.toggle('active', on);
 }
-function validatePassword(p) {
-    return p.length >= 6 && /[a-zA-Z]/.test(p) && /\d/.test(p);
-}
-function setLoading(active, text = 'Memproses Pendaftaran...') {
-    document.getElementById('loadingText').textContent = text;
-    document.getElementById('loadingOverlay').classList.toggle('active', active);
-}
-function showAlert(id, textId, msg, type = 'error') {
+function showAlert(id, textId, msg, type='error'){
     const el = document.getElementById(id);
-    const tx = document.getElementById(textId);
-    el.className = `alert-banner show ${type}`;
-    tx.textContent = msg;
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    el.className = 'alert-banner show ' + type;
+    document.getElementById(textId).textContent = msg;
+    el.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
-function hideAlert(id) {
-    document.getElementById(id).classList.remove('show');
-}
-function clearInputError(input) {
-    input.classList.remove('input-error');
-}
-function setInputError(input, errEl) {
-    input.classList.add('input-error');
-    errEl.classList.add('show');
-}
+function hideAlert(id){ document.getElementById(id).classList.remove('show'); }
 
-// ══════════════════════════════════════════════
-//  TnC MODAL
-// ══════════════════════════════════════════════
+// ── TnC ──
 const tncOverlay = document.getElementById('tncOverlay');
-const termsBox   = document.getElementById('terms');
-
-function openTnc(e) { if(e) e.preventDefault(); tncOverlay.classList.add('open'); document.body.style.overflow='hidden'; }
-function closeTnc() { tncOverlay.classList.remove('open'); document.body.style.overflow=''; }
-
+const termsBox = document.getElementById('terms');
+function openTnc(e){ if(e) e.preventDefault(); tncOverlay.classList.add('open'); document.body.style.overflow='hidden'; }
+function closeTnc(){ tncOverlay.classList.remove('open'); document.body.style.overflow=''; }
 document.getElementById('openTnc').addEventListener('click', openTnc);
 document.getElementById('tncClose').addEventListener('click', closeTnc);
-document.getElementById('tncDecline').addEventListener('click', () => { termsBox.checked=false; closeTnc(); });
-document.getElementById('tncAccept').addEventListener('click', () => {
-    termsBox.checked = true;
-    termsBox.style.transition='transform .2s';
-    termsBox.style.transform='scale(1.4)';
-    setTimeout(()=>{ termsBox.style.transform='scale(1)'; }, 200);
-    closeTnc();
-});
-tncOverlay.addEventListener('click', e => { if(e.target===tncOverlay) closeTnc(); });
-document.addEventListener('keydown', e => { if(e.key==='Escape' && tncOverlay.classList.contains('open')) closeTnc(); });
+document.getElementById('tncDecline').addEventListener('click', ()=>{ termsBox.checked=false; closeTnc(); });
+document.getElementById('tncAccept').addEventListener('click', ()=>{ termsBox.checked=true; closeTnc(); });
+tncOverlay.addEventListener('click', e=>{ if(e.target===tncOverlay) closeTnc(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && tncOverlay.classList.contains('open')) closeTnc(); });
 
-// ══════════════════════════════════════════════
-//  PASSWORD STRENGTH
-// ══════════════════════════════════════════════
-document.getElementById('password').addEventListener('input', function() {
-    const bar  = document.getElementById('strengthBar');
-    const text = document.getElementById('strengthText');
-    if (!this.value) { bar.className='password-strength-bar'; text.textContent=''; return; }
-    if (validatePassword(this.value)) {
+// ── Password strength ──
+document.getElementById('password').addEventListener('input', function(){
+    const bar = document.getElementById('strengthBar');
+    const txt = document.getElementById('strengthText');
+    if(!this.value){ bar.className='password-strength-bar'; txt.textContent=''; return; }
+    if(isValidPassword(this.value)){
         bar.className='password-strength-bar strength-strong';
-        text.textContent='Format benar ✅'; text.style.color='#10b981';
+        txt.textContent='Format benar ✅'; txt.style.color='#10b981';
     } else {
         bar.className='password-strength-bar strength-weak';
-        text.textContent='Gunakan huruf & angka (min. 6)'; text.style.color='#ef4444';
+        txt.textContent='Gunakan huruf & angka (min. 6)'; txt.style.color='#ef4444';
     }
     document.getElementById('passwordError').classList.remove('show');
     this.classList.remove('input-error');
 });
 
-document.getElementById('togglePassword').addEventListener('click', function() {
-    const pass = document.getElementById('password');
-    const icon = document.getElementById('eyeIcon');
-    pass.type = pass.type==='password' ? 'text' : 'password';
-    icon.className = pass.type==='password' ? 'far fa-eye' : 'fas fa-eye-slash';
+document.getElementById('togglePassword').addEventListener('click', function(){
+    const inp = document.getElementById('password');
+    const ico = document.getElementById('eyeIcon');
+    inp.type = inp.type==='password' ? 'text' : 'password';
+    ico.className = inp.type==='password' ? 'far fa-eye' : 'fas fa-eye-slash';
 });
 
-// live clear errors
-['firstName','lastName','email','confirmPassword'].forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('input', () => {
-        el.classList.remove('input-error');
-        const errEl = document.getElementById(id+'Error');
-        if(errEl) errEl.classList.remove('show');
+['firstName','lastName','email','confirmPassword'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', ()=>{
+        document.getElementById(id).classList.remove('input-error');
+        const e = document.getElementById(id+'Error');
+        if(e) e.classList.remove('show');
         hideAlert('globalAlert');
     });
 });
 
-// ══════════════════════════════════════════════
-//  REGISTER FORM SUBMIT
-// ══════════════════════════════════════════════
+// ── Register button click ──
 let pendingEmail = '';
-let pendingMeta  = {};
 
-document.getElementById('regForm').addEventListener('submit', async e => {
-    e.preventDefault();
+document.getElementById('btnRegister').addEventListener('click', async ()=>{
     hideAlert('globalAlert');
+    document.querySelectorAll('.error-message').forEach(e=>e.classList.remove('show'));
+    document.querySelectorAll('.form-input').forEach(e=>e.classList.remove('input-error'));
 
     const firstName = document.getElementById('firstName').value.trim();
     const lastName  = document.getElementById('lastName').value.trim();
     const email     = document.getElementById('email').value.trim().toLowerCase();
     const password  = document.getElementById('password').value;
     const confirm   = document.getElementById('confirmPassword').value;
-    const agreeTerms = termsBox.checked;
+    const agreed    = termsBox.checked;
 
-    // Clear previous errors
-    document.querySelectorAll('.error-message').forEach(el=>el.classList.remove('show'));
-    document.querySelectorAll('.form-input').forEach(el=>el.classList.remove('input-error'));
-
-    // Validate
     let valid = true;
-    if (!firstName || !lastName) {
+    if(!firstName || !lastName){
         showAlert('globalAlert','globalAlertText','Nama depan dan belakang tidak boleh kosong.','error');
         valid = false;
     }
-    if (!isStrictEmail(email)) {
-        setInputError(document.getElementById('email'), document.getElementById('emailError'));
+    if(!isValidEmail(email)){
+        document.getElementById('email').classList.add('input-error');
+        document.getElementById('emailError').classList.add('show');
         valid = false;
     }
-    if (!validatePassword(password)) {
-        setInputError(document.getElementById('password'), document.getElementById('passwordError'));
+    if(!isValidPassword(password)){
+        document.getElementById('password').classList.add('input-error');
+        document.getElementById('passwordError').classList.add('show');
         valid = false;
     }
-    if (password !== confirm) {
-        setInputError(document.getElementById('confirmPassword'), document.getElementById('confirmPasswordError'));
+    if(password !== confirm){
+        document.getElementById('confirmPassword').classList.add('input-error');
+        document.getElementById('confirmPasswordError').classList.add('show');
         valid = false;
     }
-    if (!agreeTerms) {
+    if(!agreed){
         showAlert('globalAlert','globalAlertText','Anda harus menyetujui Syarat & Ketentuan terlebih dahulu.','info');
         openTnc();
         valid = false;
     }
-    if (!valid) return;
-
-    // Check Supabase config
-    if (SUPABASE_URL.includes('YOUR_PROJECT') || SUPABASE_ANON_KEY.includes('YOUR_ANON_KEY')) {
-        showAlert('globalAlert','globalAlertText',
-            '⚙️ Konfigurasi Supabase belum diisi. Ganti SUPABASE_URL dan SUPABASE_ANON_KEY di bagian script.',
-            'info');
-        return;
-    }
+    if(!valid) return;
 
     setLoading(true, 'Mendaftarkan akun Anda...');
 
     try {
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await sbClient.auth.signUp({
             email,
             password,
             options: {
                 data: {
-                    full_name: `${firstName} ${lastName}`,
+                    full_name: firstName + ' ' + lastName,
                     first_name: firstName,
-                    last_name: lastName,
+                    last_name: lastName
                 }
             }
         });
 
-        if (error) {
-            setLoading(false);
-            // Map common Supabase errors ke bahasa Indonesia
+        setLoading(false);
+
+        if(error){
             const msgMap = {
                 'User already registered': 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.',
                 'Email rate limit exceeded': 'Terlalu banyak percobaan. Coba lagi beberapa menit.',
                 'Invalid email': 'Format email tidak valid.',
-                'Password should be at least 6 characters': 'Kata sandi terlalu pendek (min. 6 karakter).',
-                'signup_disabled': 'Pendaftaran saat ini dinonaktifkan. Hubungi administrator.',
+                'signup_disabled': 'Pendaftaran dinonaktifkan. Hubungi administrator.',
             };
             let msg = error.message;
-            for (const [key, val] of Object.entries(msgMap)) {
-                if (msg.includes(key)) { msg = val; break; }
-            }
+            for(const [k,v] of Object.entries(msgMap)){ if(msg.includes(k)){ msg=v; break; } }
             showAlert('globalAlert','globalAlertText', msg, 'error');
             return;
         }
 
-        // Supabase sends OTP / confirmation email
-        setLoading(false);
+        // Success — show OTP step
         pendingEmail = email;
-        pendingMeta  = { firstName, lastName };
-
-        // Switch to OTP step
         document.getElementById('otpEmailDisplay').textContent = email;
         document.getElementById('registerStep').style.display = 'none';
         document.getElementById('otpStep').style.display = 'block';
         startCountdown();
-        // Focus first OTP box
-        otpBoxes[0].focus();
+        otpBoxEls[0].focus();
 
-    } catch (err) {
+    } catch(err){
         setLoading(false);
-        showAlert('globalAlert','globalAlertText',
-            'Terjadi kesalahan koneksi. Periksa internet Anda dan coba lagi.','error');
+        showAlert('globalAlert','globalAlertText','Terjadi kesalahan koneksi. Periksa internet Anda.','error');
         console.error(err);
     }
 });
 
-// ══════════════════════════════════════════════
-//  OTP BOXES LOGIC
-// ══════════════════════════════════════════════
-const otpBoxes = Array.from(document.querySelectorAll('.otp-box'));
+// ── OTP boxes ──
+const otpBoxEls = Array.from(document.querySelectorAll('.otp-box'));
 const btnVerify = document.getElementById('btnVerify');
 
-function getOtpValue() { return otpBoxes.map(b=>b.value).join(''); }
+function getOtp(){ return otpBoxEls.map(b=>b.value).join(''); }
+function checkComplete(){ btnVerify.disabled = !/^\d{6}$/.test(getOtp()); }
 
-function checkOtpComplete() {
-    const v = getOtpValue();
-    const complete = v.length === 6 && /^\d{6}$/.test(v);
-    btnVerify.disabled = !complete;
-}
-
-otpBoxes.forEach((box, i) => {
-    box.addEventListener('input', e => {
-        // Allow only digits
+otpBoxEls.forEach((box, i)=>{
+    box.addEventListener('input', ()=>{
         box.value = box.value.replace(/\D/g,'').slice(-1);
         box.classList.toggle('filled', box.value !== '');
         hideAlert('otpAlert');
-
-        if (box.value && i < otpBoxes.length-1) otpBoxes[i+1].focus();
-        checkOtpComplete();
+        if(box.value && i < otpBoxEls.length-1) otpBoxEls[i+1].focus();
+        checkComplete();
     });
-
-    box.addEventListener('keydown', e => {
-        if (e.key === 'Backspace') {
-            if (!box.value && i > 0) {
-                otpBoxes[i-1].value = '';
-                otpBoxes[i-1].classList.remove('filled');
-                otpBoxes[i-1].focus();
-            }
-            checkOtpComplete();
+    box.addEventListener('keydown', e=>{
+        if(e.key==='Backspace'){
+            if(!box.value && i>0){ otpBoxEls[i-1].value=''; otpBoxEls[i-1].classList.remove('filled'); otpBoxEls[i-1].focus(); }
+            checkComplete();
         }
-        if (e.key === 'ArrowLeft' && i > 0) { e.preventDefault(); otpBoxes[i-1].focus(); }
-        if (e.key === 'ArrowRight' && i < otpBoxes.length-1) { e.preventDefault(); otpBoxes[i+1].focus(); }
+        if(e.key==='ArrowLeft' && i>0){ e.preventDefault(); otpBoxEls[i-1].focus(); }
+        if(e.key==='ArrowRight' && i<otpBoxEls.length-1){ e.preventDefault(); otpBoxEls[i+1].focus(); }
     });
-
-    // Handle paste on any box
-    box.addEventListener('paste', e => {
+    box.addEventListener('paste', e=>{
         e.preventDefault();
-        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
-        pasted.split('').forEach((ch, j) => {
-            if (otpBoxes[j]) {
-                otpBoxes[j].value = ch;
-                otpBoxes[j].classList.add('filled');
-            }
-        });
-        const nextEmpty = otpBoxes.findIndex(b=>!b.value);
-        (nextEmpty>=0 ? otpBoxes[nextEmpty] : otpBoxes[otpBoxes.length-1]).focus();
-        checkOtpComplete();
+        const pasted = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+        pasted.split('').forEach((ch,j)=>{ if(otpBoxEls[j]){ otpBoxEls[j].value=ch; otpBoxEls[j].classList.add('filled'); } });
+        const nx = otpBoxEls.findIndex(b=>!b.value);
+        (nx>=0 ? otpBoxEls[nx] : otpBoxEls[otpBoxEls.length-1]).focus();
+        checkComplete();
     });
 });
 
 // ── Verify OTP ──
-btnVerify.addEventListener('click', async () => {
-    const otp = getOtpValue();
-    if (otp.length !== 6) return;
-
-    setLoading(true, 'Memverifikasi kode...');
+btnVerify.addEventListener('click', async ()=>{
+    const otp = getOtp();
+    if(otp.length!==6) return;
+    setLoading(true,'Memverifikasi kode...');
     hideAlert('otpAlert');
-
     try {
-        const { data, error } = await supabase.auth.verifyOtp({
-            email: pendingEmail,
-            token: otp,
-            type: 'signup',
-        });
-
-        if (error) {
-            setLoading(false);
+        const { data, error } = await sbClient.auth.verifyOtp({ email: pendingEmail, token: otp, type: 'signup' });
+        setLoading(false);
+        if(error){
             let msg = 'Kode verifikasi salah atau sudah kedaluwarsa.';
-            if (error.message.includes('expired')) msg = 'Kode kedaluwarsa. Klik "Kirim Ulang" untuk kode baru.';
-            if (error.message.includes('invalid')) msg = 'Kode tidak valid. Periksa kembali kode yang Anda masukkan.';
+            if(error.message.includes('expired')) msg = 'Kode kedaluwarsa. Klik "Kirim Ulang" untuk kode baru.';
+            if(error.message.includes('invalid')) msg = 'Kode tidak valid. Periksa kembali kode Anda.';
             showAlert('otpAlert','otpAlertText', msg, 'error');
-            // Clear boxes
-            otpBoxes.forEach(b=>{ b.value=''; b.classList.remove('filled'); });
-            otpBoxes[0].focus();
+            otpBoxEls.forEach(b=>{ b.value=''; b.classList.remove('filled'); });
+            otpBoxEls[0].focus();
             btnVerify.disabled = true;
             return;
         }
-
-        setLoading(false);
         showAlert('otpAlert','otpAlertText','✅ Verifikasi berhasil! Mengalihkan...','success');
-
-        setTimeout(() => {
-            window.location.href = 'dashboard.html'; // sesuaikan tujuan redirect
-        }, 1200);
-
-    } catch (err) {
+        setTimeout(()=>{ window.location.href = 'dashboard.html'; }, 1200);
+    } catch(err){
         setLoading(false);
         showAlert('otpAlert','otpAlertText','Terjadi kesalahan. Coba lagi.','error');
         console.error(err);
     }
 });
 
-// ── Countdown & Resend ──
+// ── Countdown ──
 let countdownInterval = null;
-
-function startCountdown() {
-    const resendBtn  = document.getElementById('resendBtn');
-    const countdownEl = document.getElementById('countdown');
-    let seconds = 60;
-    resendBtn.disabled = true;
-    countdownEl.textContent = seconds;
-
+function startCountdown(){
+    const btn = document.getElementById('resendBtn');
+    const cd  = document.getElementById('countdown');
+    let sec = 60;
+    btn.disabled = true;
+    cd.textContent = sec;
     clearInterval(countdownInterval);
-    countdownInterval = setInterval(() => {
-        seconds--;
-        countdownEl.textContent = seconds;
-        if (seconds <= 0) {
-            clearInterval(countdownInterval);
-            resendBtn.disabled = false;
-            resendBtn.innerHTML = 'Kirim Ulang';
-        }
+    countdownInterval = setInterval(()=>{
+        sec--;
+        cd.textContent = sec;
+        if(sec<=0){ clearInterval(countdownInterval); btn.disabled=false; btn.innerHTML='Kirim Ulang'; }
     }, 1000);
 }
 
-document.getElementById('resendBtn').addEventListener('click', async () => {
-    if (!pendingEmail) return;
+document.getElementById('resendBtn').addEventListener('click', async ()=>{
+    if(!pendingEmail) return;
     setLoading(true,'Mengirim ulang kode...');
     try {
-        const { error } = await supabase.auth.resend({ type:'signup', email: pendingEmail });
+        const { error } = await sbClient.auth.resend({ type:'signup', email: pendingEmail });
         setLoading(false);
-        if (error) {
-            showAlert('otpAlert','otpAlertText','Gagal mengirim ulang kode: '+error.message,'error');
-        } else {
+        if(error){ showAlert('otpAlert','otpAlertText','Gagal mengirim ulang: '+error.message,'error'); }
+        else {
             showAlert('otpAlert','otpAlertText','📬 Kode baru telah dikirim ke email Anda.','success');
-            otpBoxes.forEach(b=>{ b.value=''; b.classList.remove('filled'); });
-            otpBoxes[0].focus();
+            otpBoxEls.forEach(b=>{ b.value=''; b.classList.remove('filled'); });
+            otpBoxEls[0].focus();
             btnVerify.disabled = true;
             startCountdown();
         }
-    } catch(err) {
-        setLoading(false);
-        showAlert('otpAlert','otpAlertText','Terjadi kesalahan. Coba lagi.','error');
-    }
+    } catch(err){ setLoading(false); showAlert('otpAlert','otpAlertText','Terjadi kesalahan.','error'); }
 });
 
-// ── Back button ──
-document.getElementById('btnBack').addEventListener('click', () => {
+document.getElementById('btnBack').addEventListener('click', ()=>{
     clearInterval(countdownInterval);
     document.getElementById('otpStep').style.display = 'none';
     document.getElementById('registerStep').style.display = 'block';
-    otpBoxes.forEach(b=>{ b.value=''; b.classList.remove('filled'); });
+    otpBoxEls.forEach(b=>{ b.value=''; b.classList.remove('filled'); });
     btnVerify.disabled = true;
     hideAlert('otpAlert');
 });
