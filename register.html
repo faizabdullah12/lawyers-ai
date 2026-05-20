@@ -455,7 +455,7 @@ btnVerify.addEventListener('click', async ()=>{
             return;
         }
         showAlert('otpAlert','otpAlertText','✅ Verifikasi berhasil! Mengalihkan...','success');
-        setTimeout(()=>{ window.location.href = 'dashboard.html'; }, 1200);
+        setTimeout(()=>{ window.location.href = 'login.html'; }, 1200);
     } catch(err){
         setLoading(false);
         showAlert('otpAlert','otpAlertText','Terjadi kesalahan. Coba lagi.','error');
