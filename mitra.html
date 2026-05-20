@@ -53,9 +53,7 @@
         }
         .adv-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        .stat-mini {
-            text-align: left;
-        }
+        .stat-mini { text-align: left; }
         .stat-mini-label {
             font-size: 9px; font-weight: 700; text-transform: uppercase;
             letter-spacing: 0.08em; color: var(--text-3); margin: 0 0 2px;
@@ -71,7 +69,18 @@
             border-radius: 20px; display: flex; flex-direction: column;
             align-items: center; gap: 12px; opacity: 0.6;
         }
-            /* Loading Overlay */
+
+        /* Chat button disabled state */
+        .btn-chat-disabled {
+            display: flex; align-items: center; justify-content: center;
+            padding: 10px 12px; font-size: 11px; font-weight: 700;
+            border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg-input); color: var(--text-3);
+            cursor: not-allowed; opacity: 0.5; gap: 6px;
+            text-decoration: none;
+        }
+
+        /* Loading Overlay */
         #load-overlay {
             position: fixed; inset: 0; z-index: 9999;
             background: var(--bg, #060A12);
@@ -112,14 +121,12 @@
         }
         .lai-loader-brand span { color: #3B82F6; }
         body.light .lai-loader-brand { color: #0F172A; }
-</style>
+    </style>
 
     <script>
     (function(){
-        // Apply theme early
         var t = localStorage.getItem("lawyers_ai_theme") || "dark";
         if (t === "light") document.documentElement.classList.add("light-pending");
-        // Hide loader after page ready
         window.addEventListener("load", function() {
             var ov = document.getElementById("load-overlay");
             if (ov) { ov.style.opacity = "0"; setTimeout(function(){ ov.style.display = "none"; }, 400); }
@@ -198,8 +205,7 @@
             return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
-        async function fetchPartners(filter = 'all') {
-            activeFilter = filter;
+        async function fetchPartners() {
             const grid = document.getElementById('partner-grid');
             grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
                 <i class="fas fa-circle-notch fa-spin" style="font-size:28px;color:var(--accent);margin-bottom:12px;display:block;"></i>
@@ -208,8 +214,7 @@
             document.getElementById('result-count').style.display = 'none';
 
             try {
-                // Fetch semua verified (filter spesialisasi di client-side untuk konsistensi)
-                let url = `${SUPA_URL}/rest/v1/mitra_ahli?select=*&status_verifikasi=eq.verified&order=created_at.desc`;
+                const url = `${SUPA_URL}/rest/v1/mitra_ahli?select=*&status_verifikasi=eq.verified&order=created_at.desc`;
                 const res = await fetch(url, { headers: SUPA_HEADERS });
                 if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
                 const data = await res.json();
@@ -223,7 +228,7 @@
                     </div>
                     <p style="font-size:13px;font-weight:800;color:var(--text-1);margin:0 0 6px;">Gagal Memuat Data</p>
                     <p style="font-size:11px;color:var(--text-3);margin:0 0 16px;">${esc(err.message)}</p>
-                    <button onclick="fetchPartners(activeFilter)" class="btn-primary">
+                    <button onclick="fetchPartners()" class="btn-primary">
                         <i class="fas fa-rotate-right"></i> Coba Lagi
                     </button>
                 </div>`;
@@ -246,14 +251,12 @@
             const kw = (document.getElementById('searchInput').value || '').toLowerCase().trim();
             let filtered = allPartnersData;
 
-            // Apply spesialisasi filter
             if (activeFilter !== 'all') {
                 filtered = filtered.filter(p =>
                     (p.spesialisasi || '').toLowerCase().includes(activeFilter.toLowerCase())
                 );
             }
 
-            // Apply search
             if (kw) {
                 filtered = filtered.filter(p =>
                     (p.nama_lengkap || '').toLowerCase().includes(kw) ||
@@ -292,8 +295,19 @@
                 const img = p.foto_profil_url ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(p.nama_lengkap)}&background=1E3A5F&color=60A5FA&bold=true`;
                 const lokasi = [p.kabupaten, p.provinsi].filter(Boolean).join(', ') || 'Indonesia';
-                // Gunakan user_id sebagai chat ID (fallback ke id tabel)
-                const chatId = p.user_id || p.id;
+
+                // FIX: Selalu gunakan user_id untuk chat.
+                // Jika user_id tidak ada, tombol chat di-disable.
+                const chatId = p.user_id || null;
+                const profilId = p.user_id || p.id; // profil tetap bisa pakai id tabel
+
+                const chatBtnHtml = chatId
+                    ? `<a href="chat-advokat.html?id=${encodeURIComponent(chatId)}" class="btn-primary" style="justify-content:center;padding:10px 12px;font-size:11px;">
+                            <i class="fas fa-comments"></i> Chat
+                       </a>`
+                    : `<span class="btn-chat-disabled" title="Advokat belum menghubungkan akun">
+                            <i class="fas fa-comments"></i> Chat
+                       </span>`;
 
                 const div = document.createElement('div');
                 div.className = 'partner-card';
@@ -321,12 +335,10 @@
                         </div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">
-                        <a href="profil-advokat.html?id=${encodeURIComponent(chatId)}" class="btn-ghost" style="justify-content:center;padding:10px 12px;font-size:11px;">
+                        <a href="profil-advokat.html?id=${encodeURIComponent(profilId)}" class="btn-ghost" style="justify-content:center;padding:10px 12px;font-size:11px;">
                             <i class="fas fa-id-card"></i> Profil
                         </a>
-                        <a href="chat-advokat.html?id=${encodeURIComponent(chatId)}" class="btn-primary" style="justify-content:center;padding:10px 12px;font-size:11px;">
-                            <i class="fas fa-comments"></i> Chat
-                        </a>
+                        ${chatBtnHtml}
                     </div>`;
                 grid.appendChild(div);
             });
