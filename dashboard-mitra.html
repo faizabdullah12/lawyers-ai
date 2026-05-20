@@ -1975,48 +1975,34 @@ async function updatePerfSidebar() {
       k => k.handling_status === 'selesai'
     ).length;
 
-  // =========================
-  // RATING REALTIME
-  // =========================
+  supabase
+  .channel('rating-sidebar')
+  .on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'mitra_rating_summary'
+    },
+    payload => {
 
-  let rating = 0;
-
-try {
-
-  const { data, error } =
-    await supabase
-      .from('mitra_rating_summary')
-      .select('*')
-      .eq('mitra_id', currentMitra.id)
-      .single();
-
-  console.log(
-    'RATING DATA:',
-    data
-  );
-
-  if (!error && data) {
-
-    rating =
-      Number(
-        data.avg_rating || 0
+      console.log(
+        'SIDEBAR RATING UPDATE',
+        payload
       );
 
-  }
+      updatePerfSidebar();
 
-} catch (err) {
+    }
+  )
+  .subscribe(status => {
 
-  console.error(
-    'RATING ERROR:',
-    err
-  );
+    console.log(
+      'RATING CHANNEL:',
+      status
+    );
 
-}
-
-document.getElementById(
-  'perf-rating'
-).textContent =
-  rating.toFixed(1);
+  });
   // =========================
   // UPDATE TEXT
   // =========================
@@ -2167,42 +2153,110 @@ window.addEventListener('load',()=>{
 
 async function updatePerfSidebar() {
 
-  // isi function...
-}
+  // =========================
+  // KASUS
+  // =========================
 
-// =========================
-// LOAD AWAL
-// =========================
+  const myK = allKasus.filter(
+    k => k.assigned_lawyer_id === currentMitra.id
+  );
 
-updatePerfSidebar();
+  document.getElementById('perf-total').textContent =
+    myK.length;
 
-// =========================
-// REALTIME
-// =========================
+  document.getElementById('perf-selesai').textContent =
+    myK.filter(
+      k => k.handling_status === 'selesai'
+    ).length;
 
-supabase
-  .channel('rating-sidebar')
+  // =========================
+  // RATING
+  // =========================
 
-  .on(
-    'postgres_changes',
-    {
-      event: '*',
-      schema: 'public',
-      table: 'mitra_rating_summary'
-    },
-    () => {
+  let rating = 0;
 
-      console.log(
-        'SIDEBAR RATING UPDATE'
-      );
+  try {
 
-      updatePerfSidebar();
+    console.log(
+      'CURRENT MITRA:',
+      currentMitra
+    );
 
+    const { data, error } =
+      await supabase
+        .from('mitra_rating_summary')
+        .select(`
+          avg_rating,
+          total_reviews
+        `)
+        .eq(
+          'mitra_id',
+          currentMitra.id
+        )
+        .maybeSingle();
+
+    console.log(
+      'RATING RESULT:',
+      data,
+      error
+    );
+
+    if (error) {
+      console.error(error);
     }
-  )
 
-  .subscribe();
+    if (data) {
+      rating =
+        Number(data.avg_rating || 0);
+    }
 
+  } catch (err) {
+
+    console.error(
+      'RATING ERROR:',
+      err
+    );
+
+  }
+
+  // =========================
+  // UPDATE TEXT
+  // =========================
+
+  document.getElementById(
+    'perf-rating'
+  ).textContent =
+    rating.toFixed(1);
+
+  // =========================
+  // UPDATE STARS
+  // =========================
+
+  const stars =
+    document.getElementById(
+      'perf-stars'
+    );
+
+  stars.innerHTML = '';
+
+  for (let i = 1; i <= 5; i++) {
+
+    const s =
+      document.createElement('i');
+
+    s.className =
+      'fas fa-star';
+
+    s.style.color =
+      i <= Math.round(rating)
+        ? '#F59E0B'
+        : 'rgba(245,158,11,0.3)';
+
+    stars.appendChild(s);
+
+  }
+
+}
 </script>
 <script src="mobile-fix.js"></script>
 <script src="push-init.js"></script>
