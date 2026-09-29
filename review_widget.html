@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beri Ulasan — LawyersAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════
+   Ini widget mandiri yang bisa di-embed
+   di halaman klien (index.html) sebagai
+   modal atau section tersendiri
+════════════════════════════════════ */
+
+:root {
+    --bg:       #060B16;
+    --card:     #0E1929;
+    --input:    #111F33;
+    --border:   rgba(255,255,255,0.08);
+    --text-1:   #EEF2F8;
+    --text-2:   #8EA8C4;
+    --text-3:   #4A6480;
+    --accent:   #3B82F6;
+    --gold:     #F59E0B;
+    --emerald:  #10B981;
+    --red:      #EF4444;
+    --radius:   16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    margin: 0; padding: 20px;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Modal Overlay ── */
+.review-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 800;
+    align-items: center; justify-content: center; padding: 16px;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.review-overlay.show { display: flex; }
+
+/* ── Modal Box ── */
+.review-box {
+    background: #0D1826;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    width: 100%; max-width: 440px;
+    padding: 30px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    animation: slideUp .35s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+}
+@keyframes slideUp {
+    from { transform: translateY(40px) scale(0.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ── Header ── */
+.review-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+}
+.lawyer-avatar {
+    width: 52px; height: 52px;
+    border-radius: 14px; object-fit: cover;
+    border: 2px solid rgba(59,130,246,0.3);
+    flex-shrink: 0;
+}
+.review-title {
+    font-size: 18px; font-weight: 900; font-style: italic;
+    color: var(--text-1); margin: 0 0 3px;
+    letter-spacing: -0.03em;
+}
+.review-sub {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+}
+
+/* ── Star Selector ── */
+.star-label {
+    font-size: 9px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .14em;
+    color: var(--text-3); margin-bottom: 10px;
+    display: block;
+}
+.star-selector {
+    display: flex; gap: 8px; margin-bottom: 6px;
+    flex-direction: row-reverse; /* trick CSS untuk hover kiri-kanan */
+    justify-content: flex-end;
+}
+.star-selector input { display: none; }
+.star-selector label {
+    font-size: 36px; cursor: pointer;
+    color: rgba(245,158,11,0.2);
+    transition: color .15s, transform .15s;
+    line-height: 1;
+    user-select: none;
+}
+/* Hover: warnai bintang yang di-hover dan semua sebelumnya (arah kiri) */
+.star-selector label:hover,
+.star-selector label:hover ~ label,
+.star-selector input:checked ~ label {
+    color: #F59E0B;
+    transform: scale(1.1);
+}
+.star-selector label:hover { transform: scale(1.2); }
+
+.star-hint {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    min-height: 18px; margin-bottom: 20px;
+    transition: color .2s;
+}
+
+/* ── Textarea ── */
+.review-textarea {
+    width: 100%;
+    background: var(--input);
+    border: 1.5px solid var(--border);
+    border-radius: 13px;
+    padding: 13px 15px;
+    font-family: inherit;
+    font-size: 13.5px; font-weight: 500;
+    color: var(--text-1);
+    outline: none; resize: none;
+    min-height: 100px; line-height: 1.6;
+    margin-bottom: 20px;
+    transition: border-color .2s, box-shadow .2s;
+    display: block;
+}
+.review-textarea::placeholder { color: var(--text-3); }
+.review-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+/* ── Buttons ── */
+.btn-submit {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    color: #fff; border: none;
+    border-radius: 13px;
+    font-family: inherit; font-size: 13px; font-weight: 800;
+    letter-spacing: .06em; text-transform: uppercase;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .2s;
+    box-shadow: 0 6px 20px rgba(37,99,235,0.35);
+}
+.btn-submit:hover { background: linear-gradient(135deg, #1D4ED8, #1E40AF); transform: translateY(-1px); }
+.btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.btn-skip {
+    width: 100%; margin-top: 10px; padding: 10px;
+    background: none; border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-3); font-family: inherit;
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+}
+.btn-skip:hover { background: rgba(255,255,255,0.04); color: var(--text-2); }
+
+/* ── Success State ── */
+.review-success {
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 20px 0;
+    gap: 14px;
+}
+.success-icon {
+    width: 72px; height: 72px;
+    border-radius: 22px;
+    background: rgba(16,185,129,0.12);
+    border: 2px solid rgba(16,185,129,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    animation: popIn .5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+.success-stars {
+    display: flex; gap: 4px; font-size: 22px;
+    animation: fadeInUp .4s ease .2s both;
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Already Reviewed State ── */
+.already-reviewed {
+    display: none;
+    background: rgba(16,185,129,0.07);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 13px; padding: 14px 16px;
+    margin-bottom: 16px;
+    align-items: center; gap: 10px;
+}
+.already-reviewed i { color: var(--emerald); }
+
+/* ── Trigger button (untuk demo & embed) ── */
+.trigger-btn {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #2563EB, #1D4ED8);
+    color: #fff; border: none; border-radius: 14px;
+    font-family: inherit; font-size: 14px; font-weight: 800;
+    letter-spacing: .05em; text-transform: uppercase;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px;
+    box-shadow: 0 8px 24px rgba(37,99,235,0.4);
+    transition: all .2s;
+}
+.trigger-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(37,99,235,0.5); }
+
+/* Toast */
+#review-toast {
+    position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #0D1826; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px; padding: 12px 20px;
+    font-size: 13px; font-weight: 600; color: var(--text-1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 900; white-space: nowrap;
+    transition: transform .3s cubic-bezier(0.34,1.56,0.64,1), opacity .3s;
+    opacity: 0; pointer-events: none;
+}
+#review-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     DEMO PAGE — di production, cukup ambil bagian modal
+     dan fungsi JS-nya, tempel ke halaman klien
+══════════════════════════════════════════════════════ -->
+
+<div style="text-align:center;">
+    <p style="font-size:14px;font-weight:600;color:#8EA8C4;margin-bottom:20px;">
+        Setelah konsultasi selesai, klien melihat tombol ini:
+    </p>
+    <button class="trigger-btn" onclick="openReviewModal('MITRA_ID_DISINI', 'KASUS_ID_DISINI')">
+        ⭐ Beri Ulasan untuk Advokat
+    </button>
+</div>
+
+<!-- ══════ MODAL REVIEW ══════ -->
+<div class="review-overlay" id="review-overlay">
+    <div class="review-box">
+
+        <!-- Form state -->
+        <div id="review-form-state">
+            <div class="review-header">
+                <img id="rv-lawyer-av" src="" class="lawyer-avatar"
+                     onerror="this.src='https://ui-avatars.com/api/?name=A&background=1E3A5F&color=60A5FA&bold=true'" alt="">
+                <div>
+                    <p class="review-title" id="rv-lawyer-name">Nama Advokat</p>
+                    <p class="review-sub">Beri penilaian atas layanan konsultasi ini</p>
+                </div>
+                <button onclick="closeReviewModal()" style="position:absolute;top:20px;right:20px;width:30px;height:30px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text-3);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;">✕</button>
+            </div>
+
+            <!-- Already reviewed notice -->
+            <div class="already-reviewed" id="already-reviewed-notice">
+                <i class="fas fa-circle-check" style="font-size:16px;flex-shrink:0;"></i>
+                <div>
+                    <p style="font-size:12px;font-weight:700;color:#34D399;margin:0 0 2px;">Anda sudah memberi ulasan</p>
+                    <p style="font-size:11px;color:var(--text-3);margin:0;" id="existing-rating-text">Rating Anda: —</p>
+                </div>
+            </div>
+
+            <span class="star-label">Pilih Bintang</span>
+            <!-- Reverse order trick: 5 di kiri, 1 di kanan secara DOM = flex-row-reverse -->
+            <div class="star-selector" id="star-selector">
+                <input type="radio" name="rating" id="s5" value="5">
+                <label for="s5" title="Sangat Puas">★</label>
+
+                <input type="radio" name="rating" id="s4" value="4">
+                <label for="s4" title="Puas">★</label>
+
+                <input type="radio" name="rating" id="s3" value="3">
+                <label for="s3" title="Cukup">★</label>
+
+                <input type="radio" name="rating" id="s2" value="2">
+                <label for="s2" title="Kurang">★</label>
+
+                <input type="radio" name="rating" id="s1" value="1">
+                <label for="s1" title="Tidak Puas">★</label>
+            </div>
+            <div class="star-hint" id="star-hint">Tap bintang untuk memilih nilai</div>
+
+            <textarea class="review-textarea" id="rv-komentar"
+                placeholder="Ceritakan pengalaman konsultasi Anda (opsional)..."
+                maxlength="500"></textarea>
+
+            <button class="btn-submit" id="rv-submit-btn" onclick="submitReview()">
+                <i class="fas fa-paper-plane"></i> Kirim Ulasan
+            </button>
+            <button class="btn-skip" onclick="closeReviewModal()">Lewati</button>
+        </div>
+
+        <!-- Success state -->
+        <div class="review-success" id="review-success-state">
+            <div class="success-icon">⭐</div>
+            <p style="font-size:20px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;letter-spacing:-0.03em;">Terima Kasih!</p>
+            <p style="font-size:13px;color:var(--text-2);margin:0;line-height:1.6;">Ulasan Anda membantu klien lain menemukan advokat terbaik.</p>
+            <div class="success-stars" id="success-stars"></div>
+            <button onclick="closeReviewModal()" class="btn-submit" style="margin-top:10px;max-width:200px;">
+                Tutup
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<div id="review-toast"></div>
+
+<script src="config.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════
+// REVIEW WIDGET JS
+// Fungsi-fungsi ini bisa di-paste ke index.html klien
+// ════════════════════════════════════════════════════════════
+
+const STAR_HINTS = {
+    1: '😞 Tidak Memuaskan',
+    2: '😐 Kurang Memuaskan',
+    3: '😊 Cukup Baik',
+    4: '😄 Memuaskan',
+    5: '🤩 Sangat Luar Biasa!'
+};
+
+let _reviewMitraId  = null;
+let _reviewKasusId  = null;
+let _currentUserId  = null;
+let _existingReview = null;
+
+// ── Buka modal ────────────────────────────────────────────
+async function openReviewModal(mitraId, kasusId = null) {
+    _reviewMitraId = mitraId;
+    _reviewKasusId = kasusId;
+
+    // Reset state
+    document.getElementById('review-form-state').style.display  = 'block';
+    document.getElementById('review-success-state').style.display = 'none';
+    document.querySelectorAll('input[name="rating"]').forEach(r => r.checked = false);
+    document.getElementById('rv-komentar').value = '';
+    document.getElementById('star-hint').textContent = 'Tap bintang untuk memilih nilai';
+    document.getElementById('already-reviewed-notice').style.display = 'none';
+
+    document.getElementById('review-overlay').classList.add('show');
+
+    // Cek session
+    let waited = 0;
+    while (!window.supabase && waited < 50) { await new Promise(r => setTimeout(r, 100)); waited++; }
+    if (!window.supabase) return;
+
+    const { data: { session } } = await window.supabase.auth.getSession();
+    _currentUserId = session?.user?.id || null;
+
+    // Muat info advokat
+    await loadMitraInfo(mitraId);
+
+    // Cek apakah sudah pernah review
+    if (_currentUserId) {
+        await checkExistingReview(mitraId);
+    }
+
+    // Star hover labels
+    document.querySelectorAll('input[name="rating"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.getElementById('star-hint').textContent = STAR_HINTS[radio.value] || '';
+        });
+    });
+}
+
+async function loadMitraInfo(mitraId) {
+    try {
+        const { data } = await window.supabase
+            .from('mitra_ahli')
+            .select('nama_lengkap, foto_profil_url')
+            .eq('id', mitraId)
+            .maybeSingle();
+
+        if (data) {
+            document.getElementById('rv-lawyer-name').textContent = data.nama_lengkap || 'Advokat';
+            const av = document.getElementById('rv-lawyer-av');
+            av.src = data.foto_profil_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nama_lengkap||'A')}&background=1E3A5F&color=60A5FA&bold=true`;
+        }
+    } catch (e) { /* silent */ }
+}
+
+async function checkExistingReview(mitraId) {
+    try {
+        const { data } = await window.supabase
+            .from('reviews')
+            .select('rating, komentar, id')
+            .eq('mitra_id', mitraId)
+            .eq('user_id', _currentUserId)
+            .maybeSingle();
+
+        if (data) {
+            _existingReview = data;
+            const notice = document.getElementById('already-reviewed-notice');
+            notice.style.display = 'flex';
+            document.getElementById('existing-rating-text').textContent =
+                `Rating Anda: ${'★'.repeat(data.rating)}${'☆'.repeat(5 - data.rating)} (${data.rating}/5)`;
+
+            // Pre-fill form untuk edit
+            const radioToCheck = document.getElementById(`s${data.rating}`);
+            if (radioToCheck) radioToCheck.checked = true;
+            document.getElementById('rv-komentar').value = data.komentar || '';
+            document.getElementById('star-hint').textContent = STAR_HINTS[data.rating] || '';
+            document.getElementById('rv-submit-btn').innerHTML = '<i class="fas fa-floppy-disk"></i> Perbarui Ulasan';
+        } else {
+            _existingReview = null;
+        }
+    } catch (e) { /* silent */ }
+}
+
+// ── Submit / Update review ────────────────────────────────
+async function submitReview() {
+    if (!_currentUserId) {
+        showReviewToast('❌ Anda harus login untuk memberi ulasan');
+        return;
+    }
+
+    const selected = document.querySelector('input[name="rating"]:checked');
+    if (!selected) {
+        document.getElementById('star-hint').textContent = '⚠️ Pilih dulu jumlah bintang!';
+        document.getElementById('star-hint').style.color = '#EF4444';
+        setTimeout(() => {
+            document.getElementById('star-hint').style.color = '';
+            document.getElementById('star-hint').textContent = 'Tap bintang untuk memilih nilai';
+        }, 2500);
+        return;
+    }
+
+    const rating   = parseInt(selected.value);
+    const komentar = document.getElementById('rv-komentar').value.trim() || null;
+
+    const btn = document.getElementById('rv-submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Mengirim...';
+
+    try {
+        if (_existingReview) {
+            // UPDATE review yang ada
+            const { error } = await window.supabase
+                .from('reviews')
+                .update({ rating, komentar, updated_at: new Date().toISOString() })
+                .eq('id', _existingReview.id);
+            if (error) throw error;
+        } else {
+            // INSERT review baru
+            const { error } = await window.supabase
+                .from('reviews')
+                .insert([{
+                    mitra_id:   _reviewMitraId,
+                    user_id:    _currentUserId,
+                    kasus_id:   _reviewKasusId || null,
+                    rating,
+                    komentar
+                }]);
+            if (error) throw error;
+        }
+
+        // Tampilkan success
+        showSuccessState(rating);
+
+    } catch (e) {
+        showReviewToast('❌ Gagal kirim: ' + e.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Ulasan';
+    }
+}
+
+function showSuccessState(rating) {
+    document.getElementById('review-form-state').style.display = 'none';
+    const ss = document.getElementById('review-success-state');
+    ss.style.display = 'flex';
+
+    const starsEl = document.getElementById('success-stars');
+    starsEl.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+        const s = document.createElement('span');
+        s.style.cssText = `color:${i <= rating ? '#F59E0B' : 'rgba(245,158,11,0.2)'};font-size:24px;transition:color .1s;`;
+        s.textContent = '★';
+        starsEl.appendChild(s);
+        // Stagger animation
+        setTimeout(() => { s.style.transform = 'scale(1.3)'; setTimeout(() => s.style.transform = '', 200); }, i * 80);
+    }
+}
+
+function closeReviewModal() {
+    document.getElementById('review-overlay').classList.remove('show');
+}
+
+function showReviewToast(msg) {
+    const el = document.getElementById('review-toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Tutup modal klik backdrop
+document.getElementById('review-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeReviewModal();
+});
+
+</script>
+</body>
+</html>

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Konsultasi AI — Lawyers AI</title>
+    <link rel="icon" href="/logo4.png" type="image/png">
+    <link rel="shortcut icon" href="/logo4.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -138,13 +140,43 @@
         .ai-title { font-size: 14px; font-weight: 900; font-style: italic; color: var(--text-1); }
         .ai-body  { font-size: 13px; color: var(--text-2); line-height: 1.7; }
 
+        /* Render markdown-lite: bold */
+        .ai-body strong, .ai-body b { font-weight: 800; color: var(--text-1); }
+
         .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5,end) infinite; }
         @keyframes dots { 0%,20%{color:rgba(0,0,0,0)} 40%{color:white} 60%{text-shadow:.25em 0 0 white} 80%,100%{text-shadow:.25em 0 0 white,.5em 0 0 white} }
 
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 18px 22px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px 24px 24px 6px;
+            margin-bottom: 14px;
+            width: fit-content;
+        }
+        .typing-dots { display: flex; gap: 4px; align-items: center; }
+        .typing-dots span {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--text-3);
+            animation: typingBounce 1.2s ease-in-out infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
     </style>
 </head>
 <body>
+
+    <!-- ── SIDEBAR (shared-sidebar.js akan inject ini otomatis) ── -->
 
     <div class="main-scroll">
         <div class="konsultasi-wrap">
@@ -186,11 +218,11 @@
                 <div class="input-bar" style="flex-shrink:0;">
                     <i class="fas fa-pen-to-square" style="color:var(--text-4);font-size:13px;flex-shrink:0;"></i>
                     <input type="text" id="user-input"
-                        placeholder="Tulis kronologi kasus di sini..."
+                        placeholder="Ceritain kasusnya atau tanya apa aja..."
                         onkeydown="if(event.key==='Enter') sendMessage()">
                     <button type="button" onclick="sendMessage()" id="btn-analisis"
                         class="btn-primary" style="flex-shrink:0;padding:10px 18px;font-size:10px;">
-                        <span id="btn-text">Analisis</span>
+                        <span id="btn-text">Kirim</span>
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
@@ -205,7 +237,7 @@
                     <div id="pasal-box">
                         <div style="padding:16px;background:rgba(59,130,246,0.05);border:1px dashed rgba(59,130,246,0.2);border-radius:16px;">
                             <p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Status: Menunggu</p>
-                            <p style="font-size:11px;color:var(--text-3);font-style:italic;line-height:1.6;">Analisis pasal hukum akan muncul di sini setelah Anda mengirim kasus.</p>
+                            <p style="font-size:11px;color:var(--text-3);font-style:italic;line-height:1.6;">Analisis pasal hukum akan muncul di sini setelah kamu ceritain kasusnya.</p>
                         </div>
                     </div>
                 </div>
@@ -225,19 +257,104 @@
     </div><!-- /main-scroll -->
 
     <script>
-        // Ambil API key dari config.js jika tersedia, fallback ke key lokal
-        function getProxyEndpoint() {
-            return '/api/ai-proxy';
-        }
+        // ══════════════════════════════════════════
+        // SYSTEM PROMPT — Karakter & Perilaku lewis
+        // ══════════════════════════════════════════
+        const LEWIS_SYSTEM_PROMPT = `Kamu adalah lewis, asisten hukum AI dari platform Lawyers AI — cerdas, adaptif, dan terasa seperti ngobrol sama teman yang kebetulan ahli hukum.
 
-        // Model fallback chain — dicoba satu per satu jika 429/error
-        const MODEL_CHAIN = [
-            'deepseek/deepseek-r1:free',
-            'deepseek/deepseek-chat-v3-0324:free',
-            'meta-llama/llama-3.3-70b-instruct:free',
-            'qwen/qwen-2.5-72b-instruct:free',
-            'mistralai/mistral-7b-instruct:free',
-        ];
+KEPRIBADIAN & GAYA KOMUNIKASI
+
+Baca user, adaptasi gaya:
+- Kalau user casual/santai (pakai "aku", "gak", "nih", dll) → balas casual juga, pakai bahasa gaul yang wajar tapi tetap informatif
+- Kalau user formal → balas formal, profesional, lugas
+- Kalau user sedang panik/marah/tertekan → empati dulu, validasi perasaan mereka, baru kasih solusi
+- Kalau user newbie hukum → hindari jargon, pakai analogi sederhana, jelaskan step by step
+- Kalau user kayaknya sudah paham hukum → bisa langsung teknis, pakai terminologi
+
+Personality traits:
+- Hangat dan genuine, bukan robot
+- Direct — langsung ke inti, tidak basa-basi berlebihan  
+- Percaya diri tapi tidak sombong
+- Selalu ada di sisi user, tidak menghakimi
+
+CARA MENJAWAB
+
+Untuk sapaan atau small talk:
+Balas hangat dan singkat. Tanya apa yang bisa dibantu. JANGAN panjang-panjang.
+
+Untuk pertanyaan hukum umum (tidak ada kasus spesifik):
+- Jelasin dengan clear, pakai struktur kalau perlu
+- Kasih contoh konkret kalau relevan
+- Tutup dengan tawaran untuk diskusi lebih lanjut
+
+Untuk kasus hukum spesifik:
+- Tunjukkan empati dulu (1-2 kalimat) kalau situasinya berat
+- Analisis situasi mereka secara langsung
+- Berikan jawaban yang actionable — langkah konkret apa yang bisa dilakukan
+- Sebutkan pasal/hukum yang relevan dengan bahasa yang bisa dimengerti
+- Ingatkan batasan AI (rekomendasikan advokat untuk kasus serius) tapi jangan berlebihan
+
+Untuk kasus yang darurat atau serius (KDRT, pidana berat, dll):
+- Prioritaskan keselamatan user
+- Berikan langkah immediate yang bisa dilakukan sekarang
+- Arahkan ke sumber bantuan bila perlu (LBH, kepolisian, dll)
+
+FORMAT JAWABAN
+- Paragraf mengalir untuk jawaban pendek
+- Poin bernomor untuk langkah-langkah
+- **bold** untuk istilah penting
+- Emoji boleh kalau suasananya santai, jangan dipaksakan
+- Panjang proporsional: sapaan singkat, kasus kompleks komprehensif
+- JANGAN disclaimer panjang di setiap pesan
+
+TAG LEGAL_DATA — WAJIB untuk kasus hukum spesifik
+
+Setiap kali user menceritakan kasus hukum spesifik yang melibatkan pelanggaran hak, sengketa, atau tindak pidana/perdata, WAJIB sertakan tag ini di paling akhir respons persis seperti format ini:
+
+[LEGAL_DATA]{"pasal":"nama pasal lengkap","isi_pasal":"bunyi ringkas pasal 1-2 kalimat","kategori":"kategori bidang hukum","saran":"satu saran tindakan paling penting sekarang"}[/LEGAL_DATA]
+
+Kapan HARUS pakai tag ini:
+- User cerita ada yang menipu, menggelapkan, atau merugikan mereka
+- Ada sengketa tanah, warisan, kontrak, dll
+- Ada tindak pidana: kekerasan, pencurian, pelecehan, dll
+- Ada masalah ketenagakerjaan: PHK, gaji tidak dibayar, dll
+- Ada pelanggaran hak konsumen, hak cipta, dll
+- User nanya "bisa dipidana gak?" atau "bisa digugat gak?"
+
+Kapan TIDAK perlu tag:
+- Sapaan biasa atau small talk
+- Pertanyaan hukum umum tanpa kasus spesifik
+- Follow-up yang tidak menambahkan kasus baru
+
+Isi tag harus selalu dalam Bahasa Indonesia, akurat, dan spesifik ke kasus user. Format JSON harus valid, tidak boleh ada karakter aneh atau line break di dalam JSON.`;
+
+        // ══════════════════════════════════════════
+        // GROQ API — via /api/ai-proxy (Vercel serverless)
+        // ══════════════════════════════════════════
+        async function fetchWithFallback(messages) {
+            // Inject system prompt sebagai pesan pertama
+            const messagesWithSystem = [
+                { role: 'system', content: LEWIS_SYSTEM_PROMPT },
+                ...messages
+            ];
+
+            const res = await fetch('/api/ai-proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: messagesWithSystem,
+                    temperature: 0.8,
+                    max_tokens: 3000
+                })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: res.statusText }));
+                throw new Error(err.error || `HTTP ${res.status}`);
+            }
+
+            return res.json();
+        }
 
         let currentAnalysis = null;
 
@@ -246,7 +363,9 @@
         // ══════════════════════════════════════════
         const HISTORY_KEY  = 'lawyers_ai_chat_history';
         const ANALYSIS_KEY = 'lawyers_ai_last_analysis';
-        let chatHistory = [];
+        const CONV_KEY     = 'lawyers_ai_conversation';
+        let chatHistory    = [];
+        let conversationMessages = [];
 
         const WELCOME_HTML = `<div class="message-ai" id="welcome-bubble">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -254,17 +373,18 @@
                     <i class="fas fa-robot" style="color:#60A5FA;font-size:13px;"></i>
                 </div>
                 <div>
-                    <p class="ai-title">Lawyers AI Assistant</p>
-                    <p class="ai-label" style="margin-top:2px;">Powered by AI — Selalu siap 24/7</p>
+                    <p class="ai-title">lewis — Lawyers AI</p>
+                    <p class="ai-label" style="margin-top:2px;">Asisten Hukum · Siap 24/7</p>
                 </div>
             </div>
-            <p class="ai-body">Selamat datang! Saya siap membantu menganalisis kasus hukum Anda. Ceritakan kronologi kasusnya secara detail.</p>
+            <p class="ai-body">Hei! aku lewis, asisten hukum di sini. Mau konsultasi soal kasus hukum, atau sekedar nanya-nanya soal hukum juga boleh. Ceritain aja kasusnya, aku bantu analisis.</p>
         </div>`;
 
         function saveHistory() {
             try {
                 localStorage.setItem(HISTORY_KEY, JSON.stringify(chatHistory.slice(-80)));
                 if (currentAnalysis) localStorage.setItem(ANALYSIS_KEY, JSON.stringify(currentAnalysis));
+                localStorage.setItem(CONV_KEY, JSON.stringify(conversationMessages.slice(-20)));
             } catch(e) { console.warn('Save history failed:', e); }
         }
 
@@ -274,6 +394,9 @@
             try {
                 const rawAnalysis = localStorage.getItem(ANALYSIS_KEY);
                 if (rawAnalysis) { currentAnalysis = JSON.parse(rawAnalysis); restorePasalBox(); }
+
+                const rawConv = localStorage.getItem(CONV_KEY);
+                if (rawConv) { conversationMessages = JSON.parse(rawConv) || []; }
 
                 const raw = localStorage.getItem(HISTORY_KEY);
                 if (!raw) return;
@@ -286,7 +409,6 @@
                     if (tmp.firstElementChild) chatBox.appendChild(tmp.firstElementChild);
                 });
 
-                // Badge riwayat
                 const badge = document.createElement('div');
                 badge.id = 'history-badge';
                 badge.style.cssText = 'text-align:center;padding:6px 0 10px;';
@@ -338,13 +460,15 @@
             if (!ok) return;
             localStorage.removeItem(HISTORY_KEY);
             localStorage.removeItem(ANALYSIS_KEY);
+            localStorage.removeItem(CONV_KEY);
             chatHistory = [];
+            conversationMessages = [];
             currentAnalysis = null;
             document.getElementById('chat-box').innerHTML = WELCOME_HTML;
             document.getElementById('pasal-box').innerHTML = `
                 <div style="padding:16px;background:rgba(59,130,246,0.05);border:1px dashed rgba(59,130,246,0.2);border-radius:16px;">
                     <p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Status: Menunggu</p>
-                    <p style="font-size:11px;color:var(--text-3);font-style:italic;line-height:1.6;">Analisis pasal hukum akan muncul di sini setelah Anda mengirim kasus.</p>
+                    <p style="font-size:11px;color:var(--text-3);font-style:italic;line-height:1.6;">Analisis pasal hukum akan muncul di sini setelah kamu ceritain kasusnya.</p>
                 </div>`;
             const pdfBtn = document.getElementById('btn-pdf');
             if (pdfBtn) {
@@ -355,7 +479,6 @@
             if (window.showLALToast) showLALToast('success', 'Riwayat Dihapus', 'Chat baru siap dimulai.');
         }
 
-        // Append ke DOM + simpan ke history array
         function appendToChat(html, role) {
             const chatBox = document.getElementById('chat-box');
             const tmp = document.createElement('div');
@@ -366,58 +489,53 @@
             chatHistory.push({ role, html, ts: Date.now() });
             saveHistory();
         }
-        async function fetchWithFallback(prompt) {
-            let lastError = null;
-            for (const model of MODEL_CHAIN) {
-                try {
-                    console.log(`🤖 Mencoba model: ${model}`);
-                    const res = await fetch('/api/ai-proxy', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            model,
-                            messages: [{ role: 'user', content: prompt }],
-                            temperature: 0.7,
-                            max_tokens: 3000
-                        })
-                    });
-                    if (res.status === 429 || res.status === 503 || res.status === 404) {
-                        console.warn(`⚠️ ${model} tidak tersedia (${res.status}), mencoba model berikutnya...`);
-                        lastError = new Error(`Model ${model} tidak tersedia (${res.status})`);
-                        continue;
-                    }
-                    if (!res.ok) {
-                        const errTxt = await res.text();
-                        throw new Error(`API Error ${res.status}: ${errTxt.substring(0,120)}`);
-                    }
-                    const data = await res.json();
-                    console.log(`✅ Berhasil dengan model: ${model}`);
-                    return data;
-                } catch(e) {
-                    lastError = e;
-                    if (e.message.includes('429') || e.message.includes('503') || e.message.includes('404') || e.message.includes('rate') || e.message.includes('penuh') || e.message.includes('tersedia')) {
-                        continue; // coba model berikutnya
-                    }
-                    throw e; // error lain langsung lempar
-                }
-            }
-            throw new Error(`Semua model AI sedang overload. Coba lagi dalam beberapa menit.\n(${lastError?.message || 'Rate limit'})`);
+
+        function showTyping() {
+            const chatBox = document.getElementById('chat-box');
+            const el = document.createElement('div');
+            el.id = 'typing-indicator';
+            el.className = 'typing-indicator';
+            el.innerHTML = `
+                <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="fas fa-robot" style="color:#60A5FA;font-size:11px;"></i>
+                </div>
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>`;
+            chatBox.appendChild(el);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        // Render markdown-lite: **bold** dan numbered list
+        function renderMarkdown(text) {
+            let html = escapeHtml(text);
+            // Bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Numbered list: baris yang diawali "1. " atau "- "
+            html = html.replace(/^(\d+)\.\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:4px 0;"><span style="font-weight:800;color:var(--accent);min-width:18px;">$1.</span><span>$2</span></div>');
+            html = html.replace(/^[-•]\s+(.+)$/gm, '<div style="display:flex;gap:8px;margin:4px 0;"><span style="color:var(--accent);min-width:12px;">•</span><span>$1</span></div>');
+            // Line breaks
+            html = html.replace(/\n\n/g, '</p><p style="margin-top:10px;">');
+            html = html.replace(/\n/g, '<br>');
+            return html;
         }
 
         async function sendMessage() {
             // Cek profil lengkap sebelum bisa chat
             if (!_profileComplete) {
-                const allowed = await guardProfile();
+                const allowed = await akurdProfile();
                 if (!allowed) return;
             }
 
             const input   = document.getElementById('user-input');
             const msg     = input.value.trim();
-            if (!msg || msg.length < 5) {
-                if (window.showLALToast) showLALToast('warning','Terlalu Pendek','Minimal 5 karakter.');
-                else laiAlert({ type:'warning', title:'Pesan Terlalu Pendek', message:'Minimal 5 karakter ya. Ceritakan kasusnya lebih detail.' });
+            if (!msg || msg.length < 2) {
+                if (window.showLALToast) showLALToast('warning', 'Terlalu Pendek', 'Ketik pesan dulu ya.');
                 return;
             }
 
@@ -425,50 +543,58 @@
             const btn     = document.getElementById('btn-analisis');
             const btnText = document.getElementById('btn-text');
 
-            btn.disabled = true; input.disabled = true;
-            btnText.className = 'loading-dots'; btnText.textContent = 'Menganalisis';
+            btn.disabled = true;
+            input.disabled = true;
+            btnText.className = 'loading-dots';
+            btnText.textContent = 'Memproses';
 
+            // Render bubble user
             const userHtml = `<div class="message-user"><p style="font-size:13px;margin:0;">${escapeHtml(msg)}</p></div>`;
             appendToChat(userHtml, 'user');
             input.value = '';
 
+            // Tambah ke konteks percakapan
+            conversationMessages.push({ role: 'user', content: msg });
+
+            // Typing indicator
+            showTyping();
+
             try {
-                const fullPrompt = `Kamu adalah asisten hukum AI bernama "Lawyers AI" yang ramah dan fasih Bahasa Indonesia.
+                // Kirim langsung — system prompt sudah diinject di fetchWithFallback
+                const data = await fetchWithFallback(conversationMessages);
+                let raw = data.choices[0].message.content.trim();
 
-ATURAN WAJIB: Selalu balas HANYA dalam format JSON valid. Jangan ada teks di luar JSON.
+                // ── Ekstrak LEGAL_DATA dengan regex yang toleran ──
+                const legalMatch = raw.match(/\[LEGAL_DATA\]([\s\S]*?)\[\/LEGAL_DATA\]/);
+                const cleanReply = raw.replace(/\[LEGAL_DATA\][\s\S]*?\[\/LEGAL_DATA\]/g, '').trim();
 
-Jika pesan adalah salam, basa-basi, atau pertanyaan non-hukum, gunakan MODE CHAT:
-{"mode":"chat","reply":"Jawaban santai dan ramah dalam Bahasa Indonesia"}
+                // Simpan respons AI ke konteks (tanpa tag internal)
+                conversationMessages.push({ role: 'assistant', content: cleanReply });
+                if (conversationMessages.length > 20) {
+                    conversationMessages = conversationMessages.slice(-20);
+                }
 
-Jika pesan mengandung kasus, masalah hukum, atau pertanyaan hukum, gunakan MODE LEGAL:
-{"mode":"legal","summary":"Analisis lengkap minimal 150 kata berdasarkan hukum Indonesia","pasal":"Pasal relevan misal Pasal 362 KUHP","isi_pasal":"Bunyi lengkap pasal","kategori":"Kategori hukum","saran":"Saran langkah hukum konkret"}
+                hideTyping();
 
-PENTING: Respons HANYA JSON valid. Tidak ada markdown. Tidak ada teks tambahan.
+                if (legalMatch) {
+                    // ── MODE LEGAL — ada kasus spesifik ──
+                    let legalData = {};
+                    try {
+                        // Bersihkan JSON dari karakter tak terduga sebelum parse
+                        const jsonRaw = legalMatch[1].trim().replace(/[\u0000-\u001F\u007F]/g, ' ');
+                        legalData = JSON.parse(jsonRaw);
+                    } catch(e) {
+                        console.warn('Legal data parse error:', e, legalMatch[1]);
+                    }
 
-Pesan user: ${msg}`;
-
-                const data = await fetchWithFallback(fullPrompt);
-                let raw = data.choices[0].message.content;
-                let jsonStr = raw.trim().replace(/```json\s*/g,'').replace(/```\s*/g,'');
-                const js = jsonStr.indexOf('{'), je = jsonStr.lastIndexOf('}') + 1;
-                if (js === -1 || je === 0) throw new Error('Format respons AI tidak valid');
-                const parsed = JSON.parse(jsonStr.substring(js, je));
-
-                if (parsed.mode === 'chat') {
-                    appendToChat(`
-                        <div class="message-ai">
-                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                                <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                    <i class="fas fa-robot" style="color:#60A5FA;font-size:11px;"></i>
-                                </div>
-                                <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">Lawyers AI</p>
-                            </div>
-                            <p class="ai-body">${escapeHtml(parsed.reply)}</p>
-                        </div>`, 'ai');
-                } else {
-                    if (!parsed.summary || !parsed.pasal) throw new Error('Data analisis tidak lengkap');
-                    currentAnalysis = parsed;
-                    saveHistory(); // simpan analysis terbaru
+                    currentAnalysis = {
+                        summary:   cleanReply,
+                        pasal:     legalData.pasal     || '',
+                        isi_pasal: legalData.isi_pasal || '',
+                        kategori:  legalData.kategori  || 'Hukum Umum',
+                        saran:     legalData.saran     || ''
+                    };
+                    saveHistory();
 
                     const legalHtml = `
                         <div class="message-ai">
@@ -476,45 +602,55 @@ Pesan user: ${msg}`;
                                 <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                     <i class="fas fa-balance-scale" style="color:#60A5FA;font-size:11px;"></i>
                                 </div>
-                                <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">Analisis Hukum</p>
+                                <div>
+                                    <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">Analisis Hukum</p>
+                                    ${legalData.kategori ? `<p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin:2px 0 0;">${escapeHtml(legalData.kategori)}</p>` : ''}
+                                </div>
                             </div>
-                            <p class="ai-body" style="margin-bottom:${parsed.saran?'12px':'0'};">${escapeHtml(parsed.summary)}</p>
-                            ${parsed.saran ? `
-                                <div style="padding-top:12px;border-top:1px solid var(--border);">
-                                    <p style="font-size:9px;font-weight:800;color:#60A5FA;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">💡 Saran Tindakan</p>
-                                    <p class="ai-body" style="font-style:italic;">${escapeHtml(parsed.saran)}</p>
-                                </div>` : ''}
+                            <p class="ai-body">${renderMarkdown(cleanReply)}</p>
                         </div>`;
                     appendToChat(legalHtml, 'ai');
 
-                    document.getElementById('pasal-box').innerHTML = buildPasalHTML(parsed);
-
-                    const pdfBtn = document.getElementById('btn-pdf');
-                    pdfBtn.disabled = false;
-                    pdfBtn.style.cssText = 'width:100%;padding:14px;background:#2563EB;border:none;border-radius:16px;font-size:10px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;font-family:inherit;';
-                    pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Download Somasi';
+                    // Update panel kanan kalau ada data pasal
+                    if (legalData.pasal) {
+                        document.getElementById('pasal-box').innerHTML = buildPasalHTML(currentAnalysis);
+                        const pdfBtn = document.getElementById('btn-pdf');
+                        pdfBtn.disabled = false;
+                        pdfBtn.style.cssText = 'width:100%;padding:14px;background:#2563EB;border:none;border-radius:16px;font-size:10px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;font-family:inherit;';
+                        pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i> Download Somasi';
+                    }
 
                     showAdvocateRecommendation();
+
+                } else {
+                    // ── MODE CHAT BIASA ──
+                    appendToChat(`
+                        <div class="message-ai">
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                <div style="width:28px;height:28px;background:rgba(59,130,246,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <i class="fas fa-robot" style="color:#60A5FA;font-size:11px;"></i>
+                                </div>
+                                <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">lewis — Lawyers AI</p>
+                            </div>
+                            <p class="ai-body">${renderMarkdown(cleanReply)}</p>
+                        </div>`, 'ai');
                 }
 
             } catch (err) {
+                hideTyping();
                 console.error('❌ Error:', err);
-                const is429 = err.message.includes('429') || err.message.includes('overload') || err.message.includes('rate') || err.message.includes('penuh');
+                const is429 = /429|overload|rate|sibuk/.test(err.message);
                 appendToChat(`
                     <div class="message-ai" style="border-color:rgba(239,68,68,0.3);">
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
                             <div style="width:28px;height:28px;background:rgba(239,68,68,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                                 <i class="fas fa-exclamation-triangle" style="color:#F87171;font-size:11px;"></i>
                             </div>
-                            <p style="font-size:11px;font-weight:900;color:#F87171;font-style:italic;margin:0;">${is429 ? 'AI Sedang Sibuk' : 'Terjadi Kesalahan'}</p>
+                            <p style="font-size:11px;font-weight:900;color:#F87171;font-style:italic;margin:0;">${is429 ? 'AI Lagi Sibuk' : 'Ada Masalah'}</p>
                         </div>
                         ${is429 ? `
-                        <p style="font-size:13px;color:var(--text-1);font-weight:700;margin-bottom:8px;">Server AI sedang kelebihan permintaan 🔄</p>
-                        <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:10px;">Semua model gratis sedang ramai dipakai. Ini normal terjadi pada jam sibuk.</p>
-                        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:12px;margin-bottom:10px;">
-                            <p style="font-size:10px;font-weight:800;color:#60A5FA;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.08em;">💡 Yang bisa kamu lakukan:</p>
-                            <p style="font-size:11px;color:var(--text-2);line-height:1.7;margin:0;">• Tunggu 1–2 menit lalu kirim ulang pesan<br>• Coba kirim pertanyaan lebih singkat<br>• Atau konsultasi langsung dengan advokat kami</p>
-                        </div>
+                        <p style="font-size:13px;color:var(--text-1);font-weight:700;margin-bottom:8px;">Server lagi ramai nih 🔄</p>
+                        <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:10px;">Tunggu bentar terus coba lagi ya, atau langsung chat sama advokat kalau urgent.</p>
                         <div style="display:flex;gap:8px;">
                             <button onclick="document.getElementById('user-input').focus()" class="btn-primary" style="font-size:10px;padding:9px 14px;">
                                 <i class="fas fa-redo"></i> Coba Lagi
@@ -525,13 +661,20 @@ Pesan user: ${msg}`;
                         </div>
                         ` : `
                         <p style="font-size:12px;color:var(--text-2);margin-bottom:6px;">${escapeHtml(err.message)}</p>
-                        <p style="font-size:11px;color:var(--text-3);font-style:italic;">💡 Pastikan koneksi internet stabil dan coba lagi.</p>
+                        <p style="font-size:11px;color:var(--text-3);font-style:italic;">Pastikan koneksi internet kamu stabil, terus coba lagi.</p>
                         `}
                     </div>`, 'error');
+
+                // Hapus pesan user dari konteks kalau error
+                conversationMessages.pop();
+
             } finally {
-                btn.disabled = false; input.disabled = false;
-                btnText.className = ''; btnText.textContent = 'Analisis';
+                btn.disabled = false;
+                input.disabled = false;
+                btnText.className = '';
+                btnText.textContent = 'Kirim';
                 chatBox.scrollTop = chatBox.scrollHeight;
+                input.focus();
             }
         }
 
@@ -549,11 +692,11 @@ Pesan user: ${msg}`;
                         <i class="fas fa-user-tie" style="color:#34D399;font-size:11px;"></i>
                     </div>
                     <div>
-                        <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">Butuh Bantuan Lebih?</p>
-                        <p style="font-size:8px;font-weight:800;color:#34D399;text-transform:uppercase;letter-spacing:0.1em;margin:2px 0 0;">Rekomendasi Lawyers AI</p>
+                        <p style="font-size:11px;font-weight:900;color:var(--text-1);font-style:italic;margin:0;">Perlu Bantuan Lebih Lanjut?</p>
+                        <p style="font-size:8px;font-weight:800;color:#34D399;text-transform:uppercase;letter-spacing:0.1em;margin:2px 0 0;">Rekomendasi</p>
                     </div>
                 </div>
-                <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:14px;">Analisis AI bersifat umum. Untuk penanganan mendalam, konsultasikan langsung dengan <strong>Advokat Berlisensi</strong> kami.</p>
+                <p style="font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:14px;">Analisis aku bersifat umum ya. Buat penanganan yang lebih dalam dan spesifik, mending konsultasikan langsung sama advokat berlisensi kita.</p>
                 <div style="display:flex;gap:8px;">
                     <button onclick="location.href='mitra.html'" class="btn-primary" style="flex:1;justify-content:center;font-size:10px;padding:10px 14px;">
                         <i class="fas fa-user-tie"></i> Cari Advokat
@@ -569,17 +712,17 @@ Pesan user: ${msg}`;
 
         function generatePDF() {
             if (!currentAnalysis) {
-                if (window.showLALToast) showLALToast('warning','Belum Ada Analisis','Kirim kasus terlebih dahulu.');
-                else laiAlert({ type:'warning', title:'Belum Ada Analisis', message:'Kirim kasus hukummu terlebih dahulu agar AI bisa menganalisis dan membuat draf somasi.' });
+                if (window.showLALToast) showLALToast('warning', 'Belum Ada Analisis', 'Ceritain kasusnya dulu ya.');
+                else laiAlert({ type:'warning', title:'Belum Ada Analisis', message:'Ceritakan kasus hukummu terlebih dahulu agar AI bisa menganalisis dan membuat draf somasi.' });
                 return;
             }
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-                const pw  = doc.internal.pageSize.getWidth();   // 210
-                const ph  = doc.internal.pageSize.getHeight();  // 297
+                const pw  = doc.internal.pageSize.getWidth();
+                const ph  = doc.internal.pageSize.getHeight();
                 const ml  = 25, mr = 25, mt = 20;
-                const cw  = pw - ml - mr; // 160mm
+                const cw  = pw - ml - mr;
                 let y     = mt;
 
                 const tanggal = new Date().toLocaleDateString('id-ID', {
@@ -587,22 +730,8 @@ Pesan user: ${msg}`;
                 });
                 const nomorSurat = `${String(Math.floor(Math.random()*900)+100)}/SOMASI/LAI/${new Date().getFullYear()}`;
 
-                // ── Helpers ──
                 const checkPage = (need = 10) => {
                     if (y + need > ph - 20) { doc.addPage(); y = mt; }
-                };
-                const writeText = (text, x, fontSize, style, color, maxWidth) => {
-                    doc.setFontSize(fontSize);
-                    doc.setFont('helvetica', style || 'normal');
-                    doc.setTextColor(...(color || [30,30,30]));
-                    if (maxWidth) {
-                        const lines = doc.splitTextToSize(text, maxWidth);
-                        doc.text(lines, x, y);
-                        return lines.length;
-                    } else {
-                        doc.text(text, x, y);
-                        return 1;
-                    }
                 };
                 const hline = (x1, x2, lw = 0.3, color = [30,30,30]) => {
                     doc.setLineWidth(lw);
@@ -610,32 +739,23 @@ Pesan user: ${msg}`;
                     doc.line(x1, y, x2, y);
                 };
 
-                // ══════════════════════════════════════════
                 // KOP SURAT
-                // ══════════════════════════════════════════
-                // Garis atas tebal
                 doc.setLineWidth(1.2);
                 doc.setDrawColor(37,99,235);
                 doc.line(ml, y, pw - mr, y);
                 y += 6;
 
-                writeText('LAWYERS AI', ml, 18, 'bold', [37,99,235]);
-                y += 7;
-                writeText('Konsultan & Asisten Hukum Digital', ml, 9, 'normal', [80,80,80]);
-                y += 5;
-                writeText('Jl. Hukum Digital No. 1, Jakarta Pusat 10110  |  www.lawyers-ai.id  |  info@lawyers-ai.id', ml, 8, 'normal', [120,120,120]);
-                y += 4;
+                doc.setFontSize(18); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
+                doc.text('LAWYERS AI', ml, y); y += 7;
+                doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
+                doc.text('Konsultan & Asisten Hukum Digital', ml, y); y += 5;
+                doc.setFontSize(8); doc.setTextColor(120,120,120);
+                doc.text('Jl. Hukum Digital No. 1, Jakarta Pusat 10110  |  www.lawyers-ai.id  |  info@lawyers-ai.id', ml, y); y += 4;
 
-                // Garis bawah kop
-                doc.setLineWidth(0.3);
-                doc.setDrawColor(37,99,235);
-                doc.line(ml, y, pw - mr, y);
-                y += 8;
+                doc.setLineWidth(0.3); doc.setDrawColor(37,99,235);
+                doc.line(ml, y, pw - mr, y); y += 8;
 
-                // ══════════════════════════════════════════
                 // IDENTITAS SURAT
-                // ══════════════════════════════════════════
-                // Nomor & tanggal — 2 kolom
                 doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
                 const col2 = ml + 85;
                 doc.text(`Nomor     : ${nomorSurat}`, ml, y);
@@ -647,7 +767,6 @@ Pesan user: ${msg}`;
                 doc.setFont('helvetica','normal');
                 y += 10;
 
-                // ── Kepada ──
                 doc.text('Kepada Yth.', ml, y); y += 6;
                 doc.setFont('helvetica','bold');
                 doc.text('[NAMA PIHAK YANG DISOMASI]', ml, y); y += 6;
@@ -660,12 +779,9 @@ Pesan user: ${msg}`;
                 doc.setFont('helvetica','normal');
                 y += 10;
 
-                // Garis pemisah tipis
                 hline(ml, pw - mr, 0.2, [200,200,200]); y += 8;
 
-                // ══════════════════════════════════════════
                 // PEMBUKAAN
-                // ══════════════════════════════════════════
                 const pembukaan = `Dengan hormat,\n\nYang bertanda tangan di bawah ini, kami dari Lawyers AI, selaku kuasa hukum dan/atau pihak yang berkepentingan, dengan ini menyampaikan SOMASI (Surat Teguran Hukum) kepada Saudara/i sebagaimana tersebut di atas, berkenaan dengan hal-hal sebagai berikut:`;
                 doc.setFontSize(11); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
                 const pembukaanLines = doc.splitTextToSize(pembukaan, cw);
@@ -673,33 +789,27 @@ Pesan user: ${msg}`;
                 doc.text(pembukaanLines, ml, y);
                 y += pembukaanLines.length * 6 + 8;
 
-                // ══════════════════════════════════════════
-                // BAGIAN I — DUDUK PERMASALAHAN
-                // ══════════════════════════════════════════
+                // BAGIAN I
                 checkPage(20);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('I.  DUDUK PERMASALAHAN', ml, y); y += 7;
-
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
-                const summaryLines = doc.splitTextToSize(currentAnalysis.summary || '-', cw);
+                // Strip HTML tags dari summary
+                const summaryPlain = currentAnalysis.summary.replace(/<[^>]+>/g, '');
+                const summaryLines = doc.splitTextToSize(summaryPlain || '-', cw);
                 checkPage(summaryLines.length * 6 + 6);
                 doc.text(summaryLines, ml, y);
                 y += summaryLines.length * 6 + 8;
 
-                // ══════════════════════════════════════════
-                // BAGIAN II — DASAR HUKUM
-                // ══════════════════════════════════════════
+                // BAGIAN II
                 checkPage(30);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('II.  DASAR HUKUM', ml, y); y += 7;
-
                 doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 doc.text(currentAnalysis.pasal || '-', ml, y); y += 6;
-
                 doc.setFont('helvetica','italic'); doc.setTextColor(60,60,60); doc.setFontSize(10);
                 const pasalText = `"${currentAnalysis.isi_pasal || '-'}"`;
                 const pasalLines = doc.splitTextToSize(pasalText, cw - 8);
-                // Box abu tipis untuk kutipan pasal
                 checkPage(pasalLines.length * 5.5 + 12);
                 doc.setFillColor(245, 247, 250);
                 doc.setDrawColor(200, 200, 200);
@@ -707,8 +817,6 @@ Pesan user: ${msg}`;
                 doc.roundedRect(ml, y - 3, cw, pasalLines.length * 5.5 + 6, 2, 2, 'FD');
                 doc.text(pasalLines, ml + 4, y + 2);
                 y += pasalLines.length * 5.5 + 10;
-
-                // Kategori
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 doc.text(`Kategori Hukum  :  `, ml, y);
                 doc.setFont('helvetica','bold');
@@ -716,20 +824,15 @@ Pesan user: ${msg}`;
                 doc.setFont('helvetica','normal');
                 y += 10;
 
-                // ══════════════════════════════════════════
-                // BAGIAN III — TUNTUTAN / SOMASI
-                // ══════════════════════════════════════════
+                // BAGIAN III
                 checkPage(40);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('III.  TUNTUTAN DAN PERMINTAAN', ml, y); y += 7;
-
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 const tuntutanIntro = 'Berdasarkan uraian di atas, kami dengan ini menuntut dan meminta kepada Saudara/i untuk:';
                 const tIntroLines = doc.splitTextToSize(tuntutanIntro, cw);
                 doc.text(tIntroLines, ml, y);
                 y += tIntroLines.length * 6 + 4;
-
-                // Tuntutan dari saran AI, dipecah jadi poin-poin
                 const saranRaw = currentAnalysis.saran || 'Segera menyelesaikan permasalahan ini secara hukum.';
                 const saranPoin = saranRaw.split(/[.;]\s+/).filter(s => s.trim().length > 10);
                 saranPoin.forEach((poin, i) => {
@@ -741,7 +844,7 @@ Pesan user: ${msg}`;
                 });
                 y += 4;
 
-                // Deadline
+                // Deadline box
                 checkPage(20);
                 doc.setFillColor(254, 242, 242);
                 doc.setDrawColor(220, 80, 80);
@@ -753,13 +856,10 @@ Pesan user: ${msg}`;
                 doc.text('Selambat-lambatnya 14 (empat belas) hari kalender sejak diterimanya surat ini.', ml + 4, y + 9);
                 y += 22;
 
-                // ══════════════════════════════════════════
-                // BAGIAN IV — PENUTUP
-                // ══════════════════════════════════════════
+                // BAGIAN IV
                 checkPage(40);
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(37,99,235);
                 doc.text('IV.  PENUTUP', ml, y); y += 7;
-
                 doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.setFontSize(11);
                 const penutup = `Apabila dalam batas waktu yang telah ditentukan Saudara/i tidak memenuhi tuntutan di atas, maka kami akan mengambil langkah-langkah hukum lebih lanjut, termasuk namun tidak terbatas pada gugatan perdata dan/atau laporan pidana kepada pihak berwajib sesuai ketentuan perundang-undangan yang berlaku di Negara Kesatuan Republik Indonesia.\n\nDemikian surat somasi ini kami sampaikan dengan sebenar-benarnya. Atas perhatian dan kerja sama Saudara/i, kami ucapkan terima kasih.`;
                 const penutupLines = doc.splitTextToSize(penutup, cw);
@@ -767,26 +867,19 @@ Pesan user: ${msg}`;
                 doc.text(penutupLines, ml, y);
                 y += penutupLines.length * 6 + 12;
 
-                // ══════════════════════════════════════════
                 // TANDA TANGAN
-                // ══════════════════════════════════════════
                 checkPage(50);
-                // 2 blok TTD — Pembuat & Penerima
                 const ttdX1 = ml;
                 const ttdX2 = ml + 95;
-
                 doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
                 doc.text(`Jakarta, ${tanggal}`, ttdX1, y);
                 doc.text('Hormat kami,', ttdX1, y + 6);
                 doc.text('Yang Menerima,', ttdX2, y + 6);
-
-                y += 30; // ruang TTD
-                // Garis TTD
+                y += 30;
                 doc.setLineWidth(0.3); doc.setDrawColor(30,30,30);
                 doc.line(ttdX1, y, ttdX1 + 70, y);
                 doc.line(ttdX2, y, ttdX2 + 70, y);
                 y += 5;
-
                 doc.setFont('helvetica','bold'); doc.setFontSize(10);
                 doc.text('[NAMA PEMBUAT SOMASI]', ttdX1, y);
                 doc.text('[NAMA PENERIMA]', ttdX2, y); y += 5;
@@ -794,20 +887,15 @@ Pesan user: ${msg}`;
                 doc.text('Penggugat / Pelapor', ttdX1, y);
                 doc.text('Tergugat / Terlapor', ttdX2, y);
                 y += 14;
-
-                // ── Materai placeholder ──
                 doc.setDrawColor(100,100,100); doc.setLineWidth(0.3);
                 doc.rect(ttdX1 + 15, y - 38, 28, 20);
                 doc.setFontSize(7); doc.setTextColor(130,130,130); doc.setFont('helvetica','italic');
                 doc.text('Materai\nRp 10.000', ttdX1 + 22, y - 31);
 
-                // ══════════════════════════════════════════
-                // FOOTER SEMUA HALAMAN
-                // ══════════════════════════════════════════
+                // FOOTER
                 const pc = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pc; i++) {
                     doc.setPage(i);
-                    // Garis footer
                     doc.setLineWidth(0.3); doc.setDrawColor(37,99,235);
                     doc.line(ml, ph - 14, pw - mr, ph - 14);
                     doc.setFontSize(7.5); doc.setFont('helvetica','italic'); doc.setTextColor(120,120,120);
@@ -818,44 +906,45 @@ Pesan user: ${msg}`;
                 }
 
                 doc.save(`Somasi_LawyersAI_${Date.now()}.pdf`);
-                if (window.showLALToast) showLALToast('success', 'PDF Berhasil Dibuat', 'Draf somasi resmi telah diunduh!');
+                if (window.showLALToast) showLALToast('success', 'PDF Berhasil Dibuat', 'Draf somasi udah diunduh!');
 
             } catch(e) {
                 console.error('PDF error:', e);
-                if (window.showLALToast) showLALToast('error','Gagal Buat PDF', e.message);
+                if (window.showLALToast) showLALToast('error', 'Gagal Buat PDF', e.message);
                 else laiAlert({ type:'danger', title:'Gagal Membuat PDF', message:`Terjadi kesalahan: ${e.message}` });
             }
         }
 
         function escapeHtml(t) {
+            if (!t) return '';
             const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
         }
 
-        window.sendMessage   = sendMessage;
-        window.generatePDF   = generatePDF;
+        window.sendMessage  = sendMessage;
+        window.generatePDF  = generatePDF;
+        window.clearHistory = clearHistory;
 
         // ── AUTO-TRIGGER DARI KATEGORI BERANDA ──
         const CATEGORY_MAP = {
-            'pidana':     'Halo! Saya ingin konsultasi mengenai masalah hukum pidana. Tolong jelaskan secara umum apa saja yang termasuk tindak pidana di Indonesia, hak-hak tersangka/terdakwa, dan langkah hukum yang bisa diambil jika menjadi korban tindak pidana.',
-            'perdata':    'Halo! Saya ingin konsultasi mengenai masalah hukum perdata. Tolong jelaskan apa itu hukum perdata di Indonesia, contoh kasusnya, dan langkah hukum yang bisa diambil jika ada pihak yang melanggar hak perdata saya.',
-            'keluarga':   'Halo! Saya ingin konsultasi mengenai masalah hukum keluarga. Tolong jelaskan tentang hukum perkawinan, perceraian, hak asuh anak, dan waris di Indonesia.',
-            'ite':        'Halo! Saya ingin konsultasi mengenai hukum Cyber dan ITE. Tolong jelaskan UU ITE di Indonesia, perbuatan yang dijerat, sanksinya, dan apa yang harus dilakukan jika menjadi korban kejahatan siber.',
-            'kerja':      'Halo! Saya ingin konsultasi mengenai hukum ketenagakerjaan. Tolong jelaskan hak-hak pekerja di Indonesia, termasuk PHK, pesangon, upah, dan cara menyelesaikan sengketa kerja.',
-            'tanah':      'Halo! Saya ingin konsultasi mengenai hukum pertanahan. Tolong jelaskan hak kepemilikan tanah, sengketa tanah, proses sertifikasi, dan langkah hukum jika ada penyerobotan tanah.',
-            'bisnis':     'Halo! Saya ingin konsultasi mengenai hukum bisnis di Indonesia. Tolong jelaskan pendirian perusahaan, kontrak bisnis, sengketa korporasi, dan perlindungan hukum bagi pelaku usaha.',
-            'pajak':      'Halo! Saya ingin konsultasi mengenai hukum pajak di Indonesia. Tolong jelaskan kewajiban perpajakan, sanksi pelanggaran, cara keberatan, dan hak wajib pajak.',
-            'lingkungan': 'Halo! Saya ingin konsultasi mengenai hukum lingkungan hidup. Tolong jelaskan regulasi lingkungan, sanksi perusak lingkungan, dan cara melaporkan pelanggaran secara hukum.',
-            'imigrasi':   'Halo! Saya ingin konsultasi mengenai hukum imigrasi di Indonesia. Tolong jelaskan visa, izin tinggal, kewarganegaraan, deportasi, dan sanksi pelanggaran keimigrasian.',
-            'haki':       'Halo! Saya ingin konsultasi mengenai HAKI di Indonesia. Tolong jelaskan hak cipta, merek, paten, desain industri, dan langkah hukum jika terjadi pelanggaran.',
-            'konsumen':   'Halo! Saya ingin konsultasi mengenai hukum perlindungan konsumen. Tolong jelaskan hak konsumen, kewajiban pelaku usaha, lembaga perlindungan, dan cara menuntut ganti rugi.',
+            'pidana':     'Mau nanya soal hukum pidana nih. Bisa jelasin gak perbuatan apa aja yang masuk kategori pidana di Indonesia, hak-hak tersangka, dan kalau jadi korban tindak pidana harus ngapain?',
+            'perdata':    'Pengen konsultasi soal hukum perdata. Gimana cara kerjanya, contoh kasusnya apa, dan kalau hak perdata aku dilanggar orang, langkah hukumnya gimana?',
+            'keluarga':   'Mau tanya soal hukum keluarga nih — pernikahan, perceraian, hak asuh anak, sama waris di Indonesia. Bisa bantu jelasin?',
+            'ite':        'Pengen nanya soal hukum ITE dan kejahatan siber. Perbuatan apa yang kena UU ITE, sanksinya gimana, dan kalau jadi korban harus gimana?',
+            'kerja':      'Mau konsultasi soal hak-hak pekerja. Soal PHK, pesangon, upah, dan kalau ada masalah sama perusahaan, langkah hukumnya apa?',
+            'tanah':      'Ada yang mau ditanyain soal hukum tanah — kepemilikan, sengketa, sertifikasi. Kalau tanah diserobot orang, bisa ngapain?',
+            'bisnis':     'Pengen nanya soal hukum bisnis — pendirian usaha, kontrak, sampai sengketa. Gimana perlindungan hukum buat pelaku usaha?',
+            'pajak':      'Mau konsultasi soal perpajakan. Kewajiban pajak gimana, sanksi pelanggarannya apa, dan kalau mau keberatan sama ketetapan pajak bisa ngapain?',
+            'imigrasi':   'Mau tanya soal imigrasi — visa, izin tinggal, kewarganegaraan. Apa yang terjadi kalau ada pelanggaran keimigrasian?',
+            'haki':       'Pengen nanya soal HAKI — hak cipta, merek, paten. Gimana daftarnya dan kalau ada yang niru karya/merek, langkah hukumnya apa?',
+            'konsumen':   'Mau tanya soal hak konsumen. Apa aja hak aku sebagai konsumen dan kalau kena produk/jasa yang merugikan, bisa nuntut ganti rugi gak?',
         };
 
-        // ── PROFILE GUARD ──
-        let _currentUser = null;
+        // ── PROFILE CHECK ──
+        let _currentUser    = null;
         let _profileComplete = false;
 
         const REQUIRED_FIELDS = ['full_name', 'wa_number'];
-        const FIELD_LABELS = { full_name: 'Nama Lengkap', wa_number: 'Nomor WhatsApp' };
+        const FIELD_LABELS    = { full_name: 'Nama Lengkap', wa_number: 'Nomor WhatsApp' };
 
         async function checkProfileComplete() {
             try {
@@ -864,8 +953,13 @@ Pesan user: ${msg}`;
                 _currentUser = session.user;
 
                 const { data: profile } = await window.supabase
-                    .from('profiles').select('full_name,wa_number')
+                    .from('profiles').select('full_name,wa_number,avatar_url')
                     .eq('id', _currentUser.id).maybeSingle();
+
+                const avatar = profile?.avatar_url ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name||'U')}&background=1E3A5F&color=60A5FA`;
+                const headerAvatar = document.getElementById('header-avatar');
+                if (headerAvatar) headerAvatar.src = avatar;
 
                 const missing = REQUIRED_FIELDS.filter(f => !profile?.[f]?.trim());
                 if (missing.length > 0) {
@@ -875,13 +969,12 @@ Pesan user: ${msg}`;
                 _profileComplete = true;
                 return [];
             } catch(e) {
-                // Jika supabase error (misal offline), biarkan tetap bisa chat
                 _profileComplete = true;
                 return [];
             }
         }
 
-        async function guardProfile() {
+        async function akurdProfile() {
             const missing = await checkProfileComplete();
             if (!missing || missing.length === 0) return true;
 
@@ -889,7 +982,7 @@ Pesan user: ${msg}`;
             const ok = await laiConfirm({
                 type: 'warning',
                 title: 'Lengkapi Profil Dulu',
-                message: `Sebelum konsultasi, lengkapi ${labels} di halaman profil kamu terlebih dahulu.<br><br>Ini diperlukan agar advokat bisa menghubungi kamu jika diperlukan.`,
+                message: `Sebelum konsultasi, lengkapi ${labels} di halaman profil kamu dulu ya.<br><br>Ini penting biar advokat bisa hubungi kamu kalau diperlukan.`,
                 confirmText: 'Ke Halaman Profil',
                 cancelText: 'Nanti Saja'
             });
@@ -898,13 +991,10 @@ Pesan user: ${msg}`;
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // Load history tersimpan
             loadHistory();
 
-            // Cek profil di background
             const missing = await checkProfileComplete();
             if (missing && missing.length > 0) {
-                // Tampilkan banner peringatan di atas chat
                 const chatBox = document.getElementById('chat-box');
                 const banner = document.createElement('div');
                 banner.id = 'profile-incomplete-banner';
@@ -913,17 +1003,25 @@ Pesan user: ${msg}`;
                         <i class="fas fa-circle-exclamation" style="color:#FBBF24;font-size:16px;flex-shrink:0;"></i>
                         <div style="flex:1;min-width:0;">
                             <p style="font-size:12px;font-weight:700;color:#FDE68A;margin:0 0 2px;">Profil Belum Lengkap</p>
-                            <p style="font-size:11px;color:#92400E;color:#D97706;margin:0;">${missing.map(f=>FIELD_LABELS[f]||f).join(' & ')} belum diisi. <a href="profile.html" style="color:#FBBF24;font-weight:700;text-decoration:underline;">Lengkapi sekarang →</a></p>
+                            <p style="font-size:11px;color:#D97706;margin:0;">${missing.map(f=>FIELD_LABELS[f]||f).join(' & ')} belum diisi. <a href="profile.html" style="color:#FBBF24;font-weight:700;text-decoration:underline;">Lengkapi sekarang →</a></p>
                         </div>
                         <button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#92400E;cursor:pointer;font-size:14px;flex-shrink:0;padding:0;"><i class="fas fa-xmark"></i></button>
                     </div>`;
                 chatBox.insertBefore(banner, chatBox.firstChild);
             }
 
+            // Auto-trigger dari card kategori beranda
             const params = new URLSearchParams(window.location.search);
             const cat = params.get('cat');
             if (cat && CATEGORY_MAP[cat]) {
                 document.getElementById('user-input').value = CATEGORY_MAP[cat];
+                setTimeout(() => sendMessage(), 600);
+            }
+
+            // Auto-trigger dari query langsung di URL (?q=...)
+            const q = params.get('q');
+            if (q && !cat) {
+                document.getElementById('user-input').value = decodeURIComponent(q);
                 setTimeout(() => sendMessage(), 600);
             }
         });

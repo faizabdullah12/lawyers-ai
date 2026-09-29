@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Mitra — Lawyers AI</title>
+    <link rel="icon" href="/logo4.png" type="image/png">
+    <link rel="shortcut icon" href="/logo4.png" type="image/png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="shared-modal.js" onerror="window.laiConfirm=({message=''}={})=>new Promise(r=>r(confirm(message)));window.laiAlert=({message=''}={})=>new Promise(r=>{alert(message);r();});"></script>
     <script src="config.js"></script>
+    <script src="push-init.js"></script>
     <link rel="stylesheet" href="shared.css">
     <script src="shared-sidebar.js" defer></script>
     <style>
@@ -49,111 +52,6 @@
     <div class="main-scroll">
         <div style="max-width:720px; margin:0 auto; padding:20px 20px 60px; padding-top:72px;" class="dm-fix">
         <style>@media(min-width:1024px){.dm-fix{padding-top:36px!important}}</style>
-
-            <!-- Payment Gate -->
-            <div id="paymentGate" style="display:none;" class="fade-up">
-                <div style="margin-bottom:24px;">
-                    <p style="font-size:10px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;">Registrasi Mitra</p>
-                    <h2 style="font-size:24px;font-weight:900;font-style:italic;color:var(--text-1);margin:0;">Daftar Mitra <span style="color:#60A5FA;">Ahli</span></h2>
-                    <p style="font-size:12px;color:var(--text-3);margin-top:6px;">Bergabung sebagai advokat profesional di platform LawyersAI</p>
-                </div>
-
-                <!-- Biaya card -->
-                <div class="form-wrap fade-up fade-up-1" style="max-width:none;margin-bottom:20px;">
-                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
-                        <div style="width:48px;height:48px;border-radius:14px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                            <i class="fas fa-crown" style="color:#F59E0B;font-size:18px;"></i>
-                        </div>
-                        <div>
-                            <p style="font-size:13px;font-weight:900;color:var(--text-1);margin:0 0 2px;font-style:italic;">Biaya Pendaftaran Mitra</p>
-                            <p style="font-size:10px;color:var(--text-3);">Satu kali pembayaran, akses seumur hidup</p>
-                        </div>
-                        <div style="margin-left:auto;text-align:right;">
-                            <p style="font-size:22px;font-weight:900;color:var(--text-1);margin:0;letter-spacing:-0.5px;">Rp 500.000</p>
-                            <p style="font-size:9px;color:var(--text-3);font-weight:700;text-transform:uppercase;">sekali bayar</p>
-                        </div>
-                    </div>
-
-                    <!-- Benefits -->
-                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;padding:16px;background:var(--bg-input);border-radius:14px;border:1px solid var(--border);">
-                        <p style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 4px;">Yang kamu dapatkan:</p>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
-                            <span style="font-size:12px;color:var(--text-2);">Profil terverifikasi di direktori advokat LawyersAI</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
-                            <span style="font-size:12px;color:var(--text-2);">Akses dashboard mitra & inbox klien</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
-                            <span style="font-size:12px;color:var(--text-2);">Terima konsultasi langsung dari ribuan pengguna</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
-                            <span style="font-size:12px;color:var(--text-2);">Badge "Verified Partner" di profil kamu</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-check-circle" style="color:#34D399;font-size:12px;flex-shrink:0;"></i>
-                            <span style="font-size:12px;color:var(--text-2);">Support prioritas dari tim LawyersAI</span>
-                        </div>
-                    </div>
-
-                    <!-- CTA -->
-                    <div style="display:flex;flex-direction:column;gap:10px;">
-                        <button onclick="handlePaymentIntent()" class="btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:13px;">
-                            <i class="fas fa-lock"></i> Bayar & Lanjut Daftar
-                        </button>
-                        <p style="font-size:10px;color:var(--text-3);text-align:center;margin:0;">
-                            <i class="fas fa-shield-alt" style="color:#34D399;margin-right:4px;"></i>
-                            Pembayaran aman · Setelah bayar, isi form pendaftaran
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Cara Daftar -->
-                <div class="form-wrap fade-up fade-up-2" style="max-width:none;">
-                    <p style="font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.1em;margin:0 0 14px;">Cara Mendaftar</p>
-                    <div style="display:flex;flex-direction:column;gap:12px;">
-                        <div style="display:flex;align-items:flex-start;gap:12px;">
-                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fas fa-credit-card" style="color:#60A5FA;font-size:12px;"></i>
-                            </div>
-                            <div>
-                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Bayar Rp 500.000</p>
-                                <p style="font-size:11px;color:var(--text-3);margin:0;">Klik tombol di atas, transfer ke rekening admin</p>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:flex-start;gap:12px;">
-                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fab fa-whatsapp" style="color:#34D399;font-size:12px;"></i>
-                            </div>
-                            <div>
-                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Konfirmasi ke Admin</p>
-                                <p style="font-size:11px;color:var(--text-3);margin:0;">Kirim bukti bayar via WhatsApp ke admin</p>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:flex-start;gap:12px;">
-                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fas fa-file-alt" style="color:#FBBF24;font-size:12px;"></i>
-                            </div>
-                            <div>
-                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Isi Form Pendaftaran</p>
-                                <p style="font-size:11px;color:var(--text-3);margin:0;">Admin aktifkan akses form setelah konfirmasi</p>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:flex-start;gap:12px;">
-                            <div style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fas fa-check-circle" style="color:#A78BFA;font-size:12px;"></i>
-                            </div>
-                            <div>
-                                <p style="font-size:12px;font-weight:800;color:var(--text-1);margin:0 0 2px;">Akun Diverifikasi</p>
-                                <p style="font-size:11px;color:var(--text-3);margin:0;">Tim verifikasi NIA & dokumen dalam 1-3 hari kerja</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Form Section -->
             <div id="formSection">
@@ -267,21 +165,6 @@
     <script>
         let currentUser = null;
 
-        const ADMIN_WA = '6285965988346'; 
-
-        function handlePaymentIntent() {
-            const waMsg = encodeURIComponent(
-                `Halo Admin LawyersAI,\n\nSaya ingin mendaftar sebagai Mitra Ahli.\n\nNama: -\nEmail: ${currentUser?.email || '-'}\n\nMohon info rekening untuk pembayaran Rp 500.000.\n\nTerima kasih.`
-            );
-            window.open(`https://wa.me/${ADMIN_WA}?text=${waMsg}`, '_blank');
-            laiAlert({
-                type: 'info',
-                title: 'Hubungi Admin',
-                message: 'WhatsApp admin sudah dibuka. Setelah konfirmasi pembayaran, admin akan mengaktifkan akses form pendaftaran kamu.',
-                okText: 'Mengerti'
-            });
-        }
-
         async function checkSession() {
             const { data: { session } } = await window.supabase.auth.getSession();
             if (!session) { window.location.href = 'login.html'; return; }
@@ -292,19 +175,8 @@
                 .from('mitra_ahli').select('*').eq('user_id', currentUser.id).maybeSingle();
             if (existingMitra) { showStatus(existingMitra); return; }
 
-            // Cek apakah admin sudah aktifkan akses form (flag di profiles)
-            const { data: profile } = await window.supabase
-                .from('profiles').select('mitra_payment_confirmed').eq('id', currentUser.id).single();
-
-            if (profile?.mitra_payment_confirmed) {
-                // Bayar sudah dikonfirmasi admin → tampilkan form
-                document.getElementById('paymentGate').style.display = 'none';
-                document.getElementById('formSection').style.display = 'block';
-            } else {
-                // Belum bayar → tampilkan payment gate
-                document.getElementById('paymentGate').style.display = 'block';
-                document.getElementById('formSection').style.display = 'none';
-            }
+            // Langsung tampilkan form tanpa cek payment
+            document.getElementById('formSection').style.display = 'block';
         }
 
         function showStatus(mitra) {
